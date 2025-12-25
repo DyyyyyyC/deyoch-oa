@@ -7,6 +7,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 
 # IDE
+.trae/
 .idea/
 *.iml
 .vscode/
