@@ -14,8 +14,24 @@ export const useUserStore = defineStore('user', {
     token: localStorage.getItem('token'), // 用户认证token，从本地存储获取
     userInfo: null,                      // 用户详细信息
     roles: [],                           // 用户角色列表
-    permissions: []                      // 用户权限列表
+    permissions: [],                     // 用户权限列表
+    routes: []                           // 已加载的动态路由列表
   }),
+  
+  /**
+   * 持久化配置
+   * 实现状态的持久化存储
+   */
+  persist: {
+    enabled: true, // 启用持久化
+    strategies: [
+      {
+        key: 'user', // 存储键名
+        storage: localStorage, // 存储方式：localStorage
+        paths: ['token', 'userInfo', 'roles', 'permissions'] // 需要持久化的字段
+      }
+    ]
+  },
   
   /**
    * 计算属性（getters）
@@ -54,6 +70,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo = userInfo
       this.roles = userInfo.roles || []       // 处理角色，默认空数组
       this.permissions = userInfo.permissions || [] // 处理权限，默认空数组
+      this.routes = [] // 初始化动态路由列表为空
       
       // 保存到本地存储，实现状态持久化
       localStorage.setItem('token', token)
@@ -70,6 +87,7 @@ export const useUserStore = defineStore('user', {
       this.userInfo = null
       this.roles = []
       this.permissions = []
+      this.routes = [] // 清除动态路由列表
       
       // 清除本地存储
       localStorage.removeItem('token')
@@ -88,6 +106,7 @@ export const useUserStore = defineStore('user', {
         this.userInfo = JSON.parse(userInfoStr)
         this.roles = this.userInfo.roles || []
         this.permissions = this.userInfo.permissions || []
+        this.routes = [] // 初始化动态路由列表为空
       }
     }
   }
