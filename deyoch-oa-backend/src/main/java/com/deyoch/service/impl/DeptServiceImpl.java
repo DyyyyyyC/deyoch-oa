@@ -74,7 +74,7 @@ public class DeptServiceImpl implements DeptService {
             dept.setCreatedAt(now);
             dept.setUpdatedAt(now);
             // 默认状态为启用
-            dept.setStatus(1);
+            dept.setStatus(1L);
             // 创建部门
             deyochDeptMapper.insert(dept);
             return Result.success(dept);

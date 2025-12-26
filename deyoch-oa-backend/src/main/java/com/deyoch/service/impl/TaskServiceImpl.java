@@ -56,7 +56,7 @@ public class TaskServiceImpl implements TaskService {
             task.setCreatedAt(now);
             task.setUpdatedAt(now);
             // 默认状态为待分配
-            task.setStatus(0);
+            task.setStatus(0L);
             // 创建任务
             deyochTaskMapper.insert(task);
             return Result.success(task);
@@ -110,7 +110,7 @@ public class TaskServiceImpl implements TaskService {
             // 更新被分配人
             task.setAssignee(assignee);
             // 更新状态为已分配
-            task.setStatus(1);
+            task.setStatus(1L);
             // 设置更新时间
             task.setUpdatedAt(LocalDateTime.now());
             // 更新任务

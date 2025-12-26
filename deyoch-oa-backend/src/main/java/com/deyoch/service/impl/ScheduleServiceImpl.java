@@ -70,7 +70,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             schedule.setCreatedAt(now);
             schedule.setUpdatedAt(now);
             // 默认状态为待开始
-            schedule.setStatus(0);
+            schedule.setStatus(0L);
             // 创建日程
             deyochScheduleMapper.insert(schedule);
             return Result.success(schedule);

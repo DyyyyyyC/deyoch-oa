@@ -11,16 +11,16 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochDocument {
 
-  private long id;
+  private Long id;
   private String title;
   private String content;
   private String filePath;
   private String fileName;
-  private long fileSize;
+  private Long fileSize;
   private String fileType;
   private String uploader;
-  private long deptId;
-  private long status;
+  private Long deptId;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

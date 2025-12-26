@@ -11,15 +11,15 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochDept {
 
-  private long id;
+  private Long id;
   private String deptName;
-  private long parentId;
+  private Long parentId;
   private String deptCode;
   private String leader;
   private String phone;
   private String email;
-  private long sort;
-  private long status;
+  private Long sort;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

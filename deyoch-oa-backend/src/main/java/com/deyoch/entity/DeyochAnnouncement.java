@@ -11,13 +11,13 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochAnnouncement {
 
-  private long id;
+  private Long id;
   private String title;
   private String content;
   private String publisher;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime publishTime;
-  private long status;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

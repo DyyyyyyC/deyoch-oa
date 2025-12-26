@@ -5,24 +5,38 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@Schema(description = "用户实体类")
 public class DeyochUser {
 
-  private long id;
+  @Schema(description = "主键ID")
+  private Long id;
+  @Schema(description = "用户名")
   private String username;
+  @Schema(description = "密码")
   private String password;
+  @Schema(description = "昵称")
   private String nickname;
+  @Schema(description = "邮箱")
   private String email;
+  @Schema(description = "电话")
   private String phone;
+  @Schema(description = "头像")
   private String avatar;
-  private long deptId;
-  private long roleId;
-  private long status;
+  @Schema(description = "部门ID")
+  private Long deptId;
+  @Schema(description = "角色ID")
+  private Long roleId;
+  @Schema(description = "状态：0-禁用，1-启用")
+  private Long status;
+  @Schema(description = "创建时间")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
+  @Schema(description = "更新时间")
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime updatedAt;
 

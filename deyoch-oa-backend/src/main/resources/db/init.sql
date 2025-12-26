@@ -58,14 +58,16 @@ CREATE TABLE `deyoch_permission` (
 
 -- 4. 角色权限关联表
 CREATE TABLE `deyoch_role_permission` (
+  `id` bigint NOT NULL AUTO_INCREMENT COMMENT '主键ID',
   `role_id` bigint NOT NULL COMMENT '角色ID',
   `perm_id` bigint NOT NULL COMMENT '权限ID',
-  PRIMARY KEY (`role_id`,`perm_id`),
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `uk_role_perm` (`role_id`,`perm_id`),
   KEY `idx_role_id` (`role_id`),
   KEY `idx_perm_id` (`perm_id`),
   CONSTRAINT `fk_role_perm_role` FOREIGN KEY (`role_id`) REFERENCES `deyoch_role` (`id`) ON DELETE CASCADE ON UPDATE CASCADE,
   CONSTRAINT `fk_role_perm_perm` FOREIGN KEY (`perm_id`) REFERENCES `deyoch_permission` (`id`) ON DELETE CASCADE ON UPDATE CASCADE
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
+) ENGINE=InnoDB AUTO_INCREMENT=1 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='角色权限关联表';
 
 -- 5. 部门表
 CREATE TABLE `deyoch_dept` (

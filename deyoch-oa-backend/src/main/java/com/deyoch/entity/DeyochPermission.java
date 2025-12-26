@@ -11,16 +11,16 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochPermission {
 
-  private long id;
+  private Long id;
   private String permName;
   private String permCode;
   private String permType;
-  private long parentId;
+  private Long parentId;
   private String path;
   private String component;
   private String icon;
-  private long sort;
-  private long status;
+  private Long sort;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

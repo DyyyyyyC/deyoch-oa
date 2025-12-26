@@ -79,7 +79,7 @@ public class DocumentServiceImpl implements DocumentService {
             document.setCreatedAt(now);
             document.setUpdatedAt(now);
             // 默认状态为启用
-            document.setStatus(1);
+            document.setStatus(1L);
             // 创建文档
             deyochDocumentMapper.insert(document);
             return Result.success(document);
@@ -181,7 +181,7 @@ public class DocumentServiceImpl implements DocumentService {
             document.setFileType(file.getContentType());
             document.setCreatedAt(LocalDateTime.now());
             document.setUpdatedAt(LocalDateTime.now());
-            document.setStatus(1);
+            document.setStatus(1L);
             
             // 保存文档记录
             deyochDocumentMapper.insert(document);

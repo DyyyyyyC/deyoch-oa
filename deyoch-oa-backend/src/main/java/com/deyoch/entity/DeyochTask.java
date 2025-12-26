@@ -11,12 +11,12 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochTask {
 
-  private long id;
+  private Long id;
   private String title;
   private String content;
   private String assignee;
-  private long priority;
-  private long status;
+  private Long priority;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime startTime;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

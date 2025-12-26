@@ -56,7 +56,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             announcement.setCreatedAt(now);
             announcement.setUpdatedAt(now);
             // 默认状态为未发布
-            announcement.setStatus(0);
+            announcement.setStatus(0L);
             // 创建公告
             deyochAnnouncementMapper.insert(announcement);
             return Result.success(announcement);
@@ -108,7 +108,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 设置状态为已发布
-            announcement.setStatus(1);
+            announcement.setStatus(1L);
             // 设置发布时间
             announcement.setPublishTime(LocalDateTime.now());
             // 设置更新时间
@@ -130,7 +130,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 设置状态为已撤销
-            announcement.setStatus(2);
+            announcement.setStatus(2L);
             // 设置更新时间
             announcement.setUpdatedAt(LocalDateTime.now());
             // 更新公告

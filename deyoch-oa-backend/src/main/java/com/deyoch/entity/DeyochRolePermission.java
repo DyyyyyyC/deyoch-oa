@@ -9,7 +9,8 @@ import lombok.AllArgsConstructor;
 @AllArgsConstructor
 public class DeyochRolePermission {
 
-  private long roleId;
-  private long permId;
+  private Long id;
+  private Long roleId;
+  private Long permId;
 
 }

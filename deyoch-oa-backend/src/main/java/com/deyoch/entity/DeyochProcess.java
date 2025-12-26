@@ -11,11 +11,11 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 @AllArgsConstructor
 public class DeyochProcess {
 
-  private long id;
+  private Long id;
   private String processName;
   private String processKey;
   private String description;
-  private long status;
+  private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

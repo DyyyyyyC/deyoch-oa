@@ -45,6 +45,11 @@ jwt:
   token-header: ${oa.jwt.header}  # 请求头名称
   token-prefix: ${oa.jwt.prefix}  # 令牌前缀
 
+# 文件上传配置
+file:
+  upload:
+    path: ${oa.file.upload.path}  # 文件上传路径
+
 # 日志配置
 logging:
   level:

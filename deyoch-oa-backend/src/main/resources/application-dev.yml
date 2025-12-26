@@ -51,3 +51,10 @@ oa:
       maxSize: 10MB             # 单个日志文件最大大小
       maxHistory: 30            # 日志文件保留天数
       pattern: logs/deyoch-oa-backend.%d{yyyy-MM-dd}.%i.log  # 日志文件名格式
+  
+  # ----------------------------------------
+  # 文件上传配置
+  # ----------------------------------------
+  file:
+    upload:
+      path: E:/deyoch-oa/uploads  # 文件上传路径
