@@ -29,7 +29,7 @@ public class UserController {
      * @return 用户列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('user:list')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "获取用户列表", description = "获取所有用户的列表")
     public Result<List<DeyochUser>> getUserList() {
         return userService.getUserList();
@@ -41,7 +41,7 @@ public class UserController {
      * @return 用户详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('user:detail')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "根据ID获取用户详情", description = "根据用户ID获取用户的详细信息")
     public Result<DeyochUser> getUserById(@PathVariable @Parameter(description = "用户ID") Long id) {
         return userService.getUserById(id);
@@ -53,7 +53,7 @@ public class UserController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('user:add')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "创建用户", description = "创建新的用户")
     public Result<DeyochUser> createUser(@RequestBody DeyochUser user) {
         return userService.createUser(user);
@@ -66,7 +66,7 @@ public class UserController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('user:update')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "更新用户信息", description = "根据用户ID更新用户信息")
     public Result<DeyochUser> updateUser(@PathVariable @Parameter(description = "用户ID") Long id, @RequestBody DeyochUser user) {
         user.setId(id);
@@ -79,7 +79,7 @@ public class UserController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('user:delete')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "删除用户", description = "根据用户ID删除用户")
     public Result<Void> deleteUser(@PathVariable @Parameter(description = "用户ID") Long id) {
         return userService.deleteUser(id);
@@ -92,7 +92,7 @@ public class UserController {
      * @return 更新结果
      */
     @PutMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('user:updateStatus')")
+    @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "更新用户状态", description = "根据用户ID更新用户状态")
     public Result<Void> updateUserStatus(@PathVariable @Parameter(description = "用户ID") Long id, @RequestParam @Parameter(description = "用户状态（1-启用，0-禁用）") Long status) {
         return userService.updateUserStatus(id, status);

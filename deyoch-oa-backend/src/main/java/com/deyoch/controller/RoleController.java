@@ -29,7 +29,7 @@ public class RoleController {
      * @return 角色列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('role:list')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "获取角色列表", description = "获取所有角色的列表")
     public Result<List<DeyochRole>> getRoleList() {
         return roleService.getRoleList();
@@ -41,7 +41,7 @@ public class RoleController {
      * @return 角色详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('role:detail')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "根据ID获取角色详情", description = "根据角色ID获取角色的详细信息")
     public Result<DeyochRole> getRoleById(@PathVariable @Parameter(description = "角色ID") Long id) {
         return roleService.getRoleById(id);
@@ -53,7 +53,7 @@ public class RoleController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('role:add')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "创建角色", description = "创建新的角色")
     public Result<DeyochRole> createRole(@RequestBody DeyochRole role) {
         return roleService.createRole(role);
@@ -66,7 +66,7 @@ public class RoleController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('role:update')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "更新角色信息", description = "根据角色ID更新角色信息")
     public Result<DeyochRole> updateRole(@PathVariable @Parameter(description = "角色ID") Long id, @RequestBody DeyochRole role) {
         role.setId(id);
@@ -79,7 +79,7 @@ public class RoleController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('role:delete')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "删除角色", description = "根据角色ID删除角色")
     public Result<Void> deleteRole(@PathVariable @Parameter(description = "角色ID") Long id) {
         return roleService.deleteRole(id);
@@ -92,7 +92,7 @@ public class RoleController {
      * @return 分配结果
      */
     @PostMapping("/{roleId}/assign-perms")
-    @PreAuthorize("hasAuthority('role:assign-perm')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "为角色分配权限", description = "根据角色ID为角色分配权限")
     public Result<Void> assignPermissions(@PathVariable @Parameter(description = "角色ID") Long roleId, @RequestBody @Parameter(description = "权限ID列表") List<Long> permIds) {
         return roleService.assignPermissions(roleId, permIds);
@@ -104,7 +104,7 @@ public class RoleController {
      * @return 权限ID列表
      */
     @GetMapping("/{roleId}/perms")
-    @PreAuthorize("hasAuthority('role:perm-list')")
+    @PreAuthorize("hasAuthority('sys:role:manage')")
     @Operation(summary = "获取角色权限ID列表", description = "根据角色ID获取角色已分配的权限ID列表")
     public Result<List<Long>> getRolePermIds(@PathVariable @Parameter(description = "角色ID") Long roleId) {
         return roleService.getRolePermIds(roleId);

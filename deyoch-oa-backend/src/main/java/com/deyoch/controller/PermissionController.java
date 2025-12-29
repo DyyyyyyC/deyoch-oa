@@ -29,7 +29,7 @@ public class PermissionController {
      * @return 权限树
      */
     @GetMapping("/tree")
-    @PreAuthorize("hasAuthority('permission:tree')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "获取权限树", description = "获取权限的树形结构")
     public Result<List<DeyochPermission>> getPermissionTree() {
         return permissionService.getPermissionTree();
@@ -40,7 +40,7 @@ public class PermissionController {
      * @return 权限列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('permission:list')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "获取权限列表", description = "获取权限的扁平列表结构")
     public Result<List<DeyochPermission>> getPermissionList() {
         return permissionService.getPermissionList();
@@ -52,7 +52,7 @@ public class PermissionController {
      * @return 权限详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('permission:detail')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "根据ID获取权限详情", description = "根据权限ID获取权限的详细信息")
     public Result<DeyochPermission> getPermissionById(@PathVariable @Parameter(description = "权限ID") Long id) {
         return permissionService.getPermissionById(id);
@@ -64,7 +64,7 @@ public class PermissionController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('permission:add')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "创建权限", description = "创建新的权限")
     public Result<DeyochPermission> createPermission(@RequestBody DeyochPermission permission) {
         return permissionService.createPermission(permission);
@@ -77,7 +77,7 @@ public class PermissionController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('permission:update')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "更新权限信息", description = "根据权限ID更新权限信息")
     public Result<DeyochPermission> updatePermission(@PathVariable @Parameter(description = "权限ID") Long id, @RequestBody DeyochPermission permission) {
         permission.setId(id);
@@ -90,7 +90,7 @@ public class PermissionController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('permission:delete')")
+    @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "删除权限", description = "根据权限ID删除权限")
     public Result<Void> deletePermission(@PathVariable @Parameter(description = "权限ID") Long id) {
         return permissionService.deletePermission(id);

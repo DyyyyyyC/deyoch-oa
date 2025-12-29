@@ -30,7 +30,7 @@ public class DocumentController {
      * @return 文档列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('document:list')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "获取文档列表", description = "获取所有文档的列表")
     public Result<List<DeyochDocument>> getDocumentList() {
         return documentService.getDocumentList();
@@ -42,7 +42,7 @@ public class DocumentController {
      * @return 文档详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('document:detail')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "根据ID获取文档详情", description = "根据文档ID获取文档的详细信息")
     public Result<DeyochDocument> getDocumentById(@PathVariable @Parameter(description = "文档ID") Long id) {
         return documentService.getDocumentById(id);
@@ -54,7 +54,7 @@ public class DocumentController {
      * @return 文档列表
      */
     @GetMapping("/dept/{deptId}")
-    @PreAuthorize("hasAuthority('document:list')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "根据部门ID获取文档列表", description = "根据部门ID获取该部门下的所有文档")
     public Result<List<DeyochDocument>> getDocumentsByDeptId(@PathVariable @Parameter(description = "部门ID") Long deptId) {
         return documentService.getDocumentsByDeptId(deptId);
@@ -66,7 +66,7 @@ public class DocumentController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('document:add')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "创建文档", description = "创建新的文档")
     public Result<DeyochDocument> createDocument(@RequestBody DeyochDocument document) {
         return documentService.createDocument(document);
@@ -79,7 +79,7 @@ public class DocumentController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('document:update')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "更新文档信息", description = "根据文档ID更新文档信息")
     public Result<DeyochDocument> updateDocument(@PathVariable @Parameter(description = "文档ID") Long id, @RequestBody DeyochDocument document) {
         document.setId(id);
@@ -92,7 +92,7 @@ public class DocumentController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('document:delete')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "删除文档", description = "根据文档ID删除文档")
     public Result<Void> deleteDocument(@PathVariable @Parameter(description = "文档ID") Long id) {
         return documentService.deleteDocument(id);
@@ -105,7 +105,7 @@ public class DocumentController {
      * @return 更新结果
      */
     @PostMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('document:update-status')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "更新文档状态", description = "根据文档ID更新文档状态")
     public Result<Void> updateDocumentStatus(@PathVariable @Parameter(description = "文档ID") Long id, @RequestParam @Parameter(description = "文档状态") Long status) {
         return documentService.updateDocumentStatus(id, status);
@@ -118,7 +118,7 @@ public class DocumentController {
      * @return 上传结果
      */
     @PostMapping("/upload")
-    @PreAuthorize("hasAuthority('document:upload')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "上传文档", description = "上传文档文件和信息")
     public Result<DeyochDocument> uploadDocument(@RequestParam("file") @Parameter(description = "上传的文件") MultipartFile file, @Parameter(description = "文档信息") DeyochDocument document) {
         return documentService.uploadDocument(file, document);
@@ -130,7 +130,7 @@ public class DocumentController {
      * @return 下载结果
      */
     @GetMapping("/{id}/download")
-    @PreAuthorize("hasAuthority('document:download')")
+    @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "下载文档", description = "根据文档ID下载文档")
     public Result<String> downloadDocument(@PathVariable @Parameter(description = "文档ID") Long id) {
         return documentService.downloadDocument(id);

@@ -29,7 +29,7 @@ public class AnnouncementController {
      * @return 公告列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('announcement:list')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "获取公告列表", description = "获取所有公告的列表")
     public Result<List<DeyochAnnouncement>> getAnnouncementList() {
         return announcementService.getAnnouncementList();
@@ -41,7 +41,7 @@ public class AnnouncementController {
      * @return 公告详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('announcement:detail')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "根据ID获取公告详情", description = "根据公告ID获取公告的详细信息")
     public Result<DeyochAnnouncement> getAnnouncementById(@PathVariable @Parameter(description = "公告ID") Long id) {
         return announcementService.getAnnouncementById(id);
@@ -53,7 +53,7 @@ public class AnnouncementController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('announcement:add')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "创建公告", description = "创建新的公告")
     public Result<DeyochAnnouncement> createAnnouncement(@RequestBody DeyochAnnouncement announcement) {
         return announcementService.createAnnouncement(announcement);
@@ -66,7 +66,7 @@ public class AnnouncementController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('announcement:update')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "更新公告信息", description = "根据公告ID更新公告信息")
     public Result<DeyochAnnouncement> updateAnnouncement(@PathVariable @Parameter(description = "公告ID") Long id, @RequestBody DeyochAnnouncement announcement) {
         announcement.setId(id);
@@ -79,7 +79,7 @@ public class AnnouncementController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('announcement:delete')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "删除公告", description = "根据公告ID删除公告")
     public Result<Void> deleteAnnouncement(@PathVariable @Parameter(description = "公告ID") Long id) {
         return announcementService.deleteAnnouncement(id);
@@ -91,7 +91,7 @@ public class AnnouncementController {
      * @return 发布结果
      */
     @PostMapping("/{id}/publish")
-    @PreAuthorize("hasAuthority('announcement:publish')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "发布公告", description = "根据公告ID发布公告")
     public Result<Void> publishAnnouncement(@PathVariable @Parameter(description = "公告ID") Long id) {
         return announcementService.publishAnnouncement(id);
@@ -103,7 +103,7 @@ public class AnnouncementController {
      * @return 撤销结果
      */
     @PostMapping("/{id}/revoke")
-    @PreAuthorize("hasAuthority('announcement:revoke')")
+    @PreAuthorize("hasAuthority('oa:announcement:manage')")
     @Operation(summary = "撤销公告", description = "根据公告ID撤销公告")
     public Result<Void> revokeAnnouncement(@PathVariable @Parameter(description = "公告ID") Long id) {
         return announcementService.revokeAnnouncement(id);

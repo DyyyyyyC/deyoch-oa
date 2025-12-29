@@ -29,7 +29,7 @@ public class TaskController {
      * @return 任务列表
      */
     @GetMapping("/list")
-    @PreAuthorize("hasAuthority('task:list')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "获取任务列表", description = "获取所有任务的列表")
     public Result<List<DeyochTask>> getTaskList() {
         return taskService.getTaskList();
@@ -41,7 +41,7 @@ public class TaskController {
      * @return 任务详情
      */
     @GetMapping("/{id}")
-    @PreAuthorize("hasAuthority('task:detail')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "根据ID获取任务详情", description = "根据任务ID获取任务的详细信息")
     public Result<DeyochTask> getTaskById(@PathVariable @Parameter(description = "任务ID") Long id) {
         return taskService.getTaskById(id);
@@ -53,7 +53,7 @@ public class TaskController {
      * @return 创建结果
      */
     @PostMapping
-    @PreAuthorize("hasAuthority('task:add')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "创建任务", description = "创建新的任务")
     public Result<DeyochTask> createTask(@RequestBody DeyochTask task) {
         return taskService.createTask(task);
@@ -66,7 +66,7 @@ public class TaskController {
      * @return 更新结果
      */
     @PutMapping("/{id}")
-    @PreAuthorize("hasAuthority('task:update')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "更新任务信息", description = "根据任务ID更新任务信息")
     public Result<DeyochTask> updateTask(@PathVariable @Parameter(description = "任务ID") Long id, @RequestBody DeyochTask task) {
         task.setId(id);
@@ -79,7 +79,7 @@ public class TaskController {
      * @return 删除结果
      */
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasAuthority('task:delete')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "删除任务", description = "根据任务ID删除任务")
     public Result<Void> deleteTask(@PathVariable @Parameter(description = "任务ID") Long id) {
         return taskService.deleteTask(id);
@@ -92,7 +92,7 @@ public class TaskController {
      * @return 分配结果
      */
     @PostMapping("/{id}/assign")
-    @PreAuthorize("hasAuthority('task:assign')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "分配任务", description = "根据任务ID分配任务给指定人员")
     public Result<Void> assignTask(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "被分配人") String assignee) {
         return taskService.assignTask(id, assignee);
@@ -105,7 +105,7 @@ public class TaskController {
      * @return 更新结果
      */
     @PostMapping("/{id}/status")
-    @PreAuthorize("hasAuthority('task:update-status')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "更新任务状态", description = "根据任务ID更新任务状态")
     public Result<Void> updateTaskStatus(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "任务状态") Long status) {
         return taskService.updateTaskStatus(id, status);
@@ -117,7 +117,7 @@ public class TaskController {
      * @return 任务列表
      */
     @GetMapping("/status/{status}")
-    @PreAuthorize("hasAuthority('task:list-by-status')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "根据状态获取任务列表", description = "根据任务状态获取任务列表")
     public Result<List<DeyochTask>> getTasksByStatus(@PathVariable @Parameter(description = "任务状态") Long status) {
         return taskService.getTasksByStatus(status);
@@ -129,7 +129,7 @@ public class TaskController {
      * @return 任务列表
      */
     @GetMapping("/priority/{priority}")
-    @PreAuthorize("hasAuthority('task:list-by-priority')")
+    @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "根据优先级获取任务列表", description = "根据任务优先级获取任务列表")
     public Result<List<DeyochTask>> getTasksByPriority(@PathVariable @Parameter(description = "任务优先级") Long priority) {
         return taskService.getTasksByPriority(priority);
