@@ -54,6 +54,7 @@ public class UserController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('user:add')")
+    @Operation(summary = "创建用户", description = "创建新的用户")
     public Result<DeyochUser> createUser(@RequestBody DeyochUser user) {
         return userService.createUser(user);
     }
@@ -66,7 +67,8 @@ public class UserController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('user:update')")
-    public Result<DeyochUser> updateUser(@PathVariable Long id, @RequestBody DeyochUser user) {
+    @Operation(summary = "更新用户信息", description = "根据用户ID更新用户信息")
+    public Result<DeyochUser> updateUser(@PathVariable @Parameter(description = "用户ID") Long id, @RequestBody DeyochUser user) {
         user.setId(id);
         return userService.updateUser(user);
     }
@@ -78,7 +80,8 @@ public class UserController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('user:delete')")
-    public Result<Void> deleteUser(@PathVariable Long id) {
+    @Operation(summary = "删除用户", description = "根据用户ID删除用户")
+    public Result<Void> deleteUser(@PathVariable @Parameter(description = "用户ID") Long id) {
         return userService.deleteUser(id);
     }
 
@@ -90,7 +93,8 @@ public class UserController {
      */
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('user:updateStatus')")
-    public Result<Void> updateUserStatus(@PathVariable Long id, @RequestParam Long status) {
+    @Operation(summary = "更新用户状态", description = "根据用户ID更新用户状态")
+    public Result<Void> updateUserStatus(@PathVariable @Parameter(description = "用户ID") Long id, @RequestParam @Parameter(description = "用户状态（1-启用，0-禁用）") Long status) {
         return userService.updateUserStatus(id, status);
     }
 
@@ -99,6 +103,7 @@ public class UserController {
      * @return 当前用户信息
      */
     @GetMapping("/current")
+    @Operation(summary = "获取当前登录用户信息", description = "获取当前登录用户的详细信息")
     public Result<DeyochUser> getCurrentUser() {
         return userService.getCurrentUser();
     }

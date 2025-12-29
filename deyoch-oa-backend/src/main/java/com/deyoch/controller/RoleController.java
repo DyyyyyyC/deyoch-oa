@@ -54,6 +54,7 @@ public class RoleController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('role:add')")
+    @Operation(summary = "创建角色", description = "创建新的角色")
     public Result<DeyochRole> createRole(@RequestBody DeyochRole role) {
         return roleService.createRole(role);
     }
@@ -66,7 +67,8 @@ public class RoleController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('role:update')")
-    public Result<DeyochRole> updateRole(@PathVariable Long id, @RequestBody DeyochRole role) {
+    @Operation(summary = "更新角色信息", description = "根据角色ID更新角色信息")
+    public Result<DeyochRole> updateRole(@PathVariable @Parameter(description = "角色ID") Long id, @RequestBody DeyochRole role) {
         role.setId(id);
         return roleService.updateRole(role);
     }
@@ -78,7 +80,8 @@ public class RoleController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('role:delete')")
-    public Result<Void> deleteRole(@PathVariable Long id) {
+    @Operation(summary = "删除角色", description = "根据角色ID删除角色")
+    public Result<Void> deleteRole(@PathVariable @Parameter(description = "角色ID") Long id) {
         return roleService.deleteRole(id);
     }
 
@@ -90,7 +93,8 @@ public class RoleController {
      */
     @PostMapping("/{roleId}/assign-perms")
     @PreAuthorize("hasAuthority('role:assign-perm')")
-    public Result<Void> assignPermissions(@PathVariable Long roleId, @RequestBody List<Long> permIds) {
+    @Operation(summary = "为角色分配权限", description = "根据角色ID为角色分配权限")
+    public Result<Void> assignPermissions(@PathVariable @Parameter(description = "角色ID") Long roleId, @RequestBody @Parameter(description = "权限ID列表") List<Long> permIds) {
         return roleService.assignPermissions(roleId, permIds);
     }
 
@@ -101,7 +105,8 @@ public class RoleController {
      */
     @GetMapping("/{roleId}/perms")
     @PreAuthorize("hasAuthority('role:perm-list')")
-    public Result<List<Long>> getRolePermIds(@PathVariable Long roleId) {
+    @Operation(summary = "获取角色权限ID列表", description = "根据角色ID获取角色已分配的权限ID列表")
+    public Result<List<Long>> getRolePermIds(@PathVariable @Parameter(description = "角色ID") Long roleId) {
         return roleService.getRolePermIds(roleId);
     }
 }
