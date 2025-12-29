@@ -6,6 +6,9 @@ import com.deyoch.service.ScheduleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
 
@@ -16,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("schedule")
 @RequiredArgsConstructor
+@Tag(name = "日程管理", description = "日程相关接口")
 public class ScheduleController {
 
     private final ScheduleService scheduleService;
@@ -26,6 +30,7 @@ public class ScheduleController {
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('schedule:list')")
+    @Operation(summary = "获取日程列表", description = "获取所有日程的列表")
     public Result<List<DeyochSchedule>> getScheduleList() {
         return scheduleService.getScheduleList();
     }
@@ -37,7 +42,8 @@ public class ScheduleController {
      */
     @GetMapping("/list/{userId}")
     @PreAuthorize("hasAuthority('schedule:list')")
-    public Result<List<DeyochSchedule>> getScheduleListByUserId(@PathVariable Long userId) {
+    @Operation(summary = "根据用户ID获取日程列表", description = "根据用户ID获取该用户的所有日程")
+    public Result<List<DeyochSchedule>> getScheduleListByUserId(@PathVariable @Parameter(description = "用户ID") Long userId) {
         return scheduleService.getScheduleListByUserId(userId);
     }
 
@@ -48,7 +54,8 @@ public class ScheduleController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('schedule:detail')")
-    public Result<DeyochSchedule> getScheduleById(@PathVariable Long id) {
+    @Operation(summary = "根据ID获取日程详情", description = "根据日程ID获取日程的详细信息")
+    public Result<DeyochSchedule> getScheduleById(@PathVariable @Parameter(description = "日程ID") Long id) {
         return scheduleService.getScheduleById(id);
     }
 
@@ -59,6 +66,7 @@ public class ScheduleController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('schedule:add')")
+    @Operation(summary = "创建日程", description = "创建新的日程")
     public Result<DeyochSchedule> createSchedule(@RequestBody DeyochSchedule schedule) {
         return scheduleService.createSchedule(schedule);
     }
@@ -71,7 +79,8 @@ public class ScheduleController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('schedule:update')")
-    public Result<DeyochSchedule> updateSchedule(@PathVariable Long id, @RequestBody DeyochSchedule schedule) {
+    @Operation(summary = "更新日程信息", description = "根据日程ID更新日程信息")
+    public Result<DeyochSchedule> updateSchedule(@PathVariable @Parameter(description = "日程ID") Long id, @RequestBody DeyochSchedule schedule) {
         schedule.setId(id);
         return scheduleService.updateSchedule(schedule);
     }
@@ -83,7 +92,8 @@ public class ScheduleController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('schedule:delete')")
-    public Result<Void> deleteSchedule(@PathVariable Long id) {
+    @Operation(summary = "删除日程", description = "根据日程ID删除日程")
+    public Result<Void> deleteSchedule(@PathVariable @Parameter(description = "日程ID") Long id) {
         return scheduleService.deleteSchedule(id);
     }
 
@@ -95,7 +105,8 @@ public class ScheduleController {
      */
     @PostMapping("/{id}/status")
     @PreAuthorize("hasAuthority('schedule:update-status')")
-    public Result<Void> updateScheduleStatus(@PathVariable Long id, @RequestParam Long status) {
+    @Operation(summary = "更新日程状态", description = "根据日程ID更新日程状态")
+    public Result<Void> updateScheduleStatus(@PathVariable @Parameter(description = "日程ID") Long id, @RequestParam @Parameter(description = "日程状态") Long status) {
         return scheduleService.updateScheduleStatus(id, status);
     }
 }

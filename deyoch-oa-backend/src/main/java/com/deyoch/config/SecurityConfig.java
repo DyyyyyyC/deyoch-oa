@@ -59,6 +59,8 @@ public class SecurityConfig {
                         authorizeRequests
                                 // 登录接口允许匿名访问
                                 .requestMatchers("/auth/login").permitAll()
+                                // Swagger相关路径允许匿名访问
+                                .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
                                 // 后续可添加更多不需要认证的接口
                                 // .requestMatchers("/public/**").permitAll()
                                 // 其他所有请求都需要认证

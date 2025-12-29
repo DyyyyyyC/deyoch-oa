@@ -6,6 +6,9 @@ import com.deyoch.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
 
@@ -16,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("role")
 @RequiredArgsConstructor
+@Tag(name = "角色管理", description = "角色相关接口")
 public class RoleController {
 
     private final RoleService roleService;
@@ -26,6 +30,7 @@ public class RoleController {
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('role:list')")
+    @Operation(summary = "获取角色列表", description = "获取所有角色的列表")
     public Result<List<DeyochRole>> getRoleList() {
         return roleService.getRoleList();
     }
@@ -37,7 +42,8 @@ public class RoleController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('role:detail')")
-    public Result<DeyochRole> getRoleById(@PathVariable Long id) {
+    @Operation(summary = "根据ID获取角色详情", description = "根据角色ID获取角色的详细信息")
+    public Result<DeyochRole> getRoleById(@PathVariable @Parameter(description = "角色ID") Long id) {
         return roleService.getRoleById(id);
     }
 

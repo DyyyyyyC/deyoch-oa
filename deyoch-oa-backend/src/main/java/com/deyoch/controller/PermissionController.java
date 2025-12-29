@@ -6,6 +6,9 @@ import com.deyoch.service.PermissionService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
 
@@ -16,6 +19,7 @@ import java.util.List;
 @RestController
 @RequestMapping("permission")
 @RequiredArgsConstructor
+@Tag(name = "权限管理", description = "权限相关接口")
 public class PermissionController {
 
     private final PermissionService permissionService;
@@ -26,6 +30,7 @@ public class PermissionController {
      */
     @GetMapping("/tree")
     @PreAuthorize("hasAuthority('permission:tree')")
+    @Operation(summary = "获取权限树", description = "获取权限的树形结构")
     public Result<List<DeyochPermission>> getPermissionTree() {
         return permissionService.getPermissionTree();
     }
@@ -36,6 +41,7 @@ public class PermissionController {
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('permission:list')")
+    @Operation(summary = "获取权限列表", description = "获取权限的扁平列表结构")
     public Result<List<DeyochPermission>> getPermissionList() {
         return permissionService.getPermissionList();
     }
@@ -47,7 +53,8 @@ public class PermissionController {
      */
     @GetMapping("/{id}")
     @PreAuthorize("hasAuthority('permission:detail')")
-    public Result<DeyochPermission> getPermissionById(@PathVariable Long id) {
+    @Operation(summary = "根据ID获取权限详情", description = "根据权限ID获取权限的详细信息")
+    public Result<DeyochPermission> getPermissionById(@PathVariable @Parameter(description = "权限ID") Long id) {
         return permissionService.getPermissionById(id);
     }
 
@@ -58,6 +65,7 @@ public class PermissionController {
      */
     @PostMapping
     @PreAuthorize("hasAuthority('permission:add')")
+    @Operation(summary = "创建权限", description = "创建新的权限")
     public Result<DeyochPermission> createPermission(@RequestBody DeyochPermission permission) {
         return permissionService.createPermission(permission);
     }
@@ -70,7 +78,8 @@ public class PermissionController {
      */
     @PutMapping("/{id}")
     @PreAuthorize("hasAuthority('permission:update')")
-    public Result<DeyochPermission> updatePermission(@PathVariable Long id, @RequestBody DeyochPermission permission) {
+    @Operation(summary = "更新权限信息", description = "根据权限ID更新权限信息")
+    public Result<DeyochPermission> updatePermission(@PathVariable @Parameter(description = "权限ID") Long id, @RequestBody DeyochPermission permission) {
         permission.setId(id);
         return permissionService.updatePermission(permission);
     }
@@ -82,7 +91,8 @@ public class PermissionController {
      */
     @DeleteMapping("/{id}")
     @PreAuthorize("hasAuthority('permission:delete')")
-    public Result<Void> deletePermission(@PathVariable Long id) {
+    @Operation(summary = "删除权限", description = "根据权限ID删除权限")
+    public Result<Void> deletePermission(@PathVariable @Parameter(description = "权限ID") Long id) {
         return permissionService.deletePermission(id);
     }
 
@@ -92,7 +102,8 @@ public class PermissionController {
      * @return 权限列表
      */
     @GetMapping("/user/{userId}")
-    public Result<List<DeyochPermission>> getUserPermissions(@PathVariable Long userId) {
+    @Operation(summary = "根据用户ID获取权限列表", description = "根据用户ID获取用户拥有的权限列表")
+    public Result<List<DeyochPermission>> getUserPermissions(@PathVariable @Parameter(description = "用户ID") Long userId) {
         return permissionService.getUserPermissions(userId);
     }
 
@@ -102,7 +113,8 @@ public class PermissionController {
      * @return 权限编码列表
      */
     @GetMapping("/user/{userId}/codes")
-    public Result<List<String>> getUserPermCodes(@PathVariable Long userId) {
+    @Operation(summary = "获取用户权限编码列表", description = "根据用户ID获取用户拥有的权限编码列表")
+    public Result<List<String>> getUserPermCodes(@PathVariable @Parameter(description = "用户ID") Long userId) {
         return permissionService.getUserPermCodes(userId);
     }
 }
