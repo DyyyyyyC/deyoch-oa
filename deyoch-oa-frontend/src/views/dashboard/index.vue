@@ -62,13 +62,13 @@
           <div class="calendar-view">
             <!-- 日历视图 -->
             <div class="calendar-header">
-              <el-button type="text" size="small">
-                <el-icon><ArrowLeft /></el-icon>
-              </el-button>
-              <span class="calendar-title">{{ currentMonth }}</span>
-              <el-button type="text" size="small">
-                <el-icon><ArrowRight /></el-icon>
-              </el-button>
+              <el-button link size="small">
+              <el-icon><ArrowLeft /></el-icon>
+            </el-button>
+            <span class="calendar-title">{{ currentMonth }}</span>
+            <el-button link size="small">
+              <el-icon><ArrowRight /></el-icon>
+            </el-button>
             </div>
             <div class="calendar-grid">
               <div class="calendar-day" v-for="day in 7" :key="day">
@@ -134,7 +134,7 @@
               <h4 class="file-name">{{ file.name }}</h4>
               <p class="file-meta">{{ file.size }} • {{ file.date }}</p>
             </div>
-            <el-button type="text" size="small">
+            <el-button link size="small">
               <el-icon><Download /></el-icon>
             </el-button>
           </div>
@@ -145,7 +145,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, markRaw } from 'vue'
 import { useUserStore } from '@/stores/user'
 import {
   Clock, Bell, CircleCheck, Checked, List,
@@ -157,12 +157,15 @@ const userStore = useUserStore()
 // 当前月份
 const currentMonth = ref('2025年12月')
 
+// 用户信息
+const userInfo = ref({})
+
 // 任务统计数据
 const taskStats = ref([
-  { key: 'pending', label: '待办', count: 12, icon: Clock, color: '#409eff' },
-  { key: 'pendingReview', label: '待阅', count: 8, icon: Bell, color: '#67c23a' },
-  { key: 'completed', label: '已办', count: 24, icon: CircleCheck, color: '#e6a23c' },
-  { key: 'reviewed', label: '已阅', count: 16, icon: Checked, color: '#909399' }
+  { key: 'pending', label: '待办', count: 12, icon: markRaw(Clock), color: '#409eff' },
+  { key: 'pendingReview', label: '待阅', count: 8, icon: markRaw(Bell), color: '#67c23a' },
+  { key: 'completed', label: '已办', count: 24, icon: markRaw(CircleCheck), color: '#e6a23c' },
+  { key: 'reviewed', label: '已阅', count: 16, icon: markRaw(Checked), color: '#909399' }
 ])
 
 // 活动标签页
@@ -245,25 +248,25 @@ const files = ref([
     name: '项目实施方案.docx',
     size: '2.3 MB',
     date: '2025-12-28 15:30',
-    icon: Document
+    icon: markRaw(Files)
   },
   {
     name: '季度工作总结.pptx',
     size: '5.6 MB',
     date: '2025-12-27 14:15',
-    icon: Files
+    icon: markRaw(Files)
   },
   {
     name: '技术架构设计.pdf',
     size: '3.8 MB',
     date: '2025-12-26 11:00',
-    icon: Files
+    icon: markRaw(Files)
   },
   {
     name: '团队成员名单.xlsx',
     size: '1.2 MB',
     date: '2025-12-25 09:45',
-    icon: Files
+    icon: markRaw(Files)
   }
 ])
 

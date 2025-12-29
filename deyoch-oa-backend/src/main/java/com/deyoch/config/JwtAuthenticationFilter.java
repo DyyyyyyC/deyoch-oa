@@ -91,7 +91,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                     // 7. 将权限编码转换为GrantedAuthority对象列表
                     List<GrantedAuthority> authorities = permCodes.stream()
-                            .map(permCode -> new SimpleGrantedAuthority(permCode))
+                            .map(SimpleGrantedAuthority::new)
                             .collect(Collectors.toList());
 
                     // 8. 创建UserDetails对象

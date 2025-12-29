@@ -267,6 +267,7 @@ const handleCommand = async (command) => {
   box-sizing: border-box;
   gap: 24px;
   transition: all 0.3s ease;
+  overflow: hidden;
 }
 
 /* 左侧菜单样式 */
@@ -314,10 +315,6 @@ const handleCommand = async (command) => {
   animation: none;
 }
 
-.sidebar-collapsed .sidebar-toggle {
-  right: -16px;
-}
-
 /* 菜单样式 */
 .sidebar-menu {
   border-right: none;
@@ -331,11 +328,12 @@ const handleCommand = async (command) => {
   background: rgba(255, 255, 255, 0.95);
   box-shadow: var(--shadow-light);
   border-radius: 16px;
-  padding: 32px;
   overflow: auto;
   transition: all 0.3s ease;
   backdrop-filter: blur(10px);
   animation: slideInRight 0.6s ease-out 0.1s both;
+  padding: 24px;
+  box-sizing: border-box;
 }
 
 /* 底部样式 */
