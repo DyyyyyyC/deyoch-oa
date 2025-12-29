@@ -1,4 +1,9 @@
 export default {
+  auth: {
+    unauthorized: '未登录或登录过期，请重新登录',
+    prompt: '提示',
+    loginAgain: '重新登录'
+  },
   login: {
     title: '登录',
     username: '用户名',
@@ -12,7 +17,7 @@ export default {
     logoutSuccess: '登出成功'
   },
   dashboard: {
-    title: '首页',
+    title: '工作台',
     welcome: '欢迎回来',
     welcomeMessage: '欢迎回来，{username}',
     todayDate: '今天是 {date}',
@@ -54,5 +59,125 @@ export default {
     comingSoon: '功能即将上线',
     noData: '暂无数据',
     copyright: '版权所有'
+  },
+  systemManagement: {
+    title: '系统管理'
+  },
+  userManagement: {
+    title: '用户管理',
+    addUser: '添加用户',
+    search: '搜索',
+    reset: '重置',
+    username: '用户名',
+    enterUsername: '请输入用户名',
+    password: '密码',
+    enterPassword: '请输入密码',
+    nickname: '昵称',
+    enterNickname: '请输入昵称',
+    email: '邮箱',
+    enterEmail: '请输入邮箱',
+    phone: '电话',
+    enterPhone: '请输入电话',
+    deptId: '部门ID',
+    roleId: '角色ID',
+    selectRole: '请选择角色',
+    status: '状态',
+    selectStatus: '请选择状态',
+    enabled: '启用',
+    disabled: '禁用',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作',
+    edit: '编辑',
+    delete: '删除',
+    cancel: '取消',
+    confirm: '确定'
+  },
+  roleManagement: {
+    title: '角色管理',
+    addRole: '添加角色',
+    search: '搜索',
+    reset: '重置',
+    roleName: '角色名称',
+    enterRoleName: '请输入角色名称',
+    roleCode: '角色编码',
+    enterRoleCode: '请输入角色编码',
+    description: '角色描述',
+    enterDescription: '请输入角色描述',
+    status: '状态',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作',
+    edit: '编辑',
+    assignPermission: '分配权限',
+    delete: '删除',
+    cancel: '取消',
+    confirm: '确定'
+  },
+  permissionManagement: {
+    title: '权限管理',
+    addPermission: '添加权限',
+    search: '搜索',
+    reset: '重置',
+    permissionTree: '权限树',
+    permName: '权限名称',
+    enterPermName: '请输入权限名称',
+    permCode: '权限编码',
+    enterPermCode: '请输入权限编码',
+    permType: '权限类型',
+    parentId: '父级ID',
+    parentName: '父级权限',
+    url: '路径',
+    enterUrl: '请输入路径',
+    path: '路径',
+    component: '组件',
+    icon: '图标',
+    sort: '排序',
+    enterSort: '请输入排序',
+    status: '状态',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作',
+    edit: '编辑',
+    delete: '删除',
+    cancel: '取消',
+    confirm: '确定',
+    parentPermission: '父级权限',
+    selectParentPermission: '请选择父级权限',
+    rootPermission: '根权限'
+  },
+  announcementManagement: {
+    title: '公告管理',
+    addAnnouncement: '添加公告',
+    enterTitle: '请输入标题',
+    publisher: '发布人',
+    publishTime: '发布时间',
+    status: '状态',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作'
+  },
+  taskManagement: {
+    title: '任务管理',
+    addTask: '添加任务',
+    enterTitle: '请输入标题',
+    assignee: '负责人',
+    enterAssignee: '请输入负责人',
+    priority: '优先级',
+    status: '状态',
+    startTime: '开始时间',
+    endTime: '结束时间',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作'
+  },
+  processManagement: {
+    title: '流程管理'
+  },
+  scheduleManagement: {
+    title: '日程管理'
+  },
+  documentManagement: {
+    title: '文档管理'
   }
 }

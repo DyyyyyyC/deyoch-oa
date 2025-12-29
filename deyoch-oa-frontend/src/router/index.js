@@ -7,10 +7,10 @@ import { useUserStore } from '@/stores/user'
 // 定义静态路由配置数组
 // 静态路由：不需要动态权限校验的路由
 const constantRoutes = [
-  // 根路径重定向到登录页
+  // 根路径重定向到dashboard页面
   {
     path: '/',                // 路由路径
-    redirect: '/login'        // 重定向到登录页
+    redirect: '/dashboard'    // 重定向到dashboard页面
   },
   // 登录页路由
   {
@@ -22,20 +22,15 @@ const constantRoutes = [
       title: '登录',          // 页面标题
       requiresAuth: false     // 是否需要认证，登录页不需要
     }
-  }
-]
-
-// 定义动态路由配置数组
-// 动态路由：需要根据用户权限动态加载的路由
-const asyncRoutes = [
+  },
   // 仪表盘首页路由，包含子路由
   {
     path: '/dashboard',       // 父路由路径
     component: () => import('@/layout/index.vue'),  // 父组件（布局组件）
     meta: {
-      title: '首页',          // 页面标题
+      title: '工作台',         // 页面标题
       requiresAuth: true,     // 需要认证才能访问
-      permission: 'dashboard:view'  // 权限标识
+      // 首页不需要特定权限，所有登录用户都能访问
     },
     children: [               // 子路由配置
       {
@@ -44,13 +39,18 @@ const asyncRoutes = [
         // 懒加载仪表盘组件
         component: () => import('@/views/dashboard/index.vue'),
         meta: {
-          title: '仪表盘',    // 页面标题
+          title: '工作台',    // 页面标题
           requiresAuth: true,  // 需要认证才能访问
-          permission: 'dashboard:view'  // 权限标识
+          // 仪表盘不需要特定权限，所有登录用户都能访问
         }
       }
     ]
-  },
+  }
+]
+
+// 定义动态路由配置数组
+// 动态路由：需要根据用户权限动态加载的路由
+const asyncRoutes = [
   // 系统管理菜单
   {
     path: '/system',
@@ -58,7 +58,7 @@ const asyncRoutes = [
     meta: {
       title: '系统管理',
       requiresAuth: true,
-      permission: 'system:manage'
+      permission: 'sys:manage'
     },
     children: [
       {
@@ -68,7 +68,7 @@ const asyncRoutes = [
         meta: {
           title: '用户管理',
           requiresAuth: true,
-          permission: 'user:list'
+          permission: 'sys:user:manage'
         }
       },
       {
@@ -78,7 +78,7 @@ const asyncRoutes = [
         meta: {
           title: '角色管理',
           requiresAuth: true,
-          permission: 'role:list'
+          permission: 'sys:role:manage'
         }
       },
       {
@@ -88,7 +88,7 @@ const asyncRoutes = [
         meta: {
           title: '权限管理',
           requiresAuth: true,
-          permission: 'permission:list'
+          permission: 'sys:perm:manage'
         }
       }
     ]
@@ -100,7 +100,7 @@ const asyncRoutes = [
     meta: {
       title: '公告管理',
       requiresAuth: true,
-      permission: 'announcement:manage'
+      permission: 'oa:announcement:manage'
     },
     children: [
       {
@@ -110,7 +110,7 @@ const asyncRoutes = [
         meta: {
           title: '公告列表',
           requiresAuth: true,
-          permission: 'announcement:list'
+          permission: 'oa:announcement:manage'
         }
       }
     ]
@@ -122,7 +122,7 @@ const asyncRoutes = [
     meta: {
       title: '任务管理',
       requiresAuth: true,
-      permission: 'task:manage'
+      permission: 'oa:task:manage'
     },
     children: [
       {
@@ -132,7 +132,7 @@ const asyncRoutes = [
         meta: {
           title: '任务列表',
           requiresAuth: true,
-          permission: 'task:list'
+          permission: 'oa:task:manage'
         }
       }
     ]
@@ -157,29 +157,35 @@ router.beforeEach((to, from, next) => {
   // 1. 从本地存储获取token
   const token = localStorage.getItem('token')
   
-  // 2. 检查当前路由是否需要认证
-  if (!to.meta.requiresAuth) {
-    // 不需要认证的路由，直接放行
+  // 2. 特殊处理：访问登录页时，如果已有token，跳转到dashboard
+  if (to.path === '/login' && token) {
+    next('/dashboard')
+    return
+  }
+  
+  // 3. 检查当前路由是否需要认证
+  // 对于未定义requiresAuth的路由，默认需要认证
+  // 确保所有需要认证的路由都经过动态路由加载流程
+  if (to.meta.requiresAuth === false) {
+    // 明确不需要认证的路由，直接放行
     next()
     return
   }
   
-  // 3. 需要认证的路由，检查是否有token
+  // 4. 需要认证的路由，检查是否有token
   if (!token) {
     next('/login')  // 没有token，跳转到登录页
     return
   }
   
-  // 4. 有token，检查是否已加载动态路由
+  // 5. 有token，检查是否已加载动态路由
   const userStore = useUserStore()
   if (userStore.routes === undefined || userStore.routes.length === 0) {
     // 未加载动态路由，需要加载
     try {
-      // 获取用户权限
-      const permissions = userStore.permissions || []
-      
-      // 根据权限过滤动态路由
-      const accessedRoutes = filterAsyncRoutes(asyncRoutes, permissions)
+      // 暂时不根据权限过滤动态路由，直接添加所有动态路由
+      // 后续可以根据系统完善情况，重新启用权限过滤
+      const accessedRoutes = asyncRoutes
       
       // 动态添加路由
       accessedRoutes.forEach(route => {

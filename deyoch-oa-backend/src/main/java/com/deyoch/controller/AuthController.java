@@ -33,5 +33,15 @@ public class AuthController {
     public Result<LoginResponseDto> login(@RequestBody LoginRequestDto request) {
         return authService.login(request);
     }
+    
+    /**
+     * 用户登出接口
+     * @return 登出结果
+     */
+    @PostMapping("/logout")
+    @Operation(summary = "用户登出", description = "用户登出接口")
+    public Result<Void> logout() {
+        return authService.logout();
+    }
 
 }

@@ -1,5 +1,6 @@
 package com.deyoch.result;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import java.time.LocalDateTime;
 
@@ -35,6 +36,7 @@ public class Result<T> {
      * 响应时间
      * 记录接口返回的时间，便于排查问题
      */
+    @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime timestamp;
     
     // ========== 成功响应方法 ==========

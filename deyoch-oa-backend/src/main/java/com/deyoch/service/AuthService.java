@@ -16,5 +16,11 @@ public interface AuthService {
      * @return 登录结果，包含Token和用户信息
      */
     Result<LoginResponseDto> login(LoginRequestDto loginRequestDto);
+    
+    /**
+     * 用户登出
+     * @return 登出结果
+     */
+    Result<Void> logout();
 
 }

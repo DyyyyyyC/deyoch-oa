@@ -224,10 +224,14 @@ public class PermissionServiceImpl implements PermissionService {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
             
+            System.out.println("获取用户权限编码：userId=" + userId + ", roleId=" + user.getRoleId());
+            
             // 2. 根据角色ID获取角色拥有的权限ID列表
             LambdaQueryWrapper<DeyochRolePermission> rolePermWrapper = new LambdaQueryWrapper<>();
             rolePermWrapper.eq(DeyochRolePermission::getRoleId, user.getRoleId());
             List<DeyochRolePermission> rolePermList = deyochRolePermissionMapper.selectList(rolePermWrapper);
+            
+            System.out.println("角色权限关联列表：" + rolePermList);
             
             if (rolePermList.isEmpty()) {
                 return Result.success(new ArrayList<>());
@@ -238,16 +242,24 @@ public class PermissionServiceImpl implements PermissionService {
                     .map(DeyochRolePermission::getPermId)
                     .collect(Collectors.toList());
             
+            System.out.println("权限ID列表：" + permIds);
+            
             // 4. 根据权限ID列表获取权限详情
             List<DeyochPermission> permList = deyochPermissionMapper.selectBatchIds(permIds);
+            
+            System.out.println("权限详情列表：" + permList);
             
             // 5. 提取权限编码列表
             List<String> permCodes = permList.stream()
                     .map(DeyochPermission::getPermCode)
                     .collect(Collectors.toList());
             
+            System.out.println("返回的权限编码列表：" + permCodes);
+            
             return Result.success(permCodes);
         } catch (Exception e) {
+            System.out.println("获取用户权限编码失败：" + e.getMessage());
+            e.printStackTrace();
             return Result.error(ResultCode.SYSTEM_ERROR, "获取用户权限编码失败：" + e.getMessage());
         }
     }

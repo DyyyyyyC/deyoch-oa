@@ -14,23 +14,18 @@ const locale = localStorage.getItem('locale') || 'zh-CN'
 /**
  * 创建Vue I18n实例
  * 用于配置和管理应用的国际化
+ * Vue I18n v12.0.0-alpha.3 使用Composition API模式
  */
 const i18n = createI18n({
-  legacy: false, // 启用 Composition API 模式，不使用传统的 Options API
+  legacy: true, // 使用传统模式，确保$t可以在模板中直接使用
   locale, // 设置初始语言
   messages: { // 配置语言包
     'zh-CN': zhCN, // 中文语言包
     'en': en // 英文语言包
   },
-  globalInjection: true // 全局注入$t和$i18n，可在模板中直接使用$t()
+  globalInjection: true, // 全局注入$t和$i18n，可在模板中直接使用$t()
+  fallbackLocale: 'zh-CN' // 设置回退语言为中文
 })
-
-/**
- * 监听语言变化
- * 确保当前语言与localStorage中保存的语言一致
- * 当locale.value变化时，会自动更新所有使用$t()的文本
- */
-i18n.global.locale.value = locale
 
 /**
  * 导出i18n实例

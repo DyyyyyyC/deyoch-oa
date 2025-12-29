@@ -1,4 +1,9 @@
 export default {
+  auth: {
+    unauthorized: 'Not logged in or login expired, please login again',
+    prompt: 'Prompt',
+    loginAgain: 'Login Again'
+  },
   login: {
     title: 'Login',
     username: 'Username',
@@ -54,5 +59,105 @@ export default {
     comingSoon: 'Coming soon',
     noData: 'No data available',
     copyright: 'All rights reserved'
+  },
+  systemManagement: {
+    title: 'System Management'
+  },
+  userManagement: {
+    title: 'User Management',
+    addUser: 'Add User',
+    search: 'Search',
+    reset: 'Reset',
+    username: 'Username',
+    enterUsername: 'Please enter username',
+    password: 'Password',
+    enterPassword: 'Please enter password',
+    nickname: 'Nickname',
+    enterNickname: 'Please enter nickname',
+    email: 'Email',
+    enterEmail: 'Please enter email',
+    phone: 'Phone',
+    enterPhone: 'Please enter phone',
+    deptId: 'Dept ID',
+    roleId: 'Role ID',
+    status: 'Status',
+    selectStatus: 'Please select status',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    createdAt: 'Created At',
+    updatedAt: 'Updated At',
+    actions: 'Actions',
+    edit: 'Edit',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  },
+  roleManagement: {
+    title: 'Role Management',
+    addRole: 'Add Role',
+    search: 'Search',
+    reset: 'Reset',
+    roleName: 'Role Name',
+    enterRoleName: 'Please enter role name',
+    roleCode: 'Role Code',
+    enterRoleCode: 'Please enter role code',
+    description: 'Description',
+    enterDescription: 'Please enter description',
+    status: 'Status',
+    createdAt: 'Created At',
+    updatedAt: 'Updated At',
+    actions: 'Actions',
+    edit: 'Edit',
+    assignPermission: 'Assign Permission',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    confirm: 'Confirm'
+  },
+  permissionManagement: {
+    title: 'Permission Management',
+    addPermission: 'Add Permission',
+    search: 'Search',
+    reset: 'Reset',
+    permissionTree: 'Permission Tree',
+    permName: 'Permission Name',
+    enterPermName: 'Please enter permission name',
+    permCode: 'Permission Code',
+    enterPermCode: 'Please enter permission code',
+    permType: 'Permission Type',
+    parentId: 'Parent ID',
+    parentName: 'Parent Permission',
+    url: 'URL',
+    enterUrl: 'Please enter URL',
+    path: 'Path',
+    component: 'Component',
+    icon: 'Icon',
+    sort: 'Sort',
+    enterSort: 'Please enter sort',
+    status: 'Status',
+    createdAt: 'Created At',
+    updatedAt: 'Updated At',
+    actions: 'Actions',
+    edit: 'Edit',
+    delete: 'Delete',
+    cancel: 'Cancel',
+    confirm: 'Confirm',
+    parentPermission: 'Parent Permission',
+    selectParentPermission: 'Please select parent permission',
+    rootPermission: 'Root Permission'
+  },
+  announcementManagement: {
+    title: 'Announcement Management'
+  },
+  taskManagement: {
+    title: 'Task Management'
+  },
+  processManagement: {
+    title: 'Process Management'
+  },
+  scheduleManagement: {
+    title: 'Schedule Management'
+  },
+  documentManagement: {
+    title: 'Document Management'
   }
 }

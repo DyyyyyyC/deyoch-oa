@@ -4,6 +4,8 @@ import axios from 'axios'
 import { ElMessage, ElMessageBox } from 'element-plus'
 // 导入用户状态管理Store，用于获取和管理用户token
 import { useUserStore } from '@/stores/user'
+// 导入i18n实例，用于国际化
+import i18n from '@/lang'
 
 /**
  * 创建Axios实例
@@ -32,8 +34,8 @@ service.interceptors.request.use(
     if (userStore.token) {
       // 确保headers对象存在
       config.headers = config.headers || {}
-      // 添加Authorization头，值为用户token
-      config.headers.Authorization = `${userStore.token}`
+      // 添加Authorization头，值为Bearer + token
+      config.headers.Authorization = `Bearer ${userStore.token}`
     }
     
     // 返回修改后的请求配置
@@ -65,38 +67,33 @@ service.interceptors.response.use(
     const res = response.data
     
     // 统一处理响应码
-    // 这里假设后端约定：code=200表示成功，其他表示失败
-    if (res.code !== 200) {
-      // 显示错误消息
-      ElMessage({
-        message: res.message || 'Error', // 使用响应中的消息或默认错误消息
-        type: 'error', // 消息类型为错误
-        duration: 5 * 1000 // 消息显示时间，5秒
-      })
-      
-      // 特殊处理401错误：未登录或登录过期
-      if (res.code === 401) {
-        // 获取用户Store实例
-        const userStore = useUserStore()
-        // 显示确认对话框，提示用户重新登录
-        ElMessageBox.confirm('未登录或登录过期，请重新登录', '提示', {
-          confirmButtonText: '重新登录', // 确认按钮文本
-          cancelButtonText: '取消', // 取消按钮文本
-          type: 'warning' // 对话框类型为警告
-        }).then(() => {
-          // 用户确认后，执行登出操作
-          userStore.logout()
-          // 刷新页面，重新进入登录流程
-          location.reload()
-        })
+      // 这里假设后端约定：code=200表示成功，其他表示失败
+      if (res.code !== 200) {
+        // 特殊处理401错误：未登录或登录过期
+        if (res.code === 401) {
+          // 获取用户Store实例
+          const userStore = useUserStore()
+          // 使用i18n翻译提示信息
+          const t = i18n.global.t
+          // 显示确认对话框，提示用户重新登录
+          ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
+            confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
+            cancelButtonText: t('common.cancel'), // 取消按钮文本
+            type: 'warning' // 对话框类型为警告
+          }).then(() => {
+            // 用户确认后，执行登出操作
+            userStore.logout()
+            // 刷新页面，重新进入登录流程
+            location.reload()
+          })
+        }
+        
+        // 将错误传递给调用者，不显示错误消息
+        return Promise.reject(new Error(res.message || 'Error'))
+      } else {
+        // 响应成功，返回data字段，这是前端组件期望的格式
+        return res.data
       }
-      
-      // 将错误传递给调用者
-      return Promise.reject(new Error(res.message || 'Error'))
-    } else {
-      // 响应成功，返回处理后的数据
-      return res
-    }
   },
   /**
    * 响应失败处理函数
@@ -104,12 +101,8 @@ service.interceptors.response.use(
    * @returns {Promise} - 被拒绝的Promise
    */
   (error) => {
-    // 显示错误消息
-    ElMessage({
-      message: error.message, // 错误消息
-      type: 'error', // 消息类型为错误
-      duration: 5 * 1000 // 消息显示时间，5秒
-    })
+    // 不显示错误消息，由调用者自行处理
+    console.error('Axios response error:', error)
     // 将错误传递给调用者
     return Promise.reject(error)
   }

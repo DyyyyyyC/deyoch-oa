@@ -77,8 +77,12 @@ const handleLogin = async () => {
     // 调用登录 API
     const res = await login(loginForm)
     
-    // 保存登录状态
-    userStore.login(res.token, res.userInfo)
+    // 打印登录响应数据，调试权限问题
+    console.log('登录响应数据:', res)
+    console.log('权限列表:', res.permissions)
+    
+    // 保存登录状态 - axios拦截器已将res.data返回，直接使用res
+    userStore.login(res.token, res)
     
     ElMessage.success(t('login.loginSuccess'))
     

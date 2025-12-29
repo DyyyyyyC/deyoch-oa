@@ -89,4 +89,12 @@ public class AuthServiceImpl implements AuthService {
         return Result.success(response);
     }
 
+    @Override
+    public Result<Void> logout() {
+        // JWT是无状态的，登出主要在客户端完成
+        // 客户端需要删除本地存储的token和用户信息
+        // 这里返回成功响应即可
+        return Result.success();
+    }
+
 }

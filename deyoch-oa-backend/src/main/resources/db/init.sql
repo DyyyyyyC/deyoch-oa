@@ -222,4 +222,19 @@ INSERT INTO `deyoch_dept` (`dept_name`, `parent_id`, `dept_code`, `leader`, `pho
 -- 插入初始管理员用户
 -- 密码：admin123（已加密，实际使用时需替换为真实加密值）
 INSERT INTO `deyoch_user` (`username`, `password`, `nickname`, `email`, `phone`, `avatar`, `dept_id`, `role_id`, `status`) VALUES 
-('admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGO7o199u291q2Gz0p8c8Q0M6Z2O3O', '管理员', 'admin@deyoch.com', '13800138000', '/avatar/admin.jpg', 1, 1, 1);
+('admin', '$2a$10$XGHfIHerZjc0J1tZkzmIoOGdHm9eoHzF2evltZKiXulnjdkuy1pau', '管理员', 'admin@deyoch.com', '13800138000', '/avatar/admin.jpg', 1, 1, 1);
+
+-- 插入角色权限关联数据
+-- 管理员角色赋予所有权限
+INSERT INTO `deyoch_role_permission` (`role_id`, `perm_id`) VALUES 
+(1, 1), -- 管理员角色拥有系统管理权限
+(1, 2), -- 管理员角色拥有用户管理权限
+(1, 3), -- 管理员角色拥有角色管理权限
+(1, 4), -- 管理员角色拥有权限管理权限
+(1, 5), -- 管理员角色拥有部门管理权限
+(1, 6), -- 管理员角色拥有办公管理权限
+(1, 7), -- 管理员角色拥有公告管理权限
+(1, 8), -- 管理员角色拥有流程管理权限
+(1, 9), -- 管理员角色拥有任务管理权限
+(1, 10), -- 管理员角色拥有日程管理权限
+(1, 11); -- 管理员角色拥有文档管理权限

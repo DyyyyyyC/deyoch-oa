@@ -8,15 +8,19 @@ import { defineStore } from 'pinia'
 export const useUserStore = defineStore('user', {
   /**
    * 状态定义
-   * 初始化时从localStorage获取token，实现状态持久化
+   * 初始化时从localStorage获取token和userInfo，实现状态持久化
    */
-  state: () => ({
-    token: localStorage.getItem('token'), // 用户认证token，从本地存储获取
-    userInfo: null,                      // 用户详细信息
-    roles: [],                           // 用户角色列表
-    permissions: [],                     // 用户权限列表
-    routes: []                           // 已加载的动态路由列表
-  }),
+  state: () => {
+    const userInfoStr = localStorage.getItem('userInfo')
+    const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null
+    return {
+      token: localStorage.getItem('token'), // 用户认证token，从本地存储获取
+      userInfo: userInfo,                   // 用户详细信息，从本地存储获取
+      roles: userInfo?.roles || [],         // 用户角色列表，从userInfo中获取
+      permissions: userInfo?.permissions || [], // 用户权限列表，从userInfo中获取
+      routes: []                           // 已加载的动态路由列表
+    }
+  },
   
   /**
    * 持久化配置
@@ -65,16 +69,19 @@ export const useUserStore = defineStore('user', {
      * @param {object} userInfo - 用户详细信息
      */
     login(token, userInfo) {
+      // 确保userInfo是对象
+      const validUserInfo = userInfo || {};
+      
       // 更新状态
-      this.token = token
-      this.userInfo = userInfo
-      this.roles = userInfo.roles || []       // 处理角色，默认空数组
-      this.permissions = userInfo.permissions || [] // 处理权限，默认空数组
-      this.routes = [] // 初始化动态路由列表为空
+      this.token = token;
+      this.userInfo = validUserInfo;
+      this.roles = validUserInfo.roles || [];       // 处理角色，默认空数组
+      this.permissions = validUserInfo.permissions || []; // 处理权限，默认空数组
+      this.routes = []; // 初始化动态路由列表为空
       
       // 保存到本地存储，实现状态持久化
-      localStorage.setItem('token', token)
-      localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      localStorage.setItem('token', token);
+      localStorage.setItem('userInfo', JSON.stringify(validUserInfo));
     },
     
     /**
