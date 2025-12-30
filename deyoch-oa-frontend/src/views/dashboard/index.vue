@@ -21,11 +21,11 @@
           <el-card class="stat-card" v-for="stat in taskStats" :key="stat.key">
             <div class="stat-content">
               <div class="stat-info">
+                <div class="stat-icon">
+                  <component :is="stat.icon" />
+                </div>
                 <h3 class="stat-number">{{ stat.count }}</h3>
                 <p class="stat-label">{{ stat.label }}</p>
-              </div>
-              <div class="stat-icon">
-                <component :is="stat.icon" />
               </div>
             </div>
           </el-card>
