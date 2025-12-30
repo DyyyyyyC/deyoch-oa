@@ -2,6 +2,9 @@
 -- 使用数据库
 USE `deyoch_oa`;
 
+-- 禁用外键检查
+SET FOREIGN_KEY_CHECKS = 0;
+
 -- 1. 生成用户数据
 INSERT INTO `deyoch_user` (`username`, `password`, `nickname`, `email`, `phone`, `avatar`, `dept_id`, `role_id`, `status`) VALUES 
 ('user1', '$2a$10$XGHfIHerZjc0J1tZkzmIoOGdHm9eoHzF2evltZKiXulnjdkuy1pau', '用户1', 'user1@deyoch.com', '13800138001', '/avatar/user1.jpg', 2, 2, 1),
@@ -10,20 +13,24 @@ INSERT INTO `deyoch_user` (`username`, `password`, `nickname`, `email`, `phone`,
 ('manager1', '$2a$10$XGHfIHerZjc0J1tZkzmIoOGdHm9eoHzF2evltZKiXulnjdkuy1pau', '部门经理1', 'manager1@deyoch.com', '13800138004', '/avatar/manager1.jpg', 2, 3, 1);
 
 -- 2. 生成流程数据
-INSERT INTO `deyoch_process` (`process_name`, `process_key`, `description`, `status`) VALUES 
-('请假流程', 'leave', '员工请假审批流程', 1),
-('报销流程', 'reimbursement', '费用报销审批流程', 1),
-('出差流程', 'business_trip', '员工出差审批流程', 1),
-('采购流程', 'purchase', '物资采购审批流程', 1),
-('加班流程', 'overtime', '员工加班审批流程', 1);
+-- 明确指定id值，确保外键关联正确
+INSERT INTO `deyoch_process` (`id`, `process_name`, `process_key`, `description`, `status`) VALUES 
+(1, '请假流程', 'leave', '员工请假审批流程', 1),
+(2, '报销流程', 'reimbursement', '费用报销审批流程', 1),
+(3, '出差流程', 'business_trip', '员工出差审批流程', 1),
+(4, '采购流程', 'purchase', '物资采购审批流程', 1),
+(5, '加班流程', 'overtime', '员工加班审批流程', 1);
 
 -- 3. 生成流程实例数据
+-- 确保在插入前再次禁用外键检查
+SET FOREIGN_KEY_CHECKS = 0;
 INSERT INTO `deyoch_process_instance` (`process_id`, `instance_name`, `initiator`, `start_time`, `end_time`, `status`) VALUES 
 (1, '张三请假申请', '张三', '2025-12-25 09:00:00', '2025-12-26 10:00:00', 1),
 (2, '李四报销申请', '李四', '2025-12-27 14:00:00', NULL, 0),
 (3, '王五出差申请', '王五', '2025-12-28 10:00:00', NULL, 0),
 (1, '赵六请假申请', '赵六', '2025-12-29 08:30:00', NULL, 0),
 (4, '钱七采购申请', '钱七', '2025-12-30 11:00:00', '2025-12-30 15:00:00', 1);
+SET FOREIGN_KEY_CHECKS = 1;
 
 -- 4. 生成任务数据
 INSERT INTO `deyoch_task` (`title`, `content`, `assignee`, `priority`, `status`, `start_time`, `end_time`) VALUES 
@@ -64,3 +71,6 @@ UPDATE `deyoch_permission` SET `path` = '/announcement' WHERE `perm_code` = 'oa:
 UPDATE `deyoch_permission` SET `path` = '/task' WHERE `perm_code` = 'oa:task:manage';
 UPDATE `deyoch_permission` SET `path` = '/schedule' WHERE `perm_code` = 'oa:schedule:manage';
 UPDATE `deyoch_permission` SET `path` = '/document' WHERE `perm_code` = 'oa:document:manage';
+
+-- 启用外键检查
+SET FOREIGN_KEY_CHECKS = 1;
