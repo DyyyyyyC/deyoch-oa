@@ -1,23 +1,8 @@
 <template>
   <div class="dashboard-container">
-    <!-- 任务统计卡片 -->
-    <div class="task-stats-section">
-      <el-card class="stat-card" v-for="stat in taskStats" :key="stat.key">
-        <div class="stat-content">
-          <div class="stat-info">
-            <h3 class="stat-number">{{ stat.count }}</h3>
-            <p class="stat-label">{{ stat.label }}</p>
-          </div>
-          <div class="stat-icon">
-            <component :is="stat.icon" />
-          </div>
-        </div>
-      </el-card>
-    </div>
-
     <!-- 主要内容区域 -->
     <div class="main-content">
-      <!-- 待办待阅区域 -->
+      <!-- 任务中心 -->
       <el-card class="content-card task-section">
         <template #header>
           <div class="card-header">
@@ -30,6 +15,23 @@
             </el-tabs>
           </div>
         </template>
+        
+        <!-- 任务统计卡片 -->
+        <div class="task-stats-section">
+          <el-card class="stat-card" v-for="stat in taskStats" :key="stat.key">
+            <div class="stat-content">
+              <div class="stat-info">
+                <h3 class="stat-number">{{ stat.count }}</h3>
+                <p class="stat-label">{{ stat.label }}</p>
+              </div>
+              <div class="stat-icon">
+                <component :is="stat.icon" />
+              </div>
+            </div>
+          </el-card>
+        </div>
+        
+        <!-- 任务列表 -->
         <div class="task-list">
           <el-empty v-if="tasks.length === 0" description="暂无任务" />
           <el-timeline v-else>
