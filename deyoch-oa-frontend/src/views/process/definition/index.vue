@@ -38,13 +38,13 @@
         <el-table-column prop="status" :label="$t('processManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
-              {{ scope.row.status === 1 ? '启用' : '禁用' }}
+              {{ scope.row.status === 1 ? $t('processManagement.statusEnabled') : $t('processManagement.statusDisabled') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
-        <el-table-column :label="$t('common.actions')" width="200" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditProcess(scope.row)">
               <el-icon><Edit /></el-icon>
@@ -85,46 +85,46 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="流程名称" prop="processName">
+        <el-form-item :label="$t('processManagement.processName')" prop="processName">
           <el-input
             v-model="processForm.processName"
-            placeholder="请输入流程名称"
+            :placeholder="$t('processManagement.enterProcessName')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="流程标识" prop="processKey">
+        <el-form-item :label="$t('processManagement.processKey')" prop="processKey">
           <el-input
             v-model="processForm.processKey"
-            placeholder="请输入流程标识"
+            :placeholder="$t('processManagement.enterProcessKey')"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="描述" prop="description">
+        <el-form-item :label="$t('processManagement.description')" prop="description">
           <el-input
             v-model="processForm.description"
             type="textarea"
-            placeholder="请输入流程描述"
+            :placeholder="$t('processManagement.enterDescription')"
             :rows="4"
             maxlength="500"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status">
+        <el-form-item :label="$t('processManagement.status')" prop="status">
           <el-switch
             v-model="processForm.status"
             :active-value="1"
             :inactive-value="0"
-            active-text="启用"
-            inactive-text="禁用"
+            :active-text="$t('processManagement.statusEnabled')"
+            :inactive-text="$t('processManagement.statusDisabled')"
           />
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -135,12 +135,16 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { 
   getProcessList as getProcessListApi, 
   createProcess, 
   updateProcess, 
   deleteProcess 
 } from '@/api/process'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -167,7 +171,7 @@ const isEditMode = ref(false)
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isEditMode.value ? '编辑流程' : '添加流程'
+  return isEditMode.value ? t('processManagement.editProcess') : t('processManagement.addProcess')
 })
 
 // 流程表单数据
@@ -182,17 +186,17 @@ const processForm = reactive({
 // 表单验证规则
 const formRules = {
   processName: [
-    { required: true, message: '请输入流程名称', trigger: 'blur' },
-    { min: 2, max: 100, message: '流程名称长度在 2 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('processManagement.enterProcessName'), trigger: 'blur' },
+    { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('processManagement.processName') }), trigger: 'blur' }
   ],
   processKey: [
-    { required: true, message: '请输入流程标识', trigger: 'blur' },
-    { min: 2, max: 50, message: '流程标识长度在 2 到 50 个字符', trigger: 'blur' },
-    { pattern: /^[a-zA-Z0-9_-]+$/, message: '流程标识只能包含字母、数字、下划线和连字符', trigger: 'blur' }
+    { required: true, message: t('processManagement.enterProcessKey'), trigger: 'blur' },
+    { min: 2, max: 50, message: t('common.fieldLength', { min: 2, max: 50, field: t('processManagement.processKey') }), trigger: 'blur' },
+    { pattern: /^[a-zA-Z0-9_-]+$/, message: t('processManagement.processKeyFormat'), trigger: 'blur' }
   ],
   description: [
-    { required: false, message: '请输入流程描述', trigger: 'blur' },
-    { max: 500, message: '流程描述长度不能超过 500 个字符', trigger: 'blur' }
+    { required: false, message: t('processManagement.enterDescription'), trigger: 'blur' },
+    { max: 500, message: t('common.fieldMaxLength', { max: 500, field: t('processManagement.description') }), trigger: 'blur' }
   ]
 }
 
@@ -275,11 +279,11 @@ const handleSubmit = async () => {
         } else {
           response = await createProcess(processForm)
         }
-        ElMessage.success(isEditMode.value ? '编辑流程成功' : '添加流程成功')
+        ElMessage.success(isEditMode.value ? t('processManagement.editSuccess') : t('processManagement.addSuccess'))
         dialogVisible.value = false
         getProcessList()
       } catch (error) {
-        ElMessage.error((isEditMode.value ? '编辑流程失败' : '添加流程失败') + '：' + error.message)
+        ElMessage.error((isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed')) + '：' + error.message)
       }
     }
   })
@@ -289,20 +293,20 @@ const handleSubmit = async () => {
 const handleDeleteProcess = async (row) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这条流程吗？',
-      '删除确认',
+      t('common.confirmDelete'),
+      t('common.confirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
     const response = await deleteProcess(row.id)
-    ElMessage.success('删除流程成功')
+    ElMessage.success(t('processManagement.deleteSuccess'))
     getProcessList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除流程失败：' + error.message)
+      ElMessage.error(t('processManagement.deleteFailed') + '：' + error.message)
     }
   }
 }
@@ -337,5 +341,25 @@ onMounted(() => {
   display: flex;
   justify-content: flex-end;
   margin-top: 20px;
+}
+
+/* 修复英文模式下标签和星号之间的间隔问题 */
+:deep(.el-form-item__label) {
+  /* 移除默认的margin-right，使用padding来控制间隔 */
+  margin-right: 0 !important;
+  /* 确保星号和文本之间的间距一致 */
+  position: relative;
+  padding-right: 4px;
+}
+
+:deep(.el-form-item__label.is-required::before) {
+  /* 调整必填星号的位置和样式 */
+  margin-right: 4px;
+  color: var(--el-color-danger);
+  content: "*";
+  font-size: 14px;
+  font-family: sans-serif;
+  line-height: 1;
+  vertical-align: middle;
 }
 </style>

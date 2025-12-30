@@ -54,7 +54,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('userManagement.actions')" width="200" fixed="right">
+        <el-table-column :label="$t('userManagement.actions')" min-width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditUser(scope.row)">
               <el-icon><Edit /></el-icon>

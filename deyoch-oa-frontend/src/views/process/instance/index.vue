@@ -32,6 +32,7 @@
       >
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" />
+        <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" width="180" />
         <el-table-column prop="initiator" :label="$t('processInstanceManagement.initiator')" />
         <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" width="200" />
         <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" width="200" />
@@ -44,7 +45,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" width="240" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="270" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleStartProcessInstance(scope.row)" :disabled="scope.row.status !== 0">
               <el-icon><VideoPlay /></el-icon>
@@ -89,25 +90,32 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="实例名称" prop="instanceName">
+        <el-form-item :label="$t('processInstanceManagement.instanceName')" prop="instanceName">
           <el-input
             v-model="processInstanceForm.instanceName"
-            placeholder="请输入流程实例名称"
+            :placeholder="$t('processInstanceManagement.enterInstanceName')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="流程ID" prop="processId">
-          <el-input
+        <el-form-item :label="$t('processInstanceManagement.processName')" prop="processId">
+          <el-select
             v-model="processInstanceForm.processId"
-            placeholder="请输入流程ID"
-            type="number"
-          />
+            :placeholder="$t('common.pleaseSelect', { name: $t('processInstanceManagement.processName') })"
+            clearable
+          >
+            <el-option
+              v-for="process in processList"
+              :key="process.id"
+              :label="process.processName"
+              :value="process.id"
+            />
+          </el-select>
         </el-form-item>
-        <el-form-item label="发起人" prop="initiator">
+        <el-form-item :label="$t('processInstanceManagement.initiator')" prop="initiator">
           <el-input
             v-model="processInstanceForm.initiator"
-            placeholder="请输入发起人"
+            :placeholder="$t('processInstanceManagement.enterInitiator')"
             maxlength="50"
             show-word-limit
           />
@@ -115,8 +123,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -127,14 +135,19 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, VideoPlay, CircleCheck } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { 
   getProcessInstanceList as getProcessInstanceListApi, 
   createProcessInstance, 
   updateProcessInstance, 
   deleteProcessInstance, 
   startProcessInstance, 
-  completeProcessInstance 
+  completeProcessInstance,
+  getProcessList
 } from '@/api/process'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -146,6 +159,9 @@ const searchForm = reactive({
 
 // 流程实例列表
 const processInstanceList = ref([])
+
+// 流程列表（用于关联流程实例）
+const processList = ref([])
 
 // 分页信息
 const pagination = reactive({
@@ -161,13 +177,13 @@ const isEditMode = ref(false)
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isEditMode.value ? '编辑流程实例' : '添加流程实例'
+  return isEditMode.value ? t('processInstanceManagement.editProcessInstance') : t('processInstanceManagement.addProcessInstance')
 })
 
 // 流程实例表单数据
 const processInstanceForm = reactive({
   id: null,
-  processId: 0, // 初始值改为数字0，确保类型正确
+  processId: undefined, // 初始值改为undefined，确保下拉框显示占位符
   instanceName: '',
   initiator: '',
   status: 0
@@ -176,17 +192,27 @@ const processInstanceForm = reactive({
 // 表单验证规则
 const formRules = {
   instanceName: [
-    { required: true, message: '请输入流程实例名称', trigger: 'blur' },
-    { min: 2, max: 100, message: '流程实例名称长度在 2 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('processInstanceManagement.enterInstanceName'), trigger: 'blur' },
+    { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('processInstanceManagement.instanceName') }), trigger: 'blur' }
   ],
   processId: [
-    { required: true, message: '请输入流程ID', trigger: 'blur' },
-    { type: 'number', message: '流程ID必须是数字', trigger: 'blur' }
+    { required: true, message: t('processInstanceManagement.enterProcessId'), trigger: 'blur' },
+    { type: 'number', message: t('common.fieldMustBeNumber', { field: t('processInstanceManagement.processName') }), trigger: 'blur' }
   ],
   initiator: [
-    { required: true, message: '请输入发起人', trigger: 'blur' },
-    { min: 1, max: 50, message: '发起人长度在 1 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('processInstanceManagement.enterInitiator'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('processInstanceManagement.initiator') }), trigger: 'blur' }
   ]
+}
+
+// 加载流程列表（用于关联流程实例）
+const loadProcessList = async () => {
+  try {
+    const data = await getProcessList()
+    processList.value = data
+  } catch (error) {
+    ElMessage.error('获取流程列表失败：' + error.message)
+  }
 }
 
 // 获取流程实例列表
@@ -194,7 +220,14 @@ const getProcessInstanceList = async () => {
   loading.value = true
   try {
     const data = await getProcessInstanceListApi()
-    processInstanceList.value = data
+    // 将流程名称与流程实例关联
+    processInstanceList.value = data.map(instance => {
+      const process = processList.value.find(p => p.id === instance.processId)
+      return {
+        ...instance,
+        processName: process ? process.processName : '未知流程'
+      }
+    })
     pagination.total = data.length
   } catch (error) {
     ElMessage.error('获取流程实例列表失败：' + error.message)
@@ -250,7 +283,7 @@ const resetForm = () => {
     processInstanceFormRef.value.resetFields()
   }
   processInstanceForm.id = null
-  processInstanceForm.processId = 0 // 重置为数字0，确保类型正确
+  processInstanceForm.processId = undefined // 重置为undefined，确保下拉框显示占位符
   processInstanceForm.instanceName = ''
   processInstanceForm.initiator = ''
   processInstanceForm.status = 0
@@ -264,18 +297,18 @@ const handleSubmit = async () => {
   await processInstanceFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        let response
-        if (isEditMode.value) {
-          response = await updateProcessInstance(processInstanceForm.id, processInstanceForm)
-        } else {
-          response = await createProcessInstance(processInstanceForm)
+          let response
+          if (isEditMode.value) {
+            response = await updateProcessInstance(processInstanceForm.id, processInstanceForm)
+          } else {
+            response = await createProcessInstance(processInstanceForm)
+          }
+          ElMessage.success(isEditMode.value ? t('processInstanceManagement.editSuccess') : t('processInstanceManagement.addSuccess'))
+          dialogVisible.value = false
+          getProcessInstanceList()
+        } catch (error) {
+          ElMessage.error((isEditMode.value ? t('processInstanceManagement.editFailed') : t('processInstanceManagement.addFailed')) + '：' + error.message)
         }
-        ElMessage.success(isEditMode.value ? '编辑流程实例成功' : '添加流程实例成功')
-        dialogVisible.value = false
-        getProcessInstanceList()
-      } catch (error) {
-        ElMessage.error((isEditMode.value ? '编辑流程实例失败' : '添加流程实例失败') + '：' + error.message)
-      }
     }
   })
 }
@@ -284,20 +317,20 @@ const handleSubmit = async () => {
 const handleDeleteProcessInstance = async (row) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这条流程实例吗？',
-      '删除确认',
+      t('common.confirmDelete'),
+      t('common.confirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
     const response = await deleteProcessInstance(row.id)
-    ElMessage.success('删除流程实例成功')
+    ElMessage.success(t('processInstanceManagement.deleteSuccess'))
     getProcessInstanceList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除流程实例失败：' + error.message)
+      ElMessage.error(t('processInstanceManagement.deleteFailed') + '：' + error.message)
     }
   }
 }
@@ -306,10 +339,10 @@ const handleDeleteProcessInstance = async (row) => {
 const handleStartProcessInstance = async (row) => {
   try {
     const response = await startProcessInstance(row.id)
-    ElMessage.success('启动流程实例成功')
+    ElMessage.success(t('processInstanceManagement.startSuccess'))
     getProcessInstanceList()
   } catch (error) {
-    ElMessage.error('启动流程实例失败：' + error.message)
+    ElMessage.error(t('processInstanceManagement.startFailed') + '：' + error.message)
   }
 }
 
@@ -317,10 +350,10 @@ const handleStartProcessInstance = async (row) => {
 const handleCompleteProcessInstance = async (row) => {
   try {
     const response = await completeProcessInstance(row.id)
-    ElMessage.success('完成流程实例成功')
+    ElMessage.success(t('processInstanceManagement.completeSuccess'))
     getProcessInstanceList()
   } catch (error) {
-    ElMessage.error('完成流程实例失败：' + error.message)
+    ElMessage.error(t('processInstanceManagement.completeFailed') + '：' + error.message)
   }
 }
 
@@ -337,15 +370,17 @@ const getStatusTagType = (status) => {
 // 根据状态获取文本
 const getStatusText = (status) => {
   switch (status) {
-    case 0: return '待启动'
-    case 1: return '运行中'
-    case 2: return '已完成'
-    default: return '未知状态'
+    case 0: return t('processInstanceManagement.statusPending')
+    case 1: return t('processInstanceManagement.statusRunning')
+    case 2: return t('processInstanceManagement.statusCompleted')
+    default: return t('processInstanceManagement.statusUnknown')
   }
 }
 
 // 组件挂载时获取数据
-onMounted(() => {
+onMounted(async () => {
+  // 先加载流程列表，再加载流程实例列表
+  await loadProcessList()
   getProcessInstanceList()
 })
 </script>

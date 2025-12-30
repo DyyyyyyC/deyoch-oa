@@ -46,7 +46,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" width="200" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditAnnouncement(scope.row)">
               <el-icon><Edit /></el-icon>
@@ -87,27 +87,27 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="标题" prop="title">
+        <el-form-item :label="$t('announcementManagement.title')" prop="title">
           <el-input
             v-model="announcementForm.title"
-            placeholder="请输入公告标题"
+            :placeholder="$t('announcementManagement.enterTitle')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="发布人" prop="publisher">
+        <el-form-item :label="$t('announcementManagement.publisher')" prop="publisher">
           <el-input
             v-model="announcementForm.publisher"
-            placeholder="请输入发布人"
+            :placeholder="$t('announcementManagement.enterPublisher')"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="内容" prop="content">
+        <el-form-item :label="$t('announcementManagement.content')" prop="content">
           <el-input
             v-model="announcementForm.content"
             type="textarea"
-            placeholder="请输入公告内容"
+            :placeholder="$t('announcementManagement.enterContent')"
             :rows="6"
             maxlength="1000"
             show-word-limit
@@ -116,8 +116,8 @@
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -128,6 +128,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import { 
   getAnnouncementList as getAnnouncementListApi, 
   createAnnouncement, 
@@ -136,6 +137,9 @@ import {
   publishAnnouncement, 
   revokeAnnouncement 
 } from '@/api/announcement'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -162,7 +166,7 @@ const isEditMode = ref(false)
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isEditMode.value ? '编辑公告' : '添加公告'
+  return isEditMode.value ? t('announcementManagement.editAnnouncement') : t('announcementManagement.addAnnouncement')
 })
 
 // 公告表单数据
@@ -177,16 +181,16 @@ const announcementForm = reactive({
 // 表单验证规则
 const formRules = {
   title: [
-    { required: true, message: '请输入公告标题', trigger: 'blur' },
-    { min: 2, max: 100, message: '标题长度在 2 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('announcementManagement.enterTitle'), trigger: 'blur' },
+    { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('announcementManagement.title') }), trigger: 'blur' }
   ],
   publisher: [
-    { required: true, message: '请输入发布人', trigger: 'blur' },
-    { min: 1, max: 50, message: '发布人长度在 1 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('announcementManagement.enterPublisher'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('announcementManagement.publisher') }), trigger: 'blur' }
   ],
   content: [
-    { required: true, message: '请输入公告内容', trigger: 'blur' },
-    { min: 10, max: 1000, message: '内容长度在 10 到 1000 个字符', trigger: 'blur' }
+    { required: true, message: t('announcementManagement.enterContent'), trigger: 'blur' },
+    { min: 10, max: 1000, message: t('common.fieldLength', { min: 10, max: 1000, field: t('announcementManagement.content') }), trigger: 'blur' }
   ]
 }
 
@@ -270,14 +274,14 @@ const handleSubmit = async () => {
           response = await createAnnouncement(announcementForm)
         }
         if (response.code === 200) {
-          ElMessage.success(isEditMode.value ? '编辑公告成功' : '添加公告成功')
+          ElMessage.success(isEditMode.value ? t('announcementManagement.editSuccess') : t('announcementManagement.addSuccess'))
           dialogVisible.value = false
           getAnnouncementList()
         } else {
-          ElMessage.error((isEditMode.value ? '编辑公告失败' : '添加公告失败') + '：' + response.message)
+          ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + response.message)
         }
       } catch (error) {
-        ElMessage.error((isEditMode.value ? '编辑公告失败' : '添加公告失败') + '：' + error.message)
+        ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + error.message)
       }
     }
   })
@@ -287,24 +291,24 @@ const handleSubmit = async () => {
 const handleDeleteAnnouncement = async (row) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这条公告吗？',
-      '删除确认',
+      t('common.confirmDelete'),
+      t('common.confirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
     const response = await deleteAnnouncement(row.id)
     if (response.code === 200) {
-      ElMessage.success('删除公告成功')
+      ElMessage.success(t('announcementManagement.deleteSuccess'))
       getAnnouncementList()
     } else {
-      ElMessage.error('删除公告失败：' + response.message)
+      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + response.message)
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除公告失败：' + error.message)
+      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
     }
   }
 }
@@ -315,21 +319,21 @@ const handleStatusChange = async (row) => {
     let response
     if (row.status === 1) {
       response = await publishAnnouncement(row.id)
-      ElMessage.success('发布公告成功')
+      ElMessage.success(t('announcementManagement.publishSuccess'))
     } else {
       response = await revokeAnnouncement(row.id)
-      ElMessage.success('撤销公告成功')
+      ElMessage.success(t('announcementManagement.revokeSuccess'))
     }
     if (response.code !== 200) {
       // 如果失败，恢复原来的状态
       row.status = row.status === 1 ? 0 : 1
-      ElMessage.error('状态变更失败：' + response.message)
+      ElMessage.error(t('common.operationFailed') + '：' + response.message)
     }
     getAnnouncementList()
   } catch (error) {
     // 如果失败，恢复原来的状态
     row.status = row.status === 1 ? 0 : 1
-    ElMessage.error('状态变更失败：' + error.message)
+    ElMessage.error(t('common.operationFailed') + '：' + error.message)
   }
 }
 

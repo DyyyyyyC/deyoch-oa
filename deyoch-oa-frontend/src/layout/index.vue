@@ -89,6 +89,12 @@
             <template #title>{{ $t('taskManagement.title') }}</template>
           </el-menu-item>
           
+          <!-- 日程管理 -->
+          <el-menu-item index="/schedule/list" v-if="hasPermission('oa:schedule:manage')">
+            <el-icon><Calendar /></el-icon>
+            <template #title>{{ $t('scheduleManagement.title') }}</template>
+          </el-menu-item>
+          
           <!-- 流程管理 -->
           <el-sub-menu index="process" v-if="hasPermission('oa:process:manage')">
             <template #title>
@@ -127,7 +133,7 @@ import { useI18n } from 'vue-i18n'
 import LanguageSwitch from '@/components/LanguageSwitch.vue'
 import {
   ArrowDown, House, Setting, Bell, List, Expand, Fold,
-  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy
+  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy, Calendar
 } from '@element-plus/icons-vue'
 
 const router = useRouter()

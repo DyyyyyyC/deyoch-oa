@@ -52,7 +52,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('permissionManagement.actions')" width="200" fixed="right">
+        <el-table-column :label="$t('permissionManagement.actions')" min-width="200" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditPermission(scope.row)">
               <el-icon><Edit /></el-icon>

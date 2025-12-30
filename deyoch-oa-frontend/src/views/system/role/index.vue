@@ -49,7 +49,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('roleManagement.actions')" width="350" fixed="right">
+        <el-table-column :label="$t('roleManagement.actions')" min-width="350" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditRole(scope.row)">
               <el-icon><Edit /></el-icon>
@@ -146,6 +146,10 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Setting } from '@element-plus/icons-vue'
 import { get, post, put, del } from '@/utils/axios'
+import { useI18n } from 'vue-i18n'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -194,17 +198,17 @@ const defaultProps = {
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return form.id ? '编辑角色' : '添加角色'
+  return form.id ? t('roleManagement.edit') : t('roleManagement.addRole')
 })
 
 // 表单验证规则
 const rules = {
   roleName: [
-    { required: true, message: '请输入角色名称', trigger: 'blur' },
+    { required: true, message: t('roleManagement.enterRoleName'), trigger: 'blur' },
     { min: 2, max: 20, message: '角色名称长度在 2 到 20 个字符', trigger: 'blur' }
   ],
   roleCode: [
-    { required: true, message: '请输入角色编码', trigger: 'blur' },
+    { required: true, message: t('roleManagement.enterRoleCode'), trigger: 'blur' },
     { min: 2, max: 30, message: '角色编码长度在 2 到 30 个字符', trigger: 'blur' }
   ]
 }

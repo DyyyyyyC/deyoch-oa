@@ -39,14 +39,14 @@
         <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">
-              {{ scope.row.priority === 1 ? '低' : scope.row.priority === 2 ? '中' : '高' }}
+              {{ scope.row.priority === 1 ? $t('common.low') : scope.row.priority === 2 ? $t('common.medium') : $t('common.high') }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="status" :label="$t('taskManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 0 ? 'warning' : scope.row.status === 1 ? 'info' : scope.row.status === 2 ? 'success' : 'danger'">
-              {{ scope.row.status === 0 ? '未开始' : scope.row.status === 1 ? '进行中' : scope.row.status === 2 ? '已完成' : '已取消' }}
+              {{ scope.row.status === 0 ? $t('common.notStarted') : scope.row.status === 1 ? $t('common.inProgress') : scope.row.status === 2 ? $t('common.completed') : $t('common.cancelled') }}
             </el-tag>
           </template>
         </el-table-column>
@@ -54,7 +54,7 @@
         <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" width="200" />
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" width="240" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="340" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditTask(scope.row)">
               <el-icon><Edit /></el-icon>
@@ -62,11 +62,11 @@
             </el-button>
             <el-button size="small" type="success" @click="handleUpdateTaskStatus(scope.row, 2)" :disabled="scope.row.status === 2">
               <el-icon><CircleCheck /></el-icon>
-              完成
+              {{ $t('common.complete') }}
             </el-button>
             <el-button size="small" type="warning" @click="handleUpdateTaskStatus(scope.row, 1)" :disabled="scope.row.status === 1">
               <el-icon><VideoPlay /></el-icon>
-              开始
+              {{ $t('common.start') }}
             </el-button>
             <el-button size="small" type="danger" @click="handleDeleteTask(scope.row)">
               <el-icon><Delete /></el-icon>
@@ -103,70 +103,70 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="任务标题" prop="title">
+        <el-form-item :label="$t('taskManagement.title')" prop="title">
           <el-input
             v-model="taskForm.title"
-            placeholder="请输入任务标题"
+            :placeholder="$t('taskManagement.enterTitle')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="任务描述" prop="description">
+        <el-form-item :label="$t('taskManagement.description')" prop="description">
           <el-input
             v-model="taskForm.description"
             type="textarea"
-            placeholder="请输入任务描述"
+            :placeholder="$t('taskManagement.enterDescription')"
             :rows="4"
             maxlength="500"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="负责人" prop="assignee">
+        <el-form-item :label="$t('taskManagement.assignee')" prop="assignee">
           <el-input
             v-model="taskForm.assignee"
-            placeholder="请输入负责人"
+            :placeholder="$t('taskManagement.enterAssignee')"
             maxlength="50"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="优先级" prop="priority">
+        <el-form-item :label="$t('taskManagement.priority')" prop="priority">
           <el-radio-group v-model="taskForm.priority">
-            <el-radio label="1">低</el-radio>
-            <el-radio label="2">中</el-radio>
-            <el-radio label="3">高</el-radio>
+            <el-radio :value="1">{{ $t('common.low') }}</el-radio>
+            <el-radio :value="2">{{ $t('common.medium') }}</el-radio>
+            <el-radio :value="3">{{ $t('common.high') }}</el-radio>
           </el-radio-group>
         </el-form-item>
-        <el-form-item label="开始时间" prop="startTime">
+        <el-form-item :label="$t('taskManagement.startTime')" prop="startTime">
           <el-date-picker
             v-model="taskForm.startTime"
             type="datetime"
-            placeholder="请选择开始时间"
+            :placeholder="$t('common.selectStartTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="结束时间" prop="endTime">
+        <el-form-item :label="$t('taskManagement.endTime')" prop="endTime">
           <el-date-picker
             v-model="taskForm.endTime"
             type="datetime"
-            placeholder="请选择结束时间"
+            :placeholder="$t('common.selectEndTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status" v-if="isEditMode">
-          <el-select v-model="taskForm.status" placeholder="请选择状态">
-            <el-option label="未开始" value="0"></el-option>
-            <el-option label="进行中" value="1"></el-option>
-            <el-option label="已完成" value="2"></el-option>
-            <el-option label="已取消" value="3"></el-option>
+        <el-form-item :label="$t('taskManagement.status')" prop="status" v-if="isEditMode">
+          <el-select v-model="taskForm.status" :placeholder="$t('common.selectStatus')">
+            <el-option :label="$t('common.notStarted')" value="0"></el-option>
+            <el-option :label="$t('common.inProgress')" value="1"></el-option>
+            <el-option :label="$t('common.completed')" value="2"></el-option>
+            <el-option :label="$t('common.cancelled')" value="3"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -177,6 +177,7 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, CircleCheck, VideoPlay } from '@element-plus/icons-vue'
+import { useI18n } from 'vue-i18n'
 import {
   getTaskList as getTaskListApi,
   createTask,
@@ -184,6 +185,9 @@ import {
   deleteTask,
   updateTaskStatus
 } from '@/api/task'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -211,7 +215,7 @@ const isEditMode = ref(false)
 
 // 对话框标题
 const dialogTitle = computed(() => {
-  return isEditMode.value ? '编辑任务' : '添加任务'
+  return isEditMode.value ? t('taskManagement.editTask') : t('taskManagement.addTask')
 })
 
 // 任务表单数据
@@ -229,25 +233,25 @@ const taskForm = reactive({
 // 表单验证规则
 const formRules = {
   title: [
-    { required: true, message: '请输入任务标题', trigger: 'blur' },
-    { min: 2, max: 100, message: '标题长度在 2 到 100 个字符', trigger: 'blur' }
+    { required: true, message: t('taskManagement.enterTitle'), trigger: 'blur' },
+    { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('taskManagement.title') }), trigger: 'blur' }
   ],
   assignee: [
-    { required: true, message: '请输入负责人', trigger: 'blur' },
-    { min: 1, max: 50, message: '负责人长度在 1 到 50 个字符', trigger: 'blur' }
+    { required: true, message: t('taskManagement.enterAssignee'), trigger: 'blur' },
+    { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('taskManagement.assignee') }), trigger: 'blur' }
   ],
   priority: [
-    { required: true, message: '请选择优先级', trigger: 'change' }
+    { required: true, message: t('common.pleaseSelect', { name: t('taskManagement.priority') }), trigger: 'change' }
   ],
   startTime: [
-    { required: true, message: '请选择开始时间', trigger: 'change' }
+    { required: true, message: t('common.selectStartTime'), trigger: 'change' }
   ],
   endTime: [
-    { required: true, message: '请选择结束时间', trigger: 'change' },
+    { required: true, message: t('common.selectEndTime'), trigger: 'change' },
     {
       validator: (rule, value, callback) => {
         if (taskForm.startTime && value && new Date(value) < new Date(taskForm.startTime)) {
-          callback(new Error('结束时间不能早于开始时间'))
+          callback(new Error(t('common.endTimeCannotBeEarlier')))
         } else {
           callback()
         }
@@ -347,14 +351,14 @@ const handleSubmit = async () => {
           response = await createTask(taskForm)
         }
         if (response.code === 200) {
-          ElMessage.success(isEditMode.value ? '编辑任务成功' : '添加任务成功')
+          ElMessage.success(isEditMode.value ? t('taskManagement.editSuccess') : t('taskManagement.addSuccess'))
           dialogVisible.value = false
           getTaskList()
         } else {
-          ElMessage.error((isEditMode.value ? '编辑任务失败' : '添加任务失败') + '：' + response.message)
+          ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + response.message)
         }
       } catch (error) {
-        ElMessage.error((isEditMode.value ? '编辑任务失败' : '添加任务失败') + '：' + error.message)
+        ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + error.message)
       }
     }
   })
@@ -364,24 +368,24 @@ const handleSubmit = async () => {
 const handleDeleteTask = async (row) => {
   try {
     await ElMessageBox.confirm(
-      '确定要删除这条任务吗？',
-      '删除确认',
+      t('common.confirmDelete'),
+      t('common.confirm'),
       {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
         type: 'warning'
       }
     )
     const response = await deleteTask(row.id)
     if (response.code === 200) {
-      ElMessage.success('删除任务成功')
+      ElMessage.success(t('taskManagement.deleteSuccess'))
       getTaskList()
     } else {
-      ElMessage.error('删除任务失败：' + response.message)
+      ElMessage.error(t('taskManagement.deleteFailed') + '：' + response.message)
     }
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除任务失败：' + error.message)
+      ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
     }
   }
 }
@@ -391,14 +395,15 @@ const handleUpdateTaskStatus = async (row, status) => {
   try {
     const response = await updateTaskStatus(row.id, status)
     if (response.code === 200) {
-      const statusText = status === 0 ? '未开始' : status === 1 ? '进行中' : status === 2 ? '已完成' : '已取消'
-      ElMessage.success(`任务已${statusText}`)
+      // 根据状态获取对应的文本
+      const statusText = status === 0 ? t('common.notStarted') : status === 1 ? t('common.inProgress') : status === 2 ? t('common.completed') : t('common.cancelled')
+      ElMessage.success(t('taskManagement.updateStatusSuccess'))
       getTaskList()
     } else {
-      ElMessage.error('更新任务状态失败：' + response.message)
+      ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + response.message)
     }
   } catch (error) {
-    ElMessage.error('更新任务状态失败：' + error.message)
+    ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + error.message)
   }
 }
 

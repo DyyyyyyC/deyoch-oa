@@ -31,7 +31,7 @@
         style="width: 100%"
       >
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" />
+        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" min-width="170"/>
         <el-table-column prop="content" :label="$t('scheduleManagement.content')" min-width="200" />
         <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="200" />
         <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="200" />
@@ -46,7 +46,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" width="280" fixed="right">
+        <el-table-column :label="$t('common.actions')" min-width="340" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditSchedule(scope.row)">
               <el-icon><Edit /></el-icon>
@@ -54,11 +54,11 @@
             </el-button>
             <el-button size="small" type="success" @click="handleUpdateScheduleStatus(scope.row, 2)" :disabled="scope.row.status === 2">
               <el-icon><CircleCheck /></el-icon>
-              完成
+              {{ $t('common.complete') }}
             </el-button>
             <el-button size="small" type="warning" @click="handleUpdateScheduleStatus(scope.row, 1)" :disabled="scope.row.status === 1">
               <el-icon><VideoPlay /></el-icon>
-              开始
+              {{ $t('common.start') }}
             </el-button>
             <el-button size="small" type="danger" @click="handleDeleteSchedule(scope.row)">
               <el-icon><Delete /></el-icon>
@@ -95,71 +95,71 @@
         :rules="formRules"
         label-width="100px"
       >
-        <el-form-item label="日程标题" prop="title">
+        <el-form-item :label="$t('scheduleManagement.scheduleTitle')" prop="title">
           <el-input
             v-model="scheduleForm.title"
-            placeholder="请输入日程标题"
+            :placeholder="$t('scheduleManagement.enterTitle')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="日程内容" prop="content">
+        <el-form-item :label="$t('scheduleManagement.content')" prop="content">
           <el-input
             v-model="scheduleForm.content"
             type="textarea"
-            placeholder="请输入日程内容"
+            :placeholder="$t('scheduleManagement.enterContent')"
             :rows="4"
             maxlength="500"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="开始时间" prop="startTime">
+        <el-form-item :label="$t('scheduleManagement.startTime')" prop="startTime">
           <el-date-picker
             v-model="scheduleForm.startTime"
             type="datetime"
-            placeholder="请选择开始时间"
+            :placeholder="$t('common.selectStartTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="结束时间" prop="endTime">
+        <el-form-item :label="$t('scheduleManagement.endTime')" prop="endTime">
           <el-date-picker
             v-model="scheduleForm.endTime"
             type="datetime"
-            placeholder="请选择结束时间"
+            :placeholder="$t('common.selectEndTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="地点" prop="location">
+        <el-form-item :label="$t('scheduleManagement.location')" prop="location">
           <el-input
             v-model="scheduleForm.location"
-            placeholder="请输入地点"
+            :placeholder="$t('scheduleManagement.enterLocation')"
             maxlength="100"
             show-word-limit
           />
         </el-form-item>
-        <el-form-item label="提醒时间" prop="reminderTime">
+        <el-form-item :label="$t('scheduleManagement.reminderTime')" prop="reminderTime">
           <el-date-picker
             v-model="scheduleForm.reminderTime"
             type="datetime"
-            placeholder="请选择提醒时间"
+            :placeholder="$t('common.selectReminderTime')"
             format="YYYY-MM-DD HH:mm:ss"
             value-format="YYYY-MM-DD HH:mm:ss"
           />
         </el-form-item>
-        <el-form-item label="状态" prop="status" v-if="isEditMode">
-          <el-select v-model="scheduleForm.status" placeholder="请选择状态">
-            <el-option label="未开始" value="0"></el-option>
-            <el-option label="进行中" value="1"></el-option>
-            <el-option label="已结束" value="2"></el-option>
+        <el-form-item :label="$t('scheduleManagement.status')" prop="status" v-if="isEditMode">
+          <el-select v-model="scheduleForm.status" :placeholder="$t('common.selectStatus')">
+            <el-option :label="$t('common.notStarted')" value="0"></el-option>
+            <el-option :label="$t('common.inProgress')" value="1"></el-option>
+            <el-option :label="$t('common.completed')" value="2"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
       <template #footer>
         <span class="dialog-footer">
-          <el-button @click="dialogVisible = false">取消</el-button>
-          <el-button type="primary" @click="handleSubmit">确定</el-button>
+          <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
+          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
         </span>
       </template>
     </el-dialog>
@@ -169,7 +169,7 @@
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { Plus, Edit, Delete } from '@element-plus/icons-vue'
+import { Plus, Edit, Delete, CircleCheck, VideoPlay } from '@element-plus/icons-vue'
 
 // 导入真实的API调用
 import {
