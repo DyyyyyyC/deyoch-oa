@@ -1,55 +1,70 @@
 <template>
   <div class="layout-container">
     <header class="layout-header">
-      <div class="header-content">
-        <h1 class="logo">OA系统</h1>
-        <div class="header-right">
-          <el-dropdown @command="handleCommand">
-            <span class="user-info">
-              <el-avatar :size="40">
-                {{ userInfo?.username?.charAt(0) || 'U' }}
-              </el-avatar>
-              <span class="username">{{ userInfo?.username || $t('common.anonymous') }}</span>
-              <el-icon class="el-icon--right"><arrow-down /></el-icon>
-            </span>
-            <template #dropdown>
-              <el-dropdown-menu>
-                <el-dropdown-item command="profile">{{ $t('common.profile') }}</el-dropdown-item>
-                <el-dropdown-item command="logout" divided>{{ $t('common.logout') }}</el-dropdown-item>
-              </el-dropdown-menu>
-            </template>
-          </el-dropdown>
+      <div class="header-left">
+        <div class="logo-container">
+          <el-icon class="logo-icon" :size="32"><Platform /></el-icon>
+          <h1 class="logo-text">Deyoch OA</h1>
         </div>
+      </div>
+      <div class="header-right">
+        <div class="header-actions">
+          <el-tooltip :content="$t('common.search')" placement="bottom">
+            <el-icon class="action-icon"><Search /></el-icon>
+          </el-tooltip>
+          <el-tooltip :content="$t('announcementManagement.title')" placement="bottom">
+            <el-badge :value="5" class="notice-badge">
+              <el-icon class="action-icon"><Bell /></el-icon>
+            </el-badge>
+          </el-tooltip>
+          <language-switch class="lang-switch" />
+        </div>
+        <el-dropdown @command="handleCommand" trigger="click">
+          <div class="user-profile">
+            <el-avatar :size="32" class="user-avatar">
+              {{ userInfo?.username?.charAt(0) || 'U' }}
+            </el-avatar>
+            <span class="user-name">{{ userInfo?.username || $t('common.anonymous') }}</span>
+            <el-icon><CaretBottom /></el-icon>
+          </div>
+          <template #dropdown>
+            <el-dropdown-menu>
+              <el-dropdown-item command="profile">
+                <el-icon><User /></el-icon>{{ $t('common.profile') }}
+              </el-dropdown-item>
+              <el-dropdown-item command="logout" divided>
+                <el-icon><SwitchButton /></el-icon>{{ $t('common.logout') }}
+              </el-dropdown-item>
+            </el-dropdown-menu>
+          </template>
+        </el-dropdown>
       </div>
     </header>
     <div class="layout-body">
       <!-- 左侧菜单 -->
-      <aside class="layout-sidebar" :class="{ 'sidebar-collapsed': isCollapsed }">
-        <!-- 折叠按钮 -->
-        <div class="sidebar-toggle" @click="toggleCollapse">
-          <el-icon><component :is="isCollapsed ? Expand : Fold" /></el-icon>
-        </div>
+      <aside class="layout-sidebar">
         <el-menu
           :default-active="activeMenu"
-          class="sidebar-menu"
+          class="sidebar-menu-vertical"
           router
           :collapse="isCollapsed"
-          :collapse-transition="false"
+          :collapse-transition="true"
           :default-openeds="defaultOpenedMenus"
+          background-color="#ffffff"
+          text-color="#595959"
+          active-text-color="#1890ff"
         >
           <!-- 首页 -->
           <el-menu-item index="/dashboard">
-            <template #title>
-              <el-icon><House /></el-icon>
-              {{ $t('dashboard.title') }}
-            </template>
+            <el-icon><House /></el-icon>
+            <template #title>{{ $t('dashboard.title') }}</template>
           </el-menu-item>
           
           <!-- 系统管理 -->
           <el-sub-menu index="system" v-if="hasPermission('sys:user:manage') || hasPermission('sys:role:manage') || hasPermission('sys:perm:manage')">
             <template #title>
               <el-icon><Setting /></el-icon>
-              {{ $t('systemManagement.title') }}
+              <span>{{ $t('systemManagement.title') }}</span>
             </template>
             <el-menu-item index="/system/user" v-if="hasPermission('sys:user:manage')">
               <template #title>{{ $t('userManagement.title') }}</template>
@@ -64,20 +79,34 @@
           
           <!-- 公告管理 -->
           <el-menu-item index="/announcement/list" v-if="hasPermission('oa:announcement:manage')">
-            <template #title>
-              <el-icon><Bell /></el-icon>
-              {{ $t('announcementManagement.title') }}
-            </template>
+            <el-icon><Bell /></el-icon>
+            <template #title>{{ $t('announcementManagement.title') }}</template>
           </el-menu-item>
           
           <!-- 任务管理 -->
           <el-menu-item index="/task/list" v-if="hasPermission('oa:task:manage')">
-            <template #title>
-              <el-icon><List /></el-icon>
-              {{ $t('taskManagement.title') }}
-            </template>
+            <el-icon><List /></el-icon>
+            <template #title>{{ $t('taskManagement.title') }}</template>
           </el-menu-item>
+          
+          <!-- 流程管理 -->
+          <el-sub-menu index="process" v-if="hasPermission('oa:process:manage')">
+            <template #title>
+              <el-icon><DocumentCopy /></el-icon>
+              <span>{{ $t('processManagement.title') }}</span>
+            </template>
+            <el-menu-item index="/process/definition" v-if="hasPermission('oa:process:manage')">
+              <template #title>{{ $t('processManagement.processDefinition') }}</template>
+            </el-menu-item>
+            <el-menu-item index="/process/instance" v-if="hasPermission('oa:process:manage')">
+              <template #title>{{ $t('processManagement.processInstance') }}</template>
+            </el-menu-item>
+          </el-sub-menu>
         </el-menu>
+        <!-- 折叠按钮放在右下方 -->
+        <div class="sidebar-collapse-trigger" @click="toggleCollapse">
+          <el-icon :size="16"><component :is="isCollapsed ? Expand : Fold" /></el-icon>
+        </div>
       </aside>
       
       <!-- 主内容区域 -->
@@ -85,9 +114,6 @@
         <router-view />
       </main>
     </div>
-    <footer class="layout-footer">
-      <p>{{ $t('common.copyright') }} © 2025 OA系统</p>
-    </footer>
   </div>
 </template>
 
@@ -98,7 +124,11 @@ import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
-import { ArrowDown, House, Setting, Bell, List, Expand, Fold } from '@element-plus/icons-vue'
+import LanguageSwitch from '@/components/LanguageSwitch.vue'
+import {
+  ArrowDown, House, Setting, Bell, List, Expand, Fold,
+  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy
+} from '@element-plus/icons-vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -166,261 +196,174 @@ const handleCommand = async (command) => {
 </script>
 
 <style scoped>
-/* CSS变量定义 */
-:root {
-  --primary-color: #409eff;
-  --secondary-color: #67c23a;
-  --warning-color: #e6a23c;
-  --danger-color: #f56c6c;
-  --info-color: #909399;
-  --bg-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  --card-bg: rgba(255, 255, 255, 0.95);
-  --text-primary: #303133;
-  --text-secondary: #606266;
-  --border-color: #e4e7ed;
-  --shadow-light: 0 2px 12px 0 rgba(0, 0, 0, 0.1);
-  --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.15);
-  --transition: all 0.3s ease;
-}
-
-/* 全局容器样式 */
 .layout-container {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
-  animation: fadeIn 0.5s ease-in;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #f0f2f5;
 }
 
 /* 头部样式 */
 .layout-header {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-  position: sticky;
-  top: 0;
-  z-index: 100;
-  transition: all 0.3s ease;
-}
-
-.header-content {
+  height: 64px;
+  background: #fff;
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 32px;
-  height: 72px;
-  width: 100%;
-  max-width: none;
-  margin: 0;
-  backdrop-filter: blur(10px);
+  padding: 0 24px;
+  box-shadow: 0 1px 4px rgba(0,21,41,.08);
+  z-index: 100;
 }
 
-.logo {
-  font-size: 24px;
-  font-weight: 700;
-  margin: 0;
-  color: white;
-  letter-spacing: -0.5px;
-  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
-  transition: all 0.3s ease;
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: 24px;
 }
 
-.logo:hover {
-  transform: scale(1.05);
+.logo-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
 }
+
+.logo-icon {
+  color: #1890ff;
+}
+
+.logo-text {
+  font-size: 20px;
+  font-weight: 600;
+  color: #001529;
+  margin: 0;
+  white-space: nowrap;
+}
+
 
 .header-right {
   display: flex;
   align-items: center;
+  gap: 24px;
 }
 
-.user-info {
+.header-actions {
   display: flex;
   align-items: center;
+  gap: 20px;
+  color: #595959;
+}
+
+.action-icon {
+  font-size: 18px;
   cursor: pointer;
-  gap: 12px;
-  padding: 8px 16px;
-  border-radius: 24px;
-  transition: all 0.3s ease;
-  background: rgba(255, 255, 255, 0.1);
-  backdrop-filter: blur(10px);
+  transition: color 0.3s;
 }
 
-.user-info:hover {
-  background: rgba(255, 255, 255, 0.2);
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+.action-icon:hover {
+  color: #1890ff;
 }
 
-.username {
+.user-profile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  cursor: pointer;
+  padding: 4px 8px;
+  border-radius: 4px;
+  transition: background 0.3s;
+}
+
+.user-profile:hover {
+  background: #f5f5f5;
+}
+
+.user-name {
   font-size: 14px;
-  font-weight: 600;
-  color: white;
+  color: #262626;
+  font-weight: 500;
 }
 
-/* 主内容布局 */
+/* 主体布局 */
 .layout-body {
   display: flex;
   flex: 1;
-  width: 100%;
-  padding: 24px;
-  box-sizing: border-box;
-  gap: 24px;
-  transition: all 0.3s ease;
   overflow: hidden;
 }
 
-/* 左侧菜单样式 */
+/* 侧边栏 */
 .layout-sidebar {
-  width: 260px;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: var(--shadow-light);
-  border-radius: 16px;
-  overflow: hidden;
-  flex-shrink: 0;
-  transition: width 0.3s ease, transform 0.3s ease;
+  background: #fff;
+  box-shadow: 2px 0 8px rgba(0,21,41,.05);
+  z-index: 90;
   position: relative;
-  backdrop-filter: blur(10px);
-  animation: slideInLeft 0.6s ease-out;
+  display: flex;
+  flex-direction: column;
 }
 
-/* 折叠状态样式 */
-.layout-sidebar.sidebar-collapsed {
-  width: 80px;
+.sidebar-menu-vertical:not(.el-menu--collapse) {
+  width: 240px;
 }
 
-/* 折叠按钮样式 */
-.sidebar-toggle {
+.sidebar-menu-vertical {
+  border-right: none;
+  flex: 1;
+}
+
+.sidebar-menu-vertical :deep(.el-menu-item), .sidebar-menu-vertical :deep(.el-sub-menu__title) {
+  height: 50px;
+  line-height: 50px;
+  margin: 4px 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sidebar-menu-vertical :deep(.el-menu-item.is-active) {
+  background-color: #e6f7ff;
+  border-right: 3px solid #1890ff;
+}
+
+/* 折叠触发器 */
+.sidebar-collapse-trigger {
   position: absolute;
-  right: -16px;
-  top: 20px;
-  width: 32px;
-  height: 32px;
+  bottom: 16px;
+  right: -12px;
+  width: 24px;
+  height: 24px;
+  background: #fff;
+  border: 1px solid #f0f0f0;
   border-radius: 50%;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.4);
-  z-index: 10;
-  transition: all 0.3s ease;
-  animation: pulse 2s infinite;
+  color: #8c8c8c;
+  transition: all 0.3s;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  z-index: 100;
 }
 
-.sidebar-toggle:hover {
+.sidebar-collapse-trigger:hover {
+  color: #1890ff;
   transform: scale(1.1);
-  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-  animation: none;
 }
 
-/* 菜单样式 */
-.sidebar-menu {
-  border-right: none;
-  height: 100%;
-  background: transparent;
-}
-
-/* 主内容区域样式 */
+/* 主内容 */
 .layout-main {
   flex: 1;
-  background: rgba(255, 255, 255, 0.95);
-  box-shadow: var(--shadow-light);
-  border-radius: 16px;
-  overflow: auto;
-  transition: all 0.3s ease;
-  backdrop-filter: blur(10px);
-  animation: slideInRight 0.6s ease-out 0.1s both;
-  padding: 24px;
-  box-sizing: border-box;
+  padding: 0;
+  overflow-y: auto;
+  background-color: #f0f2f5;
 }
 
-/* 底部样式 */
-.layout-footer {
-  background: rgba(255, 255, 255, 0.9);
-  text-align: center;
-  padding: 20px;
-  color: var(--text-secondary);
-  font-size: 14px;
-  box-shadow: 0 -2px 8px rgba(0, 0, 0, 0.05);
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease;
-}
-
-/* 动画定义 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-  }
-  to {
-    opacity: 1;
-  }
-}
-
-@keyframes slideInLeft {
-  from {
-    opacity: 0;
-    transform: translateX(-30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes slideInRight {
-  from {
-    opacity: 0;
-    transform: translateX(30px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-@keyframes pulse {
-  0%, 100% {
-    transform: scale(1);
-  }
-  50% {
-    transform: scale(1.05);
-  }
-}
-
-/* 响应式设计 */
+/* 响应式 */
 @media (max-width: 768px) {
-  .header-content {
-    padding: 0 16px;
+  .logo-text {
+    display: none;
   }
-  
-  .logo {
-    font-size: 20px;
-  }
-  
-  .layout-body {
-    flex-direction: column;
-    padding: 16px;
-    gap: 16px;
-  }
-  
-  .layout-sidebar {
-    width: 100%;
-    margin-bottom: 16px;
-  }
-  
-  .layout-sidebar.sidebar-collapsed {
-    width: 100%;
-  }
-  
-  .layout-main {
-    padding: 20px;
-  }
-  
-  .sidebar-toggle {
-    right: 16px;
-    top: 16px;
+  .user-name {
+    display: none;
   }
 }
 </style>

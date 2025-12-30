@@ -73,14 +73,69 @@
         />
       </div>
     </el-card>
+
+    <!-- 公告表单对话框 -->
+    <el-dialog
+      v-model="dialogVisible"
+      :title="dialogTitle"
+      width="600px"
+      destroy-on-close
+    >
+      <el-form
+        ref="announcementFormRef"
+        :model="announcementForm"
+        :rules="formRules"
+        label-width="100px"
+      >
+        <el-form-item label="标题" prop="title">
+          <el-input
+            v-model="announcementForm.title"
+            placeholder="请输入公告标题"
+            maxlength="100"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="发布人" prop="publisher">
+          <el-input
+            v-model="announcementForm.publisher"
+            placeholder="请输入发布人"
+            maxlength="50"
+            show-word-limit
+          />
+        </el-form-item>
+        <el-form-item label="内容" prop="content">
+          <el-input
+            v-model="announcementForm.content"
+            type="textarea"
+            placeholder="请输入公告内容"
+            :rows="6"
+            maxlength="1000"
+            show-word-limit
+          />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <span class="dialog-footer">
+          <el-button @click="dialogVisible = false">取消</el-button>
+          <el-button type="primary" @click="handleSubmit">确定</el-button>
+        </span>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ref, reactive, onMounted, computed } from 'vue'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { get, post, put, del } from '@/utils/axios'
+import { 
+  getAnnouncementList as getAnnouncementListApi, 
+  createAnnouncement, 
+  updateAnnouncement, 
+  deleteAnnouncement, 
+  publishAnnouncement, 
+  revokeAnnouncement 
+} from '@/api/announcement'
 
 // 加载状态
 const loading = ref(false)
@@ -100,16 +155,48 @@ const pagination = reactive({
   total: 0
 })
 
+// 对话框状态
+const dialogVisible = ref(false)
+const announcementFormRef = ref(null)
+const isEditMode = ref(false)
+
+// 对话框标题
+const dialogTitle = computed(() => {
+  return isEditMode.value ? '编辑公告' : '添加公告'
+})
+
+// 公告表单数据
+const announcementForm = reactive({
+  id: null,
+  title: '',
+  content: '',
+  publisher: '',
+  status: 0
+})
+
+// 表单验证规则
+const formRules = {
+  title: [
+    { required: true, message: '请输入公告标题', trigger: 'blur' },
+    { min: 2, max: 100, message: '标题长度在 2 到 100 个字符', trigger: 'blur' }
+  ],
+  publisher: [
+    { required: true, message: '请输入发布人', trigger: 'blur' },
+    { min: 1, max: 50, message: '发布人长度在 1 到 50 个字符', trigger: 'blur' }
+  ],
+  content: [
+    { required: true, message: '请输入公告内容', trigger: 'blur' },
+    { min: 10, max: 1000, message: '内容长度在 10 到 1000 个字符', trigger: 'blur' }
+  ]
+}
+
 // 获取公告列表
 const getAnnouncementList = async () => {
   loading.value = true
   try {
-    // 这里只是一个示例，实际应该调用后端API
-    // const data = await get('/announcement/list')
-    // announcementList.value = data.list
-    // pagination.total = data.total
-    announcementList.value = []
-    pagination.total = 0
+    const data = await getAnnouncementListApi()
+    announcementList.value = data
+    pagination.total = data.length
   } catch (error) {
     ElMessage.error('获取公告列表失败：' + error.message)
   } finally {
@@ -119,7 +206,6 @@ const getAnnouncementList = async () => {
 
 // 搜索公告
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索
   getAnnouncementList()
 }
 
@@ -141,24 +227,110 @@ const handleCurrentChange = (current) => {
   getAnnouncementList()
 }
 
-// 添加公告
+// 打开添加公告对话框
 const handleAddAnnouncement = () => {
-  ElMessage.info('添加公告功能开发中')
+  isEditMode.value = false
+  resetForm()
+  dialogVisible.value = true
 }
 
-// 编辑公告
+// 打开编辑公告对话框
 const handleEditAnnouncement = (row) => {
-  ElMessage.info('编辑公告功能开发中')
+  isEditMode.value = true
+  announcementForm.id = row.id
+  announcementForm.title = row.title
+  announcementForm.content = row.content
+  announcementForm.publisher = row.publisher
+  announcementForm.status = row.status
+  dialogVisible.value = true
+}
+
+// 重置表单
+const resetForm = () => {
+  if (announcementFormRef.value) {
+    announcementFormRef.value.resetFields()
+  }
+  announcementForm.id = null
+  announcementForm.title = ''
+  announcementForm.content = ''
+  announcementForm.publisher = ''
+  announcementForm.status = 0
+}
+
+// 提交表单
+const handleSubmit = async () => {
+  if (!announcementFormRef.value) return
+  await announcementFormRef.value.validate(async (valid) => {
+    if (valid) {
+      try {
+        let response
+        if (isEditMode.value) {
+          response = await updateAnnouncement(announcementForm.id, announcementForm)
+        } else {
+          response = await createAnnouncement(announcementForm)
+        }
+        if (response.code === 200) {
+          ElMessage.success(isEditMode.value ? '编辑公告成功' : '添加公告成功')
+          dialogVisible.value = false
+          getAnnouncementList()
+        } else {
+          ElMessage.error((isEditMode.value ? '编辑公告失败' : '添加公告失败') + '：' + response.message)
+        }
+      } catch (error) {
+        ElMessage.error((isEditMode.value ? '编辑公告失败' : '添加公告失败') + '：' + error.message)
+      }
+    }
+  })
 }
 
 // 删除公告
 const handleDeleteAnnouncement = async (row) => {
-  ElMessage.info('删除公告功能开发中')
+  try {
+    await ElMessageBox.confirm(
+      '确定要删除这条公告吗？',
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    const response = await deleteAnnouncement(row.id)
+    if (response.code === 200) {
+      ElMessage.success('删除公告成功')
+      getAnnouncementList()
+    } else {
+      ElMessage.error('删除公告失败：' + response.message)
+    }
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除公告失败：' + error.message)
+    }
+  }
 }
 
 // 状态变更
 const handleStatusChange = async (row) => {
-  ElMessage.info('状态变更功能开发中')
+  try {
+    let response
+    if (row.status === 1) {
+      response = await publishAnnouncement(row.id)
+      ElMessage.success('发布公告成功')
+    } else {
+      response = await revokeAnnouncement(row.id)
+      ElMessage.success('撤销公告成功')
+    }
+    if (response.code !== 200) {
+      // 如果失败，恢复原来的状态
+      row.status = row.status === 1 ? 0 : 1
+      ElMessage.error('状态变更失败：' + response.message)
+    }
+    getAnnouncementList()
+  } catch (error) {
+    // 如果失败，恢复原来的状态
+    row.status = row.status === 1 ? 0 : 1
+    ElMessage.error('状态变更失败：' + error.message)
+  }
 }
 
 // 组件挂载时获取数据

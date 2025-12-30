@@ -18,26 +18,27 @@ export default {
   },
   dashboard: {
     title: 'Dashboard',
-    welcome: 'Welcome Back',
-    welcomeMessage: 'Welcome back, {username}',
-    todayDate: 'Today is {date}',
-    todayData: 'Today\'s Data',
-    totalData: 'Total Data',
-    totalUsers: 'Total Users',
-    todayActive: 'Today Active',
-    totalTasks: 'Total Tasks',
+    welcome: 'Hello, {username}!',
+    welcomeSubtitle: 'Today is {date}, have a nice day!',
     pendingTasks: 'Pending Tasks',
-    recentActivities: 'Recent Activities',
-    upcomingEvents: 'Upcoming Events',
-    activity1: 'Zhang San completed a task',
-    activity2: 'Li Si created a new project',
-    activity3: 'Wang Wu commented on your report',
-    activity4: 'System update notification',
-    activity5: 'New user registered',
-    event1Title: 'Project Deadline',
-    event1Desc: 'Project A will be due tomorrow, please complete it as soon as possible',
-    event2Title: 'Team Meeting',
-    event2Desc: 'Team meeting at 3 PM in Meeting Room A'
+    todayMeetings: 'Today\'s Meetings',
+    taskCenter: 'Task Center',
+    pending: 'Pending',
+    pendingReview: 'To Review',
+    completed: 'Completed',
+    viewAllTasks: 'View All Tasks',
+    schedule: 'Schedule',
+    addSchedule: 'Add Schedule',
+    todaySchedule: 'Today\'s Schedule',
+    meetingSchedule: 'Meeting Schedule',
+    recentFiles: 'Recent Files',
+    joinMeeting: 'Join',
+    stats: {
+      pendingTask: 'Pending Tasks',
+      pendingReview: 'Files to Review',
+      completedTask: 'Completed Tasks',
+      reviewedRecord: 'Reviewed Records'
+    }
   },
   common: {
     confirm: 'Confirm',
@@ -152,7 +153,9 @@ export default {
     title: 'Task Management'
   },
   processManagement: {
-    title: 'Process Management'
+    title: 'Process Management',
+    processDefinition: 'Process Definition',
+    processInstance: 'Process Instance'
   },
   scheduleManagement: {
     title: 'Schedule Management'

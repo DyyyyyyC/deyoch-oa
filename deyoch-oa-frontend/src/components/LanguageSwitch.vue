@@ -25,8 +25,12 @@ const currentLanguage = computed(() => {
 })
 
 const handleCommand = (command) => {
+  // 更新Vue I18n的语言
   locale.value = command
+  // 保存到localStorage
   localStorage.setItem('locale', command)
+  // 刷新页面，让Element Plus重新加载对应语言包
+  window.location.reload()
 }
 </script>
 

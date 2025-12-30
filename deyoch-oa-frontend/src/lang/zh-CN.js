@@ -18,26 +18,27 @@ export default {
   },
   dashboard: {
     title: '工作台',
-    welcome: '欢迎回来',
-    welcomeMessage: '欢迎回来，{username}',
-    todayDate: '今天是 {date}',
-    todayData: '今日数据',
-    totalData: '累计数据',
-    totalUsers: '总用户数',
-    todayActive: '今日活跃',
-    totalTasks: '总任务数',
-    pendingTasks: '待处理任务',
-    recentActivities: '最近活动',
-    upcomingEvents: '即将到来的事件',
-    activity1: '张三完成了一个任务',
-    activity2: '李四创建了一个新项目',
-    activity3: '王五评论了你的报告',
-    activity4: '系统更新通知',
-    activity5: '新用户注册',
-    event1Title: '项目截止日期',
-    event1Desc: '项目A将于明天截止，请尽快完成',
-    event2Title: '团队会议',
-    event2Desc: '下午3点在会议室A召开团队会议'
+    welcome: '您好，{username}！',
+    welcomeSubtitle: '今天是 {date}，祝您工作愉快！',
+    pendingTasks: '待办任务',
+    todayMeetings: '今日会议',
+    taskCenter: '任务中心',
+    pending: '待办',
+    pendingReview: '待阅',
+    completed: '已办',
+    viewAllTasks: '查看全部任务',
+    schedule: '日程安排',
+    addSchedule: '添加日程',
+    todaySchedule: '今日安排',
+    meetingSchedule: '会议安排',
+    recentFiles: '最近文件',
+    joinMeeting: '加入',
+    stats: {
+      pendingTask: '待办任务',
+      pendingReview: '待阅文件',
+      completedTask: '已办事项',
+      reviewedRecord: '已阅记录'
+    }
   },
   common: {
     confirm: '确定',
@@ -58,7 +59,10 @@ export default {
     anonymous: '匿名用户',
     comingSoon: '功能即将上线',
     noData: '暂无数据',
-    copyright: '版权所有'
+    copyright: '版权所有',
+    createdAt: '创建时间',
+    updatedAt: '更新时间',
+    actions: '操作'
   },
   systemManagement: {
     title: '系统管理'
@@ -172,7 +176,34 @@ export default {
     actions: '操作'
   },
   processManagement: {
-    title: '流程管理'
+    title: '流程管理',
+    processDefinition: '流程定义',
+    processInstance: '流程实例',
+    addProcess: '添加流程',
+    processName: '流程名称',
+    enterProcessName: '请输入流程名称',
+    processKey: '流程标识',
+    description: '描述',
+    status: '状态',
+    instanceName: '实例名称',
+    enterInstanceName: '请输入实例名称',
+    initiator: '发起人',
+    startTime: '开始时间',
+    endTime: '结束时间',
+    start: '启动',
+    complete: '完成'
+  },
+  processInstanceManagement: {
+    title: '流程实例管理',
+    addProcessInstance: '添加流程实例',
+    instanceName: '实例名称',
+    enterInstanceName: '请输入实例名称',
+    initiator: '发起人',
+    startTime: '开始时间',
+    endTime: '结束时间',
+    status: '状态',
+    start: '启动',
+    complete: '完成'
   },
   scheduleManagement: {
     title: '日程管理'

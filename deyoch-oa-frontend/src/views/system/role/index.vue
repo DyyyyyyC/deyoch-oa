@@ -49,7 +49,7 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('roleManagement.actions')" width="250" fixed="right">
+        <el-table-column :label="$t('roleManagement.actions')" width="350" fixed="right">
           <template #default="scope">
             <el-button size="small" type="primary" @click="handleEditRole(scope.row)">
               <el-icon><Edit /></el-icon>

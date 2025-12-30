@@ -136,13 +136,67 @@ const asyncRoutes = [
         }
       }
     ]
+  },
+  // 日程管理菜单
+  {
+    path: '/schedule',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '日程管理',
+      requiresAuth: true,
+      permission: 'oa:schedule:manage'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'ScheduleList',
+        component: () => import('@/views/schedule/index.vue'),
+        meta: {
+          title: '日程列表',
+          requiresAuth: true,
+          permission: 'oa:schedule:manage'
+        }
+      }
+    ]
+  },
+  // 流程管理菜单
+  {
+    path: '/process',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '流程管理',
+      requiresAuth: true,
+      permission: 'oa:process:manage'
+    },
+    children: [
+      {
+        path: 'definition',
+        name: 'ProcessList',
+        component: () => import('@/views/process/definition/index.vue'),
+        meta: {
+          title: '流程定义',
+          requiresAuth: true,
+          permission: 'oa:process:manage'
+        }
+      },
+      {
+        path: 'instance',
+        name: 'ProcessInstanceList',
+        component: () => import('@/views/process/instance/index.vue'),
+        meta: {
+          title: '流程实例',
+          requiresAuth: true,
+          permission: 'oa:process:manage'
+        }
+      }
+    ]
   }
 ]
 
 // 创建路由实例
 const router = createRouter({
   history: createWebHistory(),  // 使用HTML5 History模式，URL中不带#
-  routes: constantRoutes,        // 初始只注册静态路由
+  routes: [...constantRoutes, ...asyncRoutes],  // 初始就注册所有路由，包括静态和动态路由
   // 滚动行为配置：页面跳转时滚动到顶部
   scrollBehavior() {
     return { top: 0 }           // 每次跳转后滚动到页面顶部
@@ -178,34 +232,9 @@ router.beforeEach((to, from, next) => {
     return
   }
   
-  // 5. 有token，检查是否已加载动态路由
-  const userStore = useUserStore()
-  if (userStore.routes === undefined || userStore.routes.length === 0) {
-    // 未加载动态路由，需要加载
-    try {
-      // 暂时不根据权限过滤动态路由，直接添加所有动态路由
-      // 后续可以根据系统完善情况，重新启用权限过滤
-      const accessedRoutes = asyncRoutes
-      
-      // 动态添加路由
-      accessedRoutes.forEach(route => {
-        router.addRoute(route)
-      })
-      
-      // 保存已加载的路由
-      userStore.routes = accessedRoutes
-      
-      // 重新跳转，确保路由已加载
-      next({ ...to, replace: true })
-    } catch (error) {
-      // 加载动态路由失败，清除token并跳转到登录页
-      userStore.logout()
-      next('/login')
-    }
-  } else {
-    // 已加载动态路由，直接放行
-    next()
-  }
+  // 5. 有token，已注册所有路由，直接放行
+  // 后续可以根据系统完善情况，在这里添加权限过滤逻辑
+  next()
 })
 
 /**

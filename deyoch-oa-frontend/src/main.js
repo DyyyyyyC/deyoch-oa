@@ -9,6 +9,9 @@ import i18n from './lang' // 引入Vue I18n配置
 const app = createApp(App)
 app.use(router) // 使用路由
 app.use(pinia) // 使用Pinia
-setupElementPlus(app) // 使用Element Plus
 app.use(i18n) // 使用Vue I18n
-app.mount('#app')
+
+// 异步设置Element Plus
+setupElementPlus(app).then(() => {
+  app.mount('#app') // 挂载应用
+})

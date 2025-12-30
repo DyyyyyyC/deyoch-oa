@@ -91,8 +91,8 @@ service.interceptors.response.use(
         // 将错误传递给调用者，不显示错误消息
         return Promise.reject(new Error(res.message || 'Error'))
       } else {
-        // 响应成功，返回data字段，这是前端组件期望的格式
-        return res.data
+        // 响应成功，返回res.data，这是前端组件期望的数组格式
+      return res.data
       }
   },
   /**
