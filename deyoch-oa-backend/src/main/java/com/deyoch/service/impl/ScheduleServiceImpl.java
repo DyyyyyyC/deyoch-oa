@@ -6,6 +6,8 @@ import com.deyoch.mapper.DeyochScheduleMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.ScheduleService;
+import com.deyoch.utils.JwtUtil;
+import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class ScheduleServiceImpl implements ScheduleService {
 
     private final DeyochScheduleMapper deyochScheduleMapper;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Result<List<DeyochSchedule>> getScheduleList() {
@@ -65,10 +68,18 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<DeyochSchedule> createSchedule(DeyochSchedule schedule) {
         try {
+            // 从JWT token中直接获取用户ID，无需查询数据库
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建日程");
+            }
+            
             // 设置创建时间和更新时间
             LocalDateTime now = LocalDateTime.now();
             schedule.setCreatedAt(now);
             schedule.setUpdatedAt(now);
+            // 设置用户ID
+            schedule.setUserId(userId);
             // 默认状态为待开始
             schedule.setStatus(0L);
             // 创建日程

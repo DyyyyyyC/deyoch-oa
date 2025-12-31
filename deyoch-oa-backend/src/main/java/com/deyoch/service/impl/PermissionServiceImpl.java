@@ -49,7 +49,10 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public Result<List<DeyochPermission>> getPermissionList() {
         try {
-            List<DeyochPermission> permList = deyochPermissionMapper.selectList(null);
+            // 查询所有权限，按创建时间倒序排列
+            LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.orderByDesc(DeyochPermission::getCreatedAt);
+            List<DeyochPermission> permList = deyochPermissionMapper.selectList(queryWrapper);
             return Result.success(permList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取权限列表失败：" + e.getMessage());

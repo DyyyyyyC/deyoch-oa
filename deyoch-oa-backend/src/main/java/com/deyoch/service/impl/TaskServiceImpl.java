@@ -6,6 +6,8 @@ import com.deyoch.mapper.DeyochTaskMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.TaskService;
+import com.deyoch.utils.JwtUtil;
+import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class TaskServiceImpl implements TaskService {
 
     private final DeyochTaskMapper deyochTaskMapper;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Result<List<DeyochTask>> getTaskList() {
@@ -51,10 +54,18 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Result<DeyochTask> createTask(DeyochTask task) {
         try {
+            // 从JWT token中直接获取用户名，无需查询数据库
+            String username = UserContextUtil.getUsernameFromToken(jwtUtil);
+            if (username == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建任务");
+            }
+            
             // 设置创建时间和更新时间
             LocalDateTime now = LocalDateTime.now();
             task.setCreatedAt(now);
             task.setUpdatedAt(now);
+            // 设置创建人
+            task.setCreator(username);
             // 默认状态为待分配
             task.setStatus(0L);
             // 创建任务

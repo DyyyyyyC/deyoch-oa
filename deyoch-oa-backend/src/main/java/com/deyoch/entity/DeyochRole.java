@@ -6,6 +6,8 @@ import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 
 @Data
 @NoArgsConstructor
@@ -14,6 +16,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 public class DeyochRole {
 
   @Schema(description = "主键ID")
+  @TableId(type = IdType.AUTO)
   private Long id;
   @Schema(description = "角色名称")
   private String roleName;

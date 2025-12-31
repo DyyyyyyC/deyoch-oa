@@ -1,12 +1,8 @@
 <template>
   <div class="schedule-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('scheduleManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddSchedule">
-        <el-icon><Plus /></el-icon>
-        {{ $t('scheduleManagement.addSchedule') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -24,13 +20,30 @@
 
     <!-- 日程列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddSchedule">
+          <el-icon><Plus /></el-icon>
+          {{ $t('scheduleManagement.addSchedule') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedSchedules.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('common.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedSchedules.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('common.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="scheduleList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" min-width="170"/>
         <el-table-column prop="content" :label="$t('scheduleManagement.content')" min-width="200" />
         <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="200" />
@@ -46,26 +59,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" min-width="340" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditSchedule(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button size="small" type="success" @click="handleUpdateScheduleStatus(scope.row, 2)" :disabled="scope.row.status === 2">
-              <el-icon><CircleCheck /></el-icon>
-              {{ $t('common.complete') }}
-            </el-button>
-            <el-button size="small" type="warning" @click="handleUpdateScheduleStatus(scope.row, 1)" :disabled="scope.row.status === 1">
-              <el-icon><VideoPlay /></el-icon>
-              {{ $t('common.start') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteSchedule(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -191,6 +184,9 @@ const searchForm = reactive({
 // 日程列表
 const scheduleList = ref([])
 
+// 选中的日程
+const selectedSchedules = ref([])
+
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
@@ -276,6 +272,12 @@ const handleReset = () => {
   getScheduleList()
 }
 
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedSchedules.value = selection
+  console.log('选中的日程：', selectedSchedules.value)
+}
+
 // 分页大小变化
 const handleSizeChange = (size) => {
   pagination.pageSize = size
@@ -295,8 +297,14 @@ const handleAddSchedule = () => {
   dialogVisible.value = true
 }
 
-// 打开编辑日程对话框
-const handleEditSchedule = (row) => {
+// 批量编辑日程
+const handleBatchEdit = () => {
+  if (selectedSchedules.length !== 1) {
+    ElMessage.warning('请选择一个日程进行编辑')
+    return
+  }
+  // 填充表单数据
+  const row = selectedSchedules[0]
   isEditMode.value = true
   scheduleForm.id = row.id
   scheduleForm.title = row.title
@@ -307,6 +315,44 @@ const handleEditSchedule = (row) => {
   scheduleForm.reminderTime = row.reminderTime
   scheduleForm.status = row.status
   dialogVisible.value = true
+}
+
+// 批量删除日程
+const handleBatchDelete = async () => {
+  if (selectedSchedules.length === 0) {
+    ElMessage.warning('请选择要删除的日程')
+    return
+  }
+  
+  try {
+    const titles = selectedSchedules.map(schedule => schedule.title).join(', ')
+    await ElMessageBox.confirm(
+      '确定要删除选中的日程吗？',
+      '删除确认',
+      {
+        confirmButtonText: '确定',
+        cancelButtonText: '取消',
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除
+    for (const schedule of selectedSchedules) {
+      const response = await deleteSchedule(schedule.id)
+      if (response.code !== 200) {
+        throw new Error(response.message)
+      }
+    }
+    
+    ElMessage.success('删除日程成功')
+    getScheduleList()
+    // 清空选择
+    selectedSchedules.value = []
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error('删除日程失败：' + error.message)
+    }
+  }
 }
 
 // 重置表单
@@ -350,32 +396,6 @@ const handleSubmit = async () => {
   })
 }
 
-// 删除日程
-const handleDeleteSchedule = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      '确定要删除这条日程吗？',
-      '删除确认',
-      {
-        confirmButtonText: '确定',
-        cancelButtonText: '取消',
-        type: 'warning'
-      }
-    )
-    const response = await deleteSchedule(row.id)
-    if (response.code === 200) {
-      ElMessage.success('删除日程成功')
-      getScheduleList()
-    } else {
-      ElMessage.error('删除日程失败：' + response.message)
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error('删除日程失败：' + error.message)
-    }
-  }
-}
-
 // 更新日程状态
 const handleUpdateScheduleStatus = async (row, status) => {
   try {
@@ -408,6 +428,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.action-area {
+  display: flex;
+  gap: 5px; /* 减小按钮间距 */
+  margin-bottom: 15px;
+  padding: 10px 0;
 }
 
 .search-card {

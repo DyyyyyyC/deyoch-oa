@@ -1,12 +1,8 @@
 <template>
   <div class="announcement-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('announcementManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddAnnouncement">
-        <el-icon><Plus /></el-icon>
-        {{ $t('announcementManagement.addAnnouncement') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -24,13 +20,30 @@
 
     <!-- 公告列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddAnnouncement">
+          <el-icon><Plus /></el-icon>
+          {{ $t('announcementManagement.addAnnouncement') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedAnnouncements.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('common.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedAnnouncements.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('common.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="announcementList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('announcementManagement.title')" />
         <el-table-column prop="publisher" :label="$t('announcementManagement.publisher')" />
         <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="200" />
@@ -46,18 +59,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" min-width="200" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditAnnouncement(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteAnnouncement(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -101,6 +102,7 @@
             :placeholder="$t('announcementManagement.enterPublisher')"
             maxlength="50"
             show-word-limit
+            :disabled="true"
           />
         </el-form-item>
         <el-form-item :label="$t('announcementManagement.content')" prop="content">
@@ -129,6 +131,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores/user'
 import { 
   getAnnouncementList as getAnnouncementListApi, 
   createAnnouncement, 
@@ -141,6 +144,9 @@ import {
 // 获取i18n的t函数
 const { t } = useI18n()
 
+// 获取用户store
+const userStore = useUserStore()
+
 // 加载状态
 const loading = ref(false)
 
@@ -151,6 +157,9 @@ const searchForm = reactive({
 
 // 公告列表
 const announcementList = ref([])
+
+// 选中的公告
+const selectedAnnouncements = ref([])
 
 // 分页信息
 const pagination = reactive({
@@ -219,6 +228,12 @@ const handleReset = () => {
   getAnnouncementList()
 }
 
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedAnnouncements.value = selection
+  console.log('选中的公告：', selectedAnnouncements.value)
+}
+
 // 分页大小变化
 const handleSizeChange = (size) => {
   pagination.pageSize = size
@@ -235,11 +250,19 @@ const handleCurrentChange = (current) => {
 const handleAddAnnouncement = () => {
   isEditMode.value = false
   resetForm()
+  // 设置发布人为当前登录用户
+  announcementForm.publisher = userStore.userInfo?.username || ''
   dialogVisible.value = true
 }
 
-// 打开编辑公告对话框
-const handleEditAnnouncement = (row) => {
+// 批量编辑公告
+const handleBatchEdit = () => {
+  if (selectedAnnouncements.length !== 1) {
+    ElMessage.warning('请选择一个公告进行编辑')
+    return
+  }
+  // 填充表单数据
+  const row = selectedAnnouncements[0]
   isEditMode.value = true
   announcementForm.id = row.id
   announcementForm.title = row.title
@@ -247,6 +270,44 @@ const handleEditAnnouncement = (row) => {
   announcementForm.publisher = row.publisher
   announcementForm.status = row.status
   dialogVisible.value = true
+}
+
+// 批量删除公告
+const handleBatchDelete = async () => {
+  if (selectedAnnouncements.length === 0) {
+    ElMessage.warning('请选择要删除的公告')
+    return
+  }
+  
+  try {
+    const titles = selectedAnnouncements.map(announcement => announcement.title).join(', ')
+    await ElMessageBox.confirm(
+      t('common.confirmDelete'),
+      t('common.confirm'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除
+    for (const announcement of selectedAnnouncements) {
+      const response = await deleteAnnouncement(announcement.id)
+      if (response.code !== 200) {
+        throw new Error(response.message)
+      }
+    }
+    
+    ElMessage.success(t('announcementManagement.deleteSuccess'))
+    getAnnouncementList()
+    // 清空选择
+    selectedAnnouncements.value = []
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
+    }
+  }
 }
 
 // 重置表单
@@ -287,53 +348,27 @@ const handleSubmit = async () => {
   })
 }
 
-// 删除公告
-const handleDeleteAnnouncement = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      t('common.confirmDelete'),
-      t('common.confirm'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning'
-      }
-    )
-    const response = await deleteAnnouncement(row.id)
-    if (response.code === 200) {
-      ElMessage.success(t('announcementManagement.deleteSuccess'))
-      getAnnouncementList()
-    } else {
-      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + response.message)
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
-    }
-  }
-}
-
 // 状态变更
 const handleStatusChange = async (row) => {
   try {
-    let response
+    // 保存原始状态，用于失败时恢复
+    const originalStatus = row.status
+    
+    // 调用API
     if (row.status === 1) {
-      response = await publishAnnouncement(row.id)
+      await publishAnnouncement(row.id)
       ElMessage.success(t('announcementManagement.publishSuccess'))
     } else {
-      response = await revokeAnnouncement(row.id)
+      await revokeAnnouncement(row.id)
       ElMessage.success(t('announcementManagement.revokeSuccess'))
     }
-    if (response.code !== 200) {
-      // 如果失败，恢复原来的状态
-      row.status = row.status === 1 ? 0 : 1
-      ElMessage.error(t('common.operationFailed') + '：' + response.message)
-    }
+    
+    // 刷新列表
     getAnnouncementList()
   } catch (error) {
     // 如果失败，恢复原来的状态
     row.status = row.status === 1 ? 0 : 1
-    ElMessage.error(t('common.operationFailed') + '：' + error.message)
+    ElMessage.error(t('common.operationFailed') + '：' + (error.message || '未知错误'))
   }
 }
 
@@ -353,6 +388,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.action-area {
+  display: flex;
+  gap: 5px; /* 减小按钮间距 */
+  margin-bottom: 15px;
+  padding: 10px 0;
 }
 
 .search-card {

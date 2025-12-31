@@ -1,12 +1,8 @@
 <template>
   <div class="permission-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('permissionManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddPermission">
-        <el-icon><Plus /></el-icon>
-        {{ $t('permissionManagement.addPermission') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -27,13 +23,30 @@
 
     <!-- 权限列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddPermission">
+          <el-icon><Plus /></el-icon>
+          {{ $t('permissionManagement.addPermission') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedPermissions.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('permissionManagement.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedPermissions.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('permissionManagement.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="permissionList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="permName" :label="$t('permissionManagement.permName')" />
         <el-table-column prop="permCode" :label="$t('permissionManagement.permCode')" />
         <el-table-column prop="parentId" :label="$t('permissionManagement.parentId')" width="120" />
@@ -52,18 +65,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('permissionManagement.actions')" min-width="200" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditPermission(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('permissionManagement.edit') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeletePermission(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('permissionManagement.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -173,6 +174,9 @@ const searchForm = reactive({
 // 权限列表
 const permissionList = ref([])
 
+// 选中的权限
+const selectedPermissions = ref([])
+
 // 权限树数据
 const permissionTree = ref([])
 
@@ -240,6 +244,12 @@ const getPermissionList = async () => {
   }
 }
 
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedPermissions.value = selection
+  console.log('选中的权限：', selectedPermissions.value)
+}
+
 // 获取权限树
 const getPermissionTree = async () => {
   treeLoading.value = true
@@ -293,28 +303,44 @@ const handleAddPermission = () => {
   dialogVisible.value = true
 }
 
-// 编辑权限
-const handleEditPermission = (row) => {
+// 批量编辑权限
+const handleBatchEdit = () => {
+  if (selectedPermissions.length !== 1) {
+    ElMessage.warning('请选择一个权限进行编辑')
+    return
+  }
   // 填充表单数据
-  Object.assign(form, row)
+  Object.assign(form, selectedPermissions[0])
   // 打开对话框
   dialogVisible.value = true
 }
 
-// 删除权限
-const handleDeletePermission = async (row) => {
+// 批量删除权限
+const handleBatchDelete = async () => {
+  if (selectedPermissions.length === 0) {
+    ElMessage.warning('请选择要删除的权限')
+    return
+  }
+  
   try {
-    await ElMessageBox.confirm('确定要删除权限 ' + row.permName + ' 吗？', '警告', {
+    const permNames = selectedPermissions.map(perm => perm.permName).join(', ')
+    await ElMessageBox.confirm('确定要删除权限 ' + permNames + ' 吗？', '警告', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
     
-    // axios拦截器已经处理了code检查，直接返回data字段
-    await del('/permission/' + row.id)
+    // 批量删除
+    for (const perm of selectedPermissions) {
+      // axios拦截器已经处理了code检查，直接返回data字段
+      await del('/permission/' + perm.id)
+    }
+    
     ElMessage.success('删除权限成功')
     getPermissionList()
     getPermissionTree()
+    // 清空选择
+    selectedPermissions.value = []
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除权限失败：' + error.message)
@@ -378,6 +404,13 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
 }
+
+.action-area {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+  }
 
 .search-card {
   margin-bottom: 20px;

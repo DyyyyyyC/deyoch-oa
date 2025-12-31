@@ -1,12 +1,8 @@
 <template>
   <div class="process-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('processManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddProcess">
-        <el-icon><Plus /></el-icon>
-        {{ $t('processManagement.addProcess') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -24,13 +20,31 @@
 
     <!-- 流程列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddProcess">
+          <el-icon><Plus /></el-icon>
+          {{ $t('processManagement.addProcess') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcesses.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('common.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcesses.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('common.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="processList"
         border
         style="width: 100%"
         fit
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="200" />
         <el-table-column prop="processName" :label="$t('processManagement.processName')" min-width="180" />
         <el-table-column prop="processKey" :label="$t('processManagement.processKey')" min-width="150" />
@@ -44,18 +58,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
-        <el-table-column :label="$t('common.actions')" min-width="200" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditProcess(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteProcess(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -156,6 +158,9 @@ const searchForm = reactive({
 
 // 流程列表
 const processList = ref([])
+
+// 选中的流程
+const selectedProcesses = ref([])
 
 // 分页信息
 const pagination = reactive({

@@ -6,10 +6,8 @@ import com.deyoch.mapper.DeyochUserMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.UserService;
+import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
-import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -30,7 +28,10 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result<List<DeyochUser>> getUserList() {
         try {
-            List<DeyochUser> userList = deyochUserMapper.selectList(null);
+            // 查询所有用户，按创建时间倒序排列
+            LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.orderByDesc(DeyochUser::getCreatedAt);
+            List<DeyochUser> userList = deyochUserMapper.selectList(queryWrapper);
             return Result.success(userList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取用户列表失败：" + e.getMessage());
@@ -139,12 +140,9 @@ public class UserServiceImpl implements UserService {
             }
 
             // 不能删除自己
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                if (existingUser.getUsername().equals(userDetails.getUsername())) {
-                    return Result.error(ResultCode.OPERATION_NOT_ALLOWED, "不能删除当前登录用户");
-                }
+            String currentUsername = UserContextUtil.getCurrentUsername();
+            if (currentUsername != null && existingUser.getUsername().equals(currentUsername)) {
+                return Result.error(ResultCode.OPERATION_NOT_ALLOWED, "不能删除当前登录用户");
             }
 
             // 删除用户
@@ -170,12 +168,9 @@ public class UserServiceImpl implements UserService {
             }
 
             // 不能禁用自己
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication != null && authentication.getPrincipal() instanceof UserDetails) {
-                UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-                if (existingUser.getUsername().equals(userDetails.getUsername()) && status == 0) {
-                    return Result.error(ResultCode.OPERATION_NOT_ALLOWED, "不能禁用当前登录用户");
-                }
+            String currentUsername = UserContextUtil.getCurrentUsername();
+            if (currentUsername != null && existingUser.getUsername().equals(currentUsername) && status == 0) {
+                return Result.error(ResultCode.OPERATION_NOT_ALLOWED, "不能禁用当前登录用户");
             }
 
             // 更新用户状态
@@ -193,13 +188,11 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result<DeyochUser> getCurrentUser() {
         try {
-            Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
-            if (authentication == null || !(authentication.getPrincipal() instanceof UserDetails)) {
+            // 使用UserContextUtil获取当前用户名，提高代码一致性
+            String username = UserContextUtil.getCurrentUsername();
+            if (username == null) {
                 return Result.error(ResultCode.UNAUTHORIZED, "未登录");
             }
-
-            UserDetails userDetails = (UserDetails) authentication.getPrincipal();
-            String username = userDetails.getUsername();
 
             // 查询用户信息
             LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();

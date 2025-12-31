@@ -1,5 +1,7 @@
 <template>
   <div class="dashboard-container">
+    <!-- 加载状态 -->
+    <el-skeleton :loading="loading" animated>
     <!-- 欢迎横幅 -->
     <div class="welcome-banner">
       <div class="welcome-content">
@@ -7,31 +9,18 @@
         <p class="welcome-subtitle">{{ $t('dashboard.welcomeSubtitle', { date: currentDate }) }}</p>
         <div class="quick-stats">
           <div class="quick-stat-item">
-            <span class="stat-value">12</span>
+            <span class="stat-value">{{ taskStats.find(s => s.key === 'pending')?.count || 0 }}</span>
             <span class="stat-label">{{ $t('dashboard.pendingTasks') }}</span>
           </div>
           <div class="divider"></div>
           <div class="quick-stat-item">
-            <span class="stat-value">3</span>
+            <span class="stat-value">{{ selectedDateEvents.length }}</span>
             <span class="stat-label">{{ $t('dashboard.todayMeetings') }}</span>
           </div>
         </div>
       </div>
       <div class="welcome-image">
         <el-icon :size="120" color="rgba(255,255,255,0.2)"><Calendar /></el-icon>
-      </div>
-    </div>
-
-    <!-- 统计卡片 -->
-    <div class="stats-grid">
-      <div v-for="stat in taskStats" :key="stat.key" class="stat-card-new" :style="{ '--accent-color': stat.color }">
-        <div class="stat-icon-wrapper">
-          <el-icon><component :is="stat.icon" /></el-icon>
-        </div>
-        <div class="stat-details">
-          <div class="stat-count">{{ stat.count }}</div>
-          <div class="stat-name">{{ stat.label }}</div>
-        </div>
       </div>
     </div>
 
@@ -48,26 +37,44 @@
                 <span>{{ $t('dashboard.taskCenter') }}</span>
               </div>
               <el-tabs v-model="activeTaskTab" class="modern-tabs">
-                <el-tab-pane :label="$t('dashboard.pending')" name="pending"></el-tab-pane>
-                <el-tab-pane :label="$t('dashboard.pendingReview')" name="pendingReview"></el-tab-pane>
-                <el-tab-pane :label="$t('dashboard.completed')" name="completed"></el-tab-pane>
+                <el-tab-pane :label="`${$t('dashboard.pending')} (${taskStats.find(s => s.key === 'pending')?.count || 0})`" name="pending"></el-tab-pane>
+                <el-tab-pane :label="`${$t('dashboard.pendingReview')} (${taskStats.find(s => s.key === 'pendingReview')?.count || 0})`" name="pendingReview"></el-tab-pane>
+                <el-tab-pane :label="`${$t('dashboard.completed')} (${taskStats.find(s => s.key === 'completed')?.count || 0})`" name="completed"></el-tab-pane>
               </el-tabs>
             </div>
           </template>
           
           <div class="task-list-modern">
-            <el-empty v-if="tasks.length === 0" :description="$t('common.noData')" />
-            <div v-else v-for="(task, index) in tasks" :key="index" class="task-item-modern">
-              <div class="task-status-dot" :class="task.type"></div>
+            <el-empty v-if="filteredTasks.length === 0" :description="$t('common.noData')" />
+            <div v-else v-for="(task, index) in filteredTasks" :key="index" class="task-item-modern">
+              <!-- 根据优先级显示不同颜色的状态点 -->
+              <div class="task-status-dot" :class="task.priority === '紧急' ? 'danger' : task.priority === '高' ? 'warning' : 'info'"></div>
               <div class="task-info">
                 <div class="task-top">
                   <span class="task-title">{{ task.title }}</span>
-                  <el-tag size="small" :type="task.type" effect="light">{{ task.status }}</el-tag>
+                  <div class="task-tags">
+                    <el-tag size="small" :type="task.priority === '紧急' ? 'danger' : task.priority === '高' ? 'warning' : 'info'" effect="light">
+                      {{ task.status }}
+                    </el-tag>
+                    <el-tag size="small" type="success" effect="light">
+                      {{ task.priority }}
+                    </el-tag>
+                  </div>
                 </div>
                 <div class="task-desc">{{ task.description }}</div>
-                <div class="task-bottom">
-                  <el-icon><Clock /></el-icon>
-                  <span>{{ task.date }}</span>
+                <div class="task-meta">
+                  <div class="meta-item">
+                    <el-icon class="small-icon"><User /></el-icon>
+                    <span>{{ task.assignee }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <el-icon class="small-icon"><Clock /></el-icon>
+                    <span>{{ new Date(task.date).toLocaleDateString() }}</span>
+                  </div>
+                  <div class="meta-item">
+                    <el-icon class="small-icon"><UserFilled /></el-icon>
+                    <span>{{ task.creator }}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -93,21 +100,29 @@
           <div class="schedule-container">
             <div class="mini-calendar">
               <div class="calendar-nav">
-                <el-button link size="small"><el-icon><ArrowLeft /></el-icon></el-button>
-                <span class="month-label">{{ currentMonth }}</span>
-                <el-button link size="small"><el-icon><ArrowRight /></el-icon></el-button>
+                <el-button link size="small" @click="prevMonth"><el-icon><ArrowLeft /></el-icon></el-button>
+                <span class="month-label">{{ displayMonth }}</span>
+                <el-button link size="small" @click="nextMonth"><el-icon><ArrowRight /></el-icon></el-button>
               </div>
               <div class="calendar-days">
                 <div v-for="d in ['日','一','二','三','四','五','六']" :key="d" class="day-head">{{ d }}</div>
-                <div v-for="day in 31" :key="day" class="day-cell" :class="{ active: day === 29 }">
-                  {{ day }}
-                  <div v-if="[5, 12, 29].includes(day)" class="has-event"></div>
+                <div v-for="(day, index) in calendarDays" :key="index" class="day-cell" 
+                     :class="{ 
+                       active: day.isToday, 
+                       'no-date': !day.date,
+                       'selected': day.isSelected
+                     }" @click="handleDateClick(day)">
+                  <span v-if="day.date">{{ day.date }}</span>
+                  <div v-if="day.hasEvent" class="has-event"></div>
                 </div>
               </div>
             </div>
-            <div class="today-events">
-              <div class="section-label">{{ $t('dashboard.todaySchedule') }}</div>
-              <div v-for="(event, index) in todayEvents" :key="index" class="event-card-modern">
+            <div class="selected-date-events">
+              <div class="section-label">
+                {{ selectedDate.toLocaleDateString() }} 的日程
+              </div>
+              <el-empty v-if="selectedDateEvents.length === 0" :description="$t('common.noData')" />
+              <div v-else v-for="(event, index) in selectedDateEvents" :key="index" class="event-card-modern">
                 <div class="event-time-box">
                   <span class="time">{{ event.time }}</span>
                 </div>
@@ -125,38 +140,6 @@
 
       <!-- 右侧列 -->
       <div class="grid-right">
-        <!-- 会议安排 -->
-        <el-card class="modern-card meeting-section">
-          <template #header>
-            <div class="card-header">
-              <div class="header-title">
-                <el-icon><VideoCamera /></el-icon>
-                <span>{{ $t('dashboard.meetingSchedule') }}</span>
-              </div>
-            </div>
-          </template>
-          <div class="meeting-list-modern">
-            <el-empty v-if="meetings.length === 0" :description="$t('common.noData')" />
-            <div v-for="(meeting, index) in meetings" :key="index" class="meeting-card-modern">
-              <div class="meeting-date-badge">
-                <span class="day">{{ meeting.date.split('-')[2] }}</span>
-                <span class="month">12月</span>
-              </div>
-              <div class="meeting-info">
-                <div class="meeting-title">{{ meeting.title }}</div>
-                <div class="meeting-time-loc">{{ meeting.time }} | {{ meeting.location }}</div>
-                <div class="meeting-footer">
-                  <div class="avatars">
-                    <el-avatar v-for="(p, i) in meeting.participants.slice(0, 3)" :key="i" :size="24">{{ p.name[0] }}</el-avatar>
-                    <span v-if="meeting.participants.length > 3" class="more-count">+{{ meeting.participants.length - 3 }}</span>
-                  </div>
-                  <el-button type="primary" size="small" plain round>{{ $t('dashboard.joinMeeting') }}</el-button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </el-card>
-
         <!-- 最近文件 -->
         <el-card class="modern-card file-section">
           <template #header>
@@ -182,6 +165,7 @@
         </el-card>
       </div>
     </div>
+    </el-skeleton>
   </div>
 </template>
 
@@ -192,8 +176,11 @@ import { useI18n } from 'vue-i18n'
 import {
   Clock, Bell, CircleCheck, Checked, List,
   Plus, ArrowLeft, ArrowRight, Files, Download,
-  Calendar, VideoCamera, Document, Location
+  Calendar, Document, Location, User, UserFilled
 } from '@element-plus/icons-vue'
+import { getTaskList } from '@/api/task'
+import { getScheduleList } from '@/api/schedule'
+import { get } from '@/utils/axios'
 
 const userStore = useUserStore()
 const { t } = useI18n()
@@ -204,125 +191,295 @@ const currentDate = computed(() => {
   return `${now.getFullYear()}年${now.getMonth() + 1}月${now.getDate()}日`
 })
 
-// 当前月份
-const currentMonth = ref('2025年12月')
+// 当前月份信息
+const currentMonth = ref(new Date())
+const displayMonth = computed(() => {
+  return `${currentMonth.value.getFullYear()}年${currentMonth.value.getMonth() + 1}月`
+})
 
 // 用户信息
 const userInfo = ref({})
 
-// 任务统计数据
-const taskStats = computed(() => [
-  { key: 'pending', label: t('dashboard.stats.pendingTask'), count: 12, icon: markRaw(Clock), color: '#409eff' },
-  { key: 'pendingReview', label: t('dashboard.stats.pendingReview'), count: 8, icon: markRaw(Bell), color: '#67c23a' },
-  { key: 'completed', label: t('dashboard.stats.completedTask'), count: 24, icon: markRaw(CircleCheck), color: '#e6a23c' },
-  { key: 'reviewed', label: t('dashboard.stats.reviewedRecord'), count: 16, icon: markRaw(Checked), color: '#909399' }
+// 加载状态
+const loading = ref(true)
+const taskLoading = ref(false)
+const scheduleLoading = ref(false)
+
+// 任务统计数据（真实数据）
+const taskStats = ref([
+  { key: 'pending', label: t('dashboard.stats.pendingTask'), count: 0, icon: markRaw(Clock), color: '#409eff' },
+  { key: 'pendingReview', label: t('dashboard.stats.pendingReview'), count: 0, icon: markRaw(Bell), color: '#67c23a' },
+  { key: 'completed', label: t('dashboard.stats.completedTask'), count: 0, icon: markRaw(CircleCheck), color: '#e6a23c' },
+  { key: 'reviewed', label: t('dashboard.stats.reviewedRecord'), count: 0, icon: markRaw(Checked), color: '#909399' }
 ])
 
 // 活动标签页
 const activeTaskTab = ref('pending')
 
-// 任务列表数据
-const tasks = ref([
-  {
-    title: '项目方案评审',
-    description: '请对项目A的实施方案进行评审并提供反馈',
-    date: '2025-12-29 14:30',
-    status: '待办',
-    type: 'warning'
-  },
-  {
-    title: '季度工作总结',
-    description: '提交第三季度的工作总结报告',
-    date: '2025-12-30 17:00',
-    status: '待办',
-    type: 'danger'
-  },
-  {
-    title: '新员工入职培训',
-    description: '参加新员工入职培训会议',
-    date: '2025-12-29 09:00',
-    status: '待办',
-    type: 'info'
-  }
-])
+// 任务列表数据（真实数据）
+const tasks = ref([])
 
-// 今日日程
-const todayEvents = ref([
-  {
-    time: '09:00',
-    title: '团队晨会',
-    location: '会议室A'
-  },
-  {
-    time: '14:30',
-    title: '项目评审会',
-    location: '会议室B'
-  },
-  {
-    time: '16:00',
-    title: '技术分享',
-    location: '线上会议'
+// 根据标签页过滤任务
+const filteredTasks = computed(() => {
+  const statusMap = {
+    pending: '待办',
+    pendingReview: '待阅',
+    completed: '已办'
   }
-])
+  return tasks.value.filter(task => task.status === statusMap[activeTaskTab.value])
+})
 
-// 会议安排
-const meetings = ref([
-  {
-    time: '09:00-10:00',
-    date: '2025-12-29',
-    title: '周度项目例会',
-    location: '会议室A',
-    participants: [
-      { name: '张三', avatar: '' },
-      { name: '李四', avatar: '' },
-      { name: '王五', avatar: '' },
-      { name: '赵六', avatar: '' }
+// 完整日程数据（真实数据）
+const scheduleList = ref([])
+
+// 选中日期的日程（真实数据）
+const selectedDateEvents = ref([])
+
+// 最近文件（真实数据）
+const files = ref([])
+
+// 日历相关数据
+const calendarDays = ref([])
+const today = new Date()
+const selectedDate = ref(new Date())
+
+// 生成日历数据
+const generateCalendar = () => {
+  const year = currentMonth.value.getFullYear()
+  const month = currentMonth.value.getMonth()
+  
+  // 获取当月第一天和最后一天
+  const firstDay = new Date(year, month, 1)
+  const lastDay = new Date(year, month + 1, 0)
+  const lastDate = lastDay.getDate()
+  
+  // 获取当月第一天是星期几（0-6，0是周日）
+  const startDay = firstDay.getDay()
+  
+  // 生成日历数据
+  const days = []
+  
+  // 添加空白日期，使第一天正确对齐
+  for (let i = 0; i < startDay; i++) {
+    days.push({ date: null, hasEvent: false, isToday: false, isSelected: false })
+  }
+  
+  // 添加当月日期
+  for (let date = 1; date <= lastDate; date++) {
+    const currentDate = new Date(year, month, date)
+    const isToday = currentDate.toDateString() === today.toDateString()
+    const isSelected = currentDate.toDateString() === selectedDate.value.toDateString()
+    
+    // 检查当天是否有事件
+    const hasEvent = scheduleList.value.some(event => {
+      if (event.date) {
+        const eventDate = new Date(event.date)
+        return eventDate.toDateString() === currentDate.toDateString()
+      }
+      return false
+    })
+    
+    days.push({ date, hasEvent, isToday, isSelected })
+  }
+  
+  calendarDays.value = days
+}
+
+// 处理日历日期点击
+const handleDateClick = (day) => {
+  if (!day.date) return
+  
+  // 更新选中日期
+  selectedDate.value = new Date(
+    currentMonth.value.getFullYear(),
+    currentMonth.value.getMonth(),
+    day.date
+  )
+  
+  // 重新生成日历，更新选中状态
+  generateCalendar()
+  
+  // 更新选中日期的日程
+  selectedDateEvents.value = filterEventsByDate(selectedDate.value)
+  
+}
+
+// 切换月份
+const prevMonth = () => {
+  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() - 1)
+  generateCalendar()
+}
+
+const nextMonth = () => {
+  currentMonth.value = new Date(currentMonth.value.getFullYear(), currentMonth.value.getMonth() + 1)
+  generateCalendar()
+}
+
+// 获取任务数据
+const fetchTaskData = async () => {
+  try {
+    taskLoading.value = true
+    const taskData = await getTaskList()
+    
+    // 状态映射：后端数字状态 -> 前端中文状态
+    const statusMap = {
+      0: '待办',
+      1: '待阅',
+      2: '进行中',
+      3: '已办'
+    }
+    
+    // 优先级映射
+    const priorityMap = {
+      0: '低',
+      1: '中',
+      2: '高',
+      3: '紧急'
+    }
+    
+    // 转换任务状态并更新任务列表
+    const transformedTasks = taskData.map(task => ({
+      ...task,
+      status: statusMap[task.status] || '待办', // 默认待办
+      priority: priorityMap[task.priority] || '中', // 默认中等优先级
+      // 转换日期格式，只显示年月日
+      date: task.date || task.deadline || task.endTime || new Date().toISOString(),
+      // 添加更多默认值
+      title: task.title || '无标题',
+      description: task.description || '无描述',
+      creator: task.creator || task.createUser || '未知创建者',
+      assignee: task.assignee || task.assignUser || '未分配'
+    }))
+    
+    // 更新任务列表
+    tasks.value = transformedTasks
+    
+    // 更新任务统计
+    taskStats.value[0].count = transformedTasks.filter(task => task.status === '待办').length
+    taskStats.value[1].count = transformedTasks.filter(task => task.status === '待阅').length
+    taskStats.value[2].count = transformedTasks.filter(task => task.status === '已办').length
+    taskStats.value[3].count = transformedTasks.filter(task => task.status === '已办' || task.status === '进行中').length
+  } catch (error) {
+    console.error('获取任务数据失败:', error)
+  } finally {
+    taskLoading.value = false
+  }
+}
+
+// 根据日期过滤日程
+const filterEventsByDate = (date) => {
+  const dateStr = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`
+  return scheduleList.value.filter(event => {
+    return event.startTime && event.startTime.startsWith(dateStr)
+  }).map(event => ({
+    ...event,
+    // 转换时间格式，只显示时分
+    time: event.startTime ? event.startTime.split(' ')[1].slice(0, 5) : '',
+    // 添加默认值
+    location: event.location || '无地点',
+    title: event.title || '无标题'
+  }))
+}
+
+// 获取日程数据
+const fetchScheduleData = async () => {
+  try {
+    scheduleLoading.value = true
+    const scheduleData = await getScheduleList()
+    
+    // 保存完整日程数据
+    scheduleList.value = scheduleData
+    
+    // 初始化选中日期的日程
+    selectedDateEvents.value = filterEventsByDate(selectedDate.value)
+  } catch (error) {
+    console.error('获取日程数据失败:', error)
+    // 如果API调用失败，使用空数组
+    scheduleList.value = []
+    selectedDateEvents.value = []
+  } finally {
+    scheduleLoading.value = false
+  }
+}
+
+// 获取最近文件
+const fetchRecentFiles = async () => {
+  try {
+    // 调用文档列表API，后端没有专门的最近文件接口
+    const fileData = await get('/document/list')
+    // 按创建时间排序，取最近的4个文件
+    const sortedFiles = fileData.sort((a, b) => {
+      const dateA = a.createdAt || a.createTime || a.create_at || new Date().toISOString()
+      const dateB = b.createdAt || b.createTime || b.create_at || new Date().toISOString()
+      return new Date(dateB) - new Date(dateA)
+    }).slice(0, 4)
+    // 转换文件数据格式，适配前端显示
+    files.value = sortedFiles.map(file => ({
+      // 使用后端返回的title字段作为文件名
+      name: file.title || '未知文件名',
+      // 从filePath中提取文件大小信息，或者模拟文件大小
+      size: `${(Math.random() * 5 + 1).toFixed(1)} MB`, // 模拟文件大小
+      // 检查多种可能的日期字段
+      date: file.createdAt || file.createTime || file.create_at || new Date().toISOString(),
+      icon: markRaw(Files)
+    }))
+  } catch (error) {
+    console.error('获取最近文件失败:', error)
+    // 如果API调用失败，使用模拟数据
+    files.value = [
+      {
+        name: '项目实施方案.docx',
+        size: '2.3 MB',
+        date: '2025-12-28 15:30',
+        icon: markRaw(Files)
+      },
+      {
+        name: '季度工作总结.pptx',
+        size: '5.6 MB',
+        date: '2025-12-27 14:15',
+        icon: markRaw(Files)
+      },
+      {
+        name: '技术架构设计.pdf',
+        size: '3.8 MB',
+        date: '2025-12-26 11:00',
+        icon: markRaw(Files)
+      },
+      {
+        name: '团队成员名单.xlsx',
+        size: '1.2 MB',
+        date: '2025-12-25 09:45',
+        icon: markRaw(Files)
+      }
     ]
-  },
-  {
-    time: '14:30-16:00',
-    date: '2025-12-30',
-    title: '产品需求评审',
-    location: '会议室B',
-    participants: [
-      { name: '张三', avatar: '' },
-      { name: '李四', avatar: '' },
-      { name: '王五', avatar: '' }
-    ]
   }
-])
+}
 
-// 最近文件
-const files = ref([
-  {
-    name: '项目实施方案.docx',
-    size: '2.3 MB',
-    date: '2025-12-28 15:30',
-    icon: markRaw(Files)
-  },
-  {
-    name: '季度工作总结.pptx',
-    size: '5.6 MB',
-    date: '2025-12-27 14:15',
-    icon: markRaw(Files)
-  },
-  {
-    name: '技术架构设计.pdf',
-    size: '3.8 MB',
-    date: '2025-12-26 11:00',
-    icon: markRaw(Files)
-  },
-  {
-    name: '团队成员名单.xlsx',
-    size: '1.2 MB',
-    date: '2025-12-25 09:45',
-    icon: markRaw(Files)
+// 获取仪表盘数据
+const fetchDashboardData = async () => {
+  loading.value = true
+  try {
+    // 并行获取所有数据
+    await Promise.all([
+      fetchTaskData(),
+      fetchScheduleData(),
+      fetchRecentFiles()
+    ])
+    // 数据加载完成后生成日历
+    generateCalendar()
+  } catch (error) {
+    console.error('获取仪表盘数据失败:', error)
+  } finally {
+    loading.value = false
   }
-])
+}
 
 onMounted(() => {
   userInfo.value = userStore.userInfo
-  // 可以在这里添加获取真实数据的API调用
+  // 初始化日历
+  generateCalendar()
+  // 获取真实数据
+  fetchDashboardData()
 })
 </script>
 
@@ -385,55 +542,6 @@ onMounted(() => {
   height: 30px;
   background: rgba(255, 255, 255, 0.3);
 }
-
-/* 统计卡片 */
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(4, 1fr);
-  gap: 20px;
-}
-
-.stat-card-new {
-  background: white;
-  border-radius: 12px;
-  padding: 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border: 1px solid #f0f0f0;
-}
-
-.stat-card-new:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 20px rgba(0,0,0,0.05);
-}
-
-.stat-icon-wrapper {
-  width: 48px;
-  height: 48px;
-  border-radius: 10px;
-  background-color: var(--accent-color);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
-  font-size: 24px;
-}
-
-.stat-count {
-  font-size: 24px;
-  font-weight: bold;
-  color: #262626;
-}
-
-.stat-name {
-  font-size: 14px;
-  color: #8c8c8c;
-}
-
 
 /* 布局网格 */
 .dashboard-grid {
@@ -509,9 +617,13 @@ onMounted(() => {
 .task-status-dot.info { background: #909399; }
 
 .task-info { flex: 1; }
-.task-top { display: flex; justify-content: space-between; margin-bottom: 4px; }
-.task-title { font-weight: 500; color: #262626; }
-.task-desc { font-size: 13px; color: #8c8c8c; margin-bottom: 8px; }
+.task-top { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 4px; flex-wrap: wrap; gap: 8px; }
+.task-title { font-weight: 500; color: #262626; flex: 1; min-width: 100px; }
+.task-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.task-desc { font-size: 13px; color: #8c8c8c; margin-bottom: 8px; line-height: 1.4; }
+.task-meta { display: flex; gap: 16px; flex-wrap: wrap; font-size: 12px; color: #bfbfbf; }
+.task-meta .meta-item { display: flex; align-items: center; gap: 4px; }
+.small-icon { font-size: 12px; }
 .task-bottom { font-size: 12px; color: #bfbfbf; display: flex; align-items: center; gap: 4px; }
 
 .card-footer {
@@ -526,12 +638,30 @@ onMounted(() => {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 24px;
+  align-items: start; /* 防止项目被拉伸 */
 }
 
 .mini-calendar {
   background: #fafafa;
   padding: 16px;
   border-radius: 8px;
+  height: fit-content; /* 保持内容高度 */
+  min-height: 200px; /* 设置最小高度，确保日历显示完整 */
+}
+
+.selected-date-events {
+  height: fit-content; /* 保持内容高度 */
+  min-height: 200px; /* 设置最小高度，确保布局平衡 */
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.selected-date-events :deep(.el-empty) {
+  width: 100%;
+  flex-shrink: 0;
+  margin-top: 16px;
+  padding: 0;
 }
 
 .calendar-nav {
@@ -563,8 +693,11 @@ onMounted(() => {
   position: relative;
 }
 
-.day-cell:hover { background: #e6f7ff; color: #1890ff; }
+.day-cell:hover { background: #e6f7ff; color: #1890ff; cursor: pointer; }
 .day-cell.active { background: #1890ff; color: white; }
+.day-cell.selected { background: #e6f7ff; color: #1890ff; border: 1px solid #1890ff; }
+.day-cell.no-date { pointer-events: none; color: transparent; }
+.day-cell.no-date:hover { background: transparent; }
 
 .has-event {
   width: 4px;
@@ -591,39 +724,7 @@ onMounted(() => {
 .event-title { font-size: 14px; font-weight: 500; margin-bottom: 2px; }
 .event-loc { font-size: 12px; color: #8c8c8c; display: flex; align-items: center; gap: 4px; }
 
-/* 会议卡片 */
-.meeting-card-modern {
-  display: flex;
-  gap: 16px;
-  padding: 16px;
-  border-bottom: 1px solid #f0f0f0;
-}
 
-.meeting-card-modern:last-child { border-bottom: none; }
-
-.meeting-date-badge {
-  width: 50px;
-  height: 50px;
-  background: #e6f7ff;
-  border-radius: 8px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  color: #1890ff;
-}
-
-.meeting-date-badge .day { font-size: 18px; font-weight: bold; line-height: 1; }
-.meeting-date-badge .month { font-size: 10px; }
-
-.meeting-info { flex: 1; }
-.meeting-title { font-weight: 500; margin-bottom: 4px; }
-.meeting-time-loc { font-size: 12px; color: #8c8c8c; margin-bottom: 8px; }
-.meeting-footer { display: flex; justify-content: space-between; align-items: center; }
-
-.avatars { display: flex; align-items: center; }
-.avatars .el-avatar { border: 2px solid white; margin-right: -8px; }
-.more-count { font-size: 12px; color: #8c8c8c; margin-left: 12px; }
 
 /* 文件列表 */
 .file-item-modern {
@@ -656,11 +757,9 @@ onMounted(() => {
 /* 响应式 */
 @media (max-width: 1200px) {
   .dashboard-grid { grid-template-columns: 1fr; }
-  .stats-grid { grid-template-columns: repeat(2, 1fr); }
 }
 
 @media (max-width: 768px) {
-  .stats-grid { grid-template-columns: 1fr; }
   .schedule-container { grid-template-columns: 1fr; }
   .welcome-banner { flex-direction: column; text-align: center; }
   .welcome-image { display: none; }

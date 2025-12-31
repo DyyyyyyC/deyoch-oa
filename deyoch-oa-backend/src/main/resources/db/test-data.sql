@@ -58,11 +58,11 @@ INSERT INTO `deyoch_announcement` (`title`, `content`, `publisher`, `publish_tim
 
 -- 7. 生成文档数据
 INSERT INTO `deyoch_document` (`title`, `content`, `file_path`, `file_name`, `file_size`, `file_type`, `uploader`, `dept_id`, `status`) VALUES 
-('OA系统需求文档', 'OA系统的详细需求分析文档', '/upload/documents/req.docx', 'req.docx', 1024000, 'docx', '张三', 2, 1),
-('数据库设计文档', 'OA系统数据库设计文档', '/upload/documents/db.docx', 'db.docx', 512000, 'docx', '李四', 2, 1),
-('用户手册', 'OA系统用户操作手册', '/upload/documents/user_manual.pdf', 'user_manual.pdf', 2048000, 'pdf', '王五', 1, 1),
-('开发规范', 'OA系统开发规范文档', '/upload/documents/dev_spec.docx', 'dev_spec.docx', 768000, 'docx', '赵六', 2, 1),
-('测试报告', 'OA系统测试报告', '/upload/documents/test_report.pdf', 'test_report.pdf', 1536000, 'pdf', '钱七', 2, 1);
+('OA系统需求文档.docx', 'OA系统的详细需求分析文档', '/upload/documents/req.docx', 'req.docx', 1024000, 'docx', '张三', 2, 1),
+('数据库设计文档.docx', 'OA系统数据库设计文档', '/upload/documents/db.docx', 'db.docx', 512000, 'docx', '李四', 2, 1),
+('用户手册.pdf', 'OA系统用户操作手册', '/upload/documents/user_manual.pdf', 'user_manual.pdf', 2048000, 'pdf', '王五', 1, 1),
+('开发规范.docx', 'OA系统开发规范文档', '/upload/documents/dev_spec.docx', 'dev_spec.docx', 768000, 'docx', '赵六', 2, 1),
+('测试报告.pdf', 'OA系统测试报告', '/upload/documents/test_report.pdf', 'test_report.pdf', 1536000, 'pdf', '钱七', 2, 1);
 
 -- 8. 更新角色权限关联数据（添加新的权限路径）
 UPDATE `deyoch_permission` SET `path` = '/process' WHERE `perm_code` = 'oa:process:manage';

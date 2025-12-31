@@ -1,12 +1,8 @@
 <template>
   <div class="task-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('taskManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddTask">
-        <el-icon><Plus /></el-icon>
-        {{ $t('taskManagement.addTask') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -27,15 +23,33 @@
 
     <!-- 任务列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddTask">
+          <el-icon><Plus /></el-icon>
+          {{ $t('taskManagement.addTask') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedTasks.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('common.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedTasks.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('common.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="taskList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('taskManagement.title')" />
         <el-table-column prop="assignee" :label="$t('taskManagement.assignee')" />
+        <el-table-column prop="creator" :label="$t('taskManagement.creator')" />
         <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">
@@ -54,26 +68,6 @@
         <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" width="200" />
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" min-width="340" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditTask(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button size="small" type="success" @click="handleUpdateTaskStatus(scope.row, 2)" :disabled="scope.row.status === 2">
-              <el-icon><CircleCheck /></el-icon>
-              {{ $t('common.complete') }}
-            </el-button>
-            <el-button size="small" type="warning" @click="handleUpdateTaskStatus(scope.row, 1)" :disabled="scope.row.status === 1">
-              <el-icon><VideoPlay /></el-icon>
-              {{ $t('common.start') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteTask(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -201,6 +195,9 @@ const searchForm = reactive({
 // 任务列表
 const taskList = ref([])
 
+// 选中的任务
+const selectedTasks = ref([])
+
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
@@ -296,7 +293,13 @@ const handleSizeChange = (size) => {
   getTaskList()
 }
 
-// 当前页变化
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedTasks.value = selection
+  console.log('选中的任务：', selectedTasks.value)
+}
+
+// 页码变化 当前页变化
 const handleCurrentChange = (current) => {
   pagination.currentPage = current
   getTaskList()
@@ -309,8 +312,14 @@ const handleAddTask = () => {
   dialogVisible.value = true
 }
 
-// 打开编辑任务对话框
-const handleEditTask = (row) => {
+// 批量编辑任务
+const handleBatchEdit = () => {
+  if (selectedTasks.length !== 1) {
+    ElMessage.warning('请选择一个任务进行编辑')
+    return
+  }
+  // 填充表单数据
+  const row = selectedTasks[0]
   isEditMode.value = true
   taskForm.id = row.id
   taskForm.title = row.title
@@ -321,6 +330,43 @@ const handleEditTask = (row) => {
   taskForm.startTime = row.startTime
   taskForm.endTime = row.endTime
   dialogVisible.value = true
+}
+
+// 批量删除任务
+const handleBatchDelete = async () => {
+  if (selectedTasks.length === 0) {
+    ElMessage.warning('请选择要删除的任务')
+    return
+  }
+  
+  try {
+    await ElMessageBox.confirm(
+      t('common.confirmDelete'),
+      t('common.confirm'),
+      {
+        confirmButtonText: t('common.confirm'),
+        cancelButtonText: t('common.cancel'),
+        type: 'warning'
+      }
+    )
+    
+    // 批量删除
+    for (const task of selectedTasks) {
+      const response = await deleteTask(task.id)
+      if (response.code !== 200) {
+        throw new Error(response.message)
+      }
+    }
+    
+    ElMessage.success(t('taskManagement.deleteSuccess'))
+    getTaskList()
+    // 清空选择
+    selectedTasks.value = []
+  } catch (error) {
+    if (error !== 'cancel') {
+      ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
+    }
+  }
 }
 
 // 重置表单
@@ -364,32 +410,6 @@ const handleSubmit = async () => {
   })
 }
 
-// 删除任务
-const handleDeleteTask = async (row) => {
-  try {
-    await ElMessageBox.confirm(
-      t('common.confirmDelete'),
-      t('common.confirm'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning'
-      }
-    )
-    const response = await deleteTask(row.id)
-    if (response.code === 200) {
-      ElMessage.success(t('taskManagement.deleteSuccess'))
-      getTaskList()
-    } else {
-      ElMessage.error(t('taskManagement.deleteFailed') + '：' + response.message)
-    }
-  } catch (error) {
-    if (error !== 'cancel') {
-      ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
-    }
-  }
-}
-
 // 更新任务状态
 const handleUpdateTaskStatus = async (row, status) => {
   try {
@@ -423,6 +443,13 @@ onMounted(() => {
   justify-content: space-between;
   align-items: center;
   margin-bottom: 20px;
+}
+
+.action-area {
+  display: flex;
+  gap: 5px; /* 减小按钮间距 */
+  margin-bottom: 15px;
+  padding: 10px 0;
 }
 
 .search-card {

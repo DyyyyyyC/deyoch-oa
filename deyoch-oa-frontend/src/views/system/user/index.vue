@@ -1,12 +1,8 @@
 <template>
   <div class="user-management">
-    <!-- 页面标题和操作按钮 -->
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('userManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddUser">
-        <el-icon><Plus /></el-icon>
-        {{ $t('userManagement.addUser') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -30,13 +26,30 @@
 
     <!-- 用户列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddUser">
+          <el-icon><Plus /></el-icon>
+          {{ $t('userManagement.addUser') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedUsers.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('userManagement.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedUsers.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('userManagement.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="userList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
-        <el-table-column prop="id" label="ID" width="80" />
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="username" :label="$t('userManagement.username')" />
         <el-table-column prop="nickname" :label="$t('userManagement.nickname')" />
         <el-table-column prop="email" :label="$t('userManagement.email')" />
@@ -54,18 +67,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" width="200" />
         <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" width="200" />
-        <el-table-column :label="$t('userManagement.actions')" min-width="200" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleEditUser(scope.row)">
-              <el-icon><Edit /></el-icon>
-              {{ $t('userManagement.edit') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteUser(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('userManagement.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -95,7 +96,10 @@
         label-width="100px"
       >
         <el-form-item :label="$t('userManagement.username')" prop="username">
-          <el-input v-model="form.username" :placeholder="$t('userManagement.enterUsername')" />
+          <el-input v-model="form.username" :placeholder="$t('userManagement.enterUsername')" :disabled="!!form.id" />
+          <div v-if="form.id" class="el-form-item__error" style="color: #67c23a; margin-top: 4px; font-size: 12px;">
+            {{ $t('userManagement.usernameCannotBeModified') }}
+          </div>
         </el-form-item>
         <el-form-item :label="$t('userManagement.nickname')" prop="nickname">
           <el-input v-model="form.nickname" :placeholder="$t('userManagement.enterNickname')" />
@@ -135,7 +139,7 @@
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { get, post, put, del } from '@/utils/axios'
 
@@ -150,6 +154,9 @@ const searchForm = reactive({
 
 // 用户列表
 const userList = ref([])
+
+// 选中的用户
+const selectedUsers = ref([])
 
 // 分页信息
 const pagination = reactive({
@@ -229,6 +236,12 @@ const getRoleList = async () => {
   }
 }
 
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedUsers.value = selection
+  console.log('选中的用户：', selectedUsers.value)
+}
+
 // 搜索用户
 const handleSearch = () => {
   // 这里可以实现带条件的搜索，暂时先调用getUserList()
@@ -271,29 +284,45 @@ const handleAddUser = async () => {
   dialogVisible.value = true
 }
 
-// 编辑用户
-const handleEditUser = async (row) => {
+// 批量编辑用户
+const handleBatchEdit = async () => {
+  if (selectedUsers.length !== 1) {
+    ElMessage.warning('请选择一个用户进行编辑')
+    return
+  }
   // 填充表单数据
-  Object.assign(form, row)
+  Object.assign(form, selectedUsers[0])
   // 打开对话框前加载角色列表
   await getRoleList()
   // 打开对话框
   dialogVisible.value = true
 }
 
-// 删除用户
-const handleDeleteUser = async (row) => {
+// 批量删除用户
+const handleBatchDelete = async () => {
+  if (selectedUsers.length === 0) {
+    ElMessage.warning('请选择要删除的用户')
+    return
+  }
+  
   try {
-    await ElMessageBox.confirm('确定要删除用户 ' + row.username + ' 吗？', '警告', {
+    const usernames = selectedUsers.map(user => user.username).join(', ')
+    await ElMessageBox.confirm('确定要删除用户 ' + usernames + ' 吗？', '警告', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
       type: 'warning'
     })
     
-    // axios拦截器已经处理了code检查，直接返回data字段
-    await del('/user/' + row.id)
+    // 批量删除
+    for (const user of selectedUsers) {
+      // axios拦截器已经处理了code检查，直接返回data字段
+      await del('/user/' + user.id)
+    }
+    
     ElMessage.success('删除用户成功')
     getUserList()
+    // 清空选择
+    selectedUsers.value = []
   } catch (error) {
     if (error !== 'cancel') {
       ElMessage.error('删除用户失败：' + error.message)
@@ -355,6 +384,13 @@ onMounted(() => {
   align-items: center;
   margin-bottom: 20px;
 }
+
+.action-area {
+    display: flex;
+    gap: 5px;
+    margin-bottom: 20px;
+    padding: 10px 0;
+  }
 
 .search-card {
   margin-bottom: 20px;

@@ -26,5 +26,3 @@ export default async function setupElementPlus(app) {
   
   return app
 }
-
-// 移除了setElementPlusLocale函数，改用更合适的方案
