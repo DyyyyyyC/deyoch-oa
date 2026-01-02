@@ -11,6 +11,56 @@ import i18n from '@/lang'
 let isLoginDialogShown = false
 
 /**
+ * 格式化错误信息
+ * @param {Error} error - 错误对象
+ * @returns {string} - 格式化后的错误信息
+ */
+const formatErrorMessage = (error) => {
+  // 获取i18n翻译
+  const t = i18n.global.t
+  
+  // 初始错误信息
+  let errorMessage = t('common.operationFailed')
+  
+  // 检查错误对象结构
+  if (error.response) {
+    // 服务器返回了错误响应
+    const res = error.response.data
+    
+    // 检查是否有自定义错误信息
+    if (res.message) {
+      errorMessage = res.message
+    } 
+    // 检查是否有SQL错误信息
+    else if (res.error && typeof res.error === 'string') {
+      // 提取SQL错误中的有用信息
+      if (res.error.includes('Unknown column')) {
+        errorMessage = t('common.databaseError') + ': ' + res.error.match(/Unknown column '[^']+' in 'field list'/)[0]
+      } else if (res.error.includes('Table')) {
+        errorMessage = t('common.databaseError') + ': ' + res.error.match(/Table '[^']+' doesn't exist/)[0]
+      } else {
+        // 其他数据库错误
+        errorMessage = t('common.databaseError')
+      }
+    }
+    // 检查HTTP状态码
+    else if (error.response.status === 404) {
+      errorMessage = t('common.resourceNotFound')
+    } else if (error.response.status === 500) {
+      errorMessage = t('common.serverError')
+    }
+  } else if (error.request) {
+    // 请求已发出，但没有收到响应
+    errorMessage = t('common.networkError')
+  } else {
+    // 请求配置错误
+    errorMessage = error.message
+  }
+  
+  return errorMessage
+}
+
+/**
  * 创建Axios实例
  * 用于配置全局的请求参数和默认设置
  */
@@ -149,7 +199,8 @@ service.interceptors.response.use(
       return Promise.reject(new Error(''))
     } else {
       // 其他错误，显示友好的错误消息
-      ElMessage.error(t('common.operationFailed'))
+      const errorMessage = formatErrorMessage(error)
+      ElMessage.error(errorMessage)
     }
     
     // 将错误传递给调用者

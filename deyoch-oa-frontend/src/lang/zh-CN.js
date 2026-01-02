@@ -82,7 +82,11 @@ export default {
     cancelled: '已取消',
     endTimeCannotBeEarlier: '结束时间不能早于开始时间',
     operationFailed: '操作失败',
-    fieldMaxLength: '{field}长度不能超过 {max} 个字符'
+    fieldMaxLength: '{field}长度不能超过 {max} 个字符',
+    databaseError: '数据库错误',
+    resourceNotFound: '资源不存在',
+    serverError: '服务器错误',
+    networkError: '网络错误'
   },
   systemManagement: {
     title: '系统管理'

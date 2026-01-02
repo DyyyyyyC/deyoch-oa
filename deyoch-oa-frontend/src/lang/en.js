@@ -82,7 +82,11 @@ export default {
     cancelled: 'Cancelled',
     endTimeCannotBeEarlier: 'End time cannot be earlier than start time',
     operationFailed: 'Operation failed',
-    fieldMaxLength: '{field} length cannot exceed {max} characters'
+    fieldMaxLength: '{field} length cannot exceed {max} characters',
+    databaseError: 'Database Error',
+    resourceNotFound: 'Resource not found',
+    serverError: 'Server error',
+    networkError: 'Network error'
   },
   systemManagement: {
     title: 'System Management'
