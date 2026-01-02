@@ -86,7 +86,9 @@ export default {
     databaseError: 'Database Error',
     resourceNotFound: 'Resource not found',
     serverError: 'Server error',
-    networkError: 'Network error'
+    networkError: 'Network error',
+    badRequest: 'Bad request',
+    forbidden: 'Forbidden'
   },
   systemManagement: {
     title: 'System Management'

@@ -86,7 +86,9 @@ export default {
     databaseError: '数据库错误',
     resourceNotFound: '资源不存在',
     serverError: '服务器错误',
-    networkError: '网络错误'
+    networkError: '网络错误',
+    badRequest: '请求参数错误',
+    forbidden: '没有权限执行此操作'
   },
   systemManagement: {
     title: '系统管理'

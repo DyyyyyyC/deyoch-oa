@@ -31,23 +31,21 @@ const formatErrorMessage = (error) => {
     if (res.message) {
       errorMessage = res.message
     } 
-    // 检查是否有SQL错误信息
-    else if (res.error && typeof res.error === 'string') {
-      // 提取SQL错误中的有用信息
-      if (res.error.includes('Unknown column')) {
-        errorMessage = t('common.databaseError') + ': ' + res.error.match(/Unknown column '[^']+' in 'field list'/)[0]
-      } else if (res.error.includes('Table')) {
-        errorMessage = t('common.databaseError') + ': ' + res.error.match(/Table '[^']+' doesn't exist/)[0]
-      } else {
-        // 其他数据库错误
-        errorMessage = t('common.databaseError')
-      }
-    }
     // 检查HTTP状态码
     else if (error.response.status === 404) {
       errorMessage = t('common.resourceNotFound')
     } else if (error.response.status === 500) {
+      // 对于500错误，不显示具体的错误信息，只显示通用提示
       errorMessage = t('common.serverError')
+    } else if (error.response.status === 400) {
+      // 对于400错误，显示请求参数错误
+      errorMessage = t('common.badRequest')
+    } else if (error.response.status === 401) {
+      // 对于401错误，显示未授权
+      errorMessage = t('auth.unauthorized')
+    } else if (error.response.status === 403) {
+      // 对于403错误，显示权限不足
+      errorMessage = t('common.forbidden')
     }
   } else if (error.request) {
     // 请求已发出，但没有收到响应
