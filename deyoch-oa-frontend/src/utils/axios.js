@@ -7,6 +7,9 @@ import { useUserStore } from '@/stores/user'
 // 导入i18n实例，用于国际化
 import i18n from '@/lang'
 
+// 标志位：防止重复显示登录对话框
+let isLoginDialogShown = false
+
 /**
  * 创建Axios实例
  * 用于配置全局的请求参数和默认设置
@@ -71,24 +74,35 @@ service.interceptors.response.use(
       if (res.code !== 200) {
         // 特殊处理401和403错误：未登录或登录过期、权限不足
         if (res.code === 401 || res.code === 403) {
-          // 获取用户Store实例
-          const userStore = useUserStore()
-          // 使用i18n翻译提示信息
-          const t = i18n.global.t
-          // 显示确认对话框，提示用户重新登录
-          ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
-            confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
-            cancelButtonText: t('common.cancel'), // 取消按钮文本
-            type: 'warning' // 对话框类型为警告
-          }).then(() => {
-            // 用户确认后，执行登出操作
-            userStore.logout()
-            // 刷新页面，重新进入登录流程
-            location.reload()
-          })
+          // 检查是否已经显示了登录对话框，避免重复显示
+          if (!isLoginDialogShown) {
+            isLoginDialogShown = true
+            
+            // 获取用户Store实例
+            const userStore = useUserStore()
+            // 使用i18n翻译提示信息
+            const t = i18n.global.t
+            // 显示确认对话框，提示用户重新登录
+            ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
+              confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
+              cancelButtonText: t('common.cancel'), // 取消按钮文本
+              type: 'warning' // 对话框类型为警告
+            }).then(() => {
+              // 用户确认后，执行登出操作
+              userStore.logout()
+              // 刷新页面，重新进入登录流程
+              location.reload()
+            }).finally(() => {
+              // 重置标志位
+              isLoginDialogShown = false
+            })
+          }
+          
+          // 不传递错误给组件，避免组件重复显示错误信息
+          return Promise.reject(new Error(''))
         }
         
-        // 将错误传递给调用者，不显示错误消息
+        // 其他错误，传递给调用者，显示错误消息
         return Promise.reject(new Error(res.message || 'Error'))
       } else {
         // 响应成功，返回res.data，这是前端组件期望的数组格式
@@ -104,26 +118,38 @@ service.interceptors.response.use(
     // 统一处理响应错误
     console.error('Axios response error:', error)
     
-    // 获取用户Store实例和i18n翻译
-    const userStore = useUserStore()
+    // 获取i18n翻译
     const t = i18n.global.t
     
     // 处理403错误：权限不足或token过期
     if (error.response && error.response.status === 403) {
-      // 显示确认对话框，提示用户重新登录
-      ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
-        confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
-        cancelButtonText: t('common.cancel'), // 取消按钮文本
-        type: 'warning' // 对话框类型为警告
-      }).then(() => {
-        // 用户确认后，执行登出操作
-        userStore.logout()
-        // 刷新页面，重新进入登录流程
-        location.reload()
-      })
+      // 检查是否已经显示了登录对话框，避免重复显示
+      if (!isLoginDialogShown) {
+        isLoginDialogShown = true
+        
+        // 获取用户Store实例
+        const userStore = useUserStore()
+        // 显示确认对话框，提示用户重新登录
+        ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
+          confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
+          cancelButtonText: t('common.cancel'), // 取消按钮文本
+          type: 'warning' // 对话框类型为警告
+        }).then(() => {
+          // 用户确认后，执行登出操作
+          userStore.logout()
+          // 刷新页面，重新进入登录流程
+          location.reload()
+        }).finally(() => {
+          // 重置标志位
+          isLoginDialogShown = false
+        })
+      }
+      
+      // 不传递错误给组件，避免组件重复显示错误信息
+      return Promise.reject(new Error(''))
     } else {
-      // 其他错误，显示错误消息
-      ElMessage.error(error.message || t('common.operationFailed'))
+      // 其他错误，显示友好的错误消息
+      ElMessage.error(t('common.operationFailed'))
     }
     
     // 将错误传递给调用者
