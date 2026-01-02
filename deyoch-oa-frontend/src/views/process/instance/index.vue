@@ -211,7 +211,10 @@ const loadProcessList = async () => {
     const data = await getProcessList()
     processList.value = data
   } catch (error) {
-    ElMessage.error('获取流程列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取流程列表失败：' + error.message)
+    }
   }
 }
 
@@ -230,7 +233,10 @@ const getProcessInstanceList = async () => {
     })
     pagination.total = data.length
   } catch (error) {
-    ElMessage.error('获取流程实例列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取流程实例列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -307,7 +313,12 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           getProcessInstanceList()
         } catch (error) {
-          ElMessage.error((isEditMode.value ? t('processInstanceManagement.editFailed') : t('processInstanceManagement.addFailed')) + '：' + error.message)
+          // 只在error.message不为空时显示详细错误信息
+          if (error.message) {
+            ElMessage.error((isEditMode.value ? t('processInstanceManagement.editFailed') : t('processInstanceManagement.addFailed')) + '：' + error.message)
+          } else {
+            ElMessage.error(isEditMode.value ? t('processInstanceManagement.editFailed') : t('processInstanceManagement.addFailed'))
+          }
         }
     }
   })
@@ -330,7 +341,10 @@ const handleDeleteProcessInstance = async (row) => {
     getProcessInstanceList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('processInstanceManagement.deleteFailed') + '：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error(t('processInstanceManagement.deleteFailed') + '：' + error.message)
+      }
     }
   }
 }
@@ -342,7 +356,10 @@ const handleStartProcessInstance = async (row) => {
     ElMessage.success(t('processInstanceManagement.startSuccess'))
     getProcessInstanceList()
   } catch (error) {
-    ElMessage.error(t('processInstanceManagement.startFailed') + '：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error(t('processInstanceManagement.startFailed') + '：' + error.message)
+    }
   }
 }
 
@@ -353,7 +370,10 @@ const handleCompleteProcessInstance = async (row) => {
     ElMessage.success(t('processInstanceManagement.completeSuccess'))
     getProcessInstanceList()
   } catch (error) {
-    ElMessage.error(t('processInstanceManagement.completeFailed') + '：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error(t('processInstanceManagement.completeFailed') + '：' + error.message)
+    }
   }
 }
 

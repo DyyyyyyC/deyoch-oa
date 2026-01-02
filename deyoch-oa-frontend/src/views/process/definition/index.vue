@@ -213,7 +213,10 @@ const getProcessList = async () => {
     processList.value = data
     pagination.total = data.length
   } catch (error) {
-    ElMessage.error('获取流程列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取流程列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -288,7 +291,12 @@ const handleSubmit = async () => {
         dialogVisible.value = false
         getProcessList()
       } catch (error) {
-        ElMessage.error((isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed')) + '：' + error.message)
+        // 只在error.message不为空时显示详细错误信息
+        if (error.message) {
+          ElMessage.error((isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed')) + '：' + error.message)
+        } else {
+          ElMessage.error(isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed'))
+        }
       }
     }
   })
@@ -311,7 +319,10 @@ const handleDeleteProcess = async (row) => {
     getProcessList()
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('processManagement.deleteFailed') + '：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error(t('processManagement.deleteFailed') + '：' + error.message)
+      }
     }
   }
 }

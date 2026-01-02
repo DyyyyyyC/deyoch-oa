@@ -211,7 +211,10 @@ const getAnnouncementList = async () => {
     announcementList.value = data
     pagination.total = data.length
   } catch (error) {
-    ElMessage.error('获取公告列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取公告列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -305,7 +308,10 @@ const handleBatchDelete = async () => {
     selectedAnnouncements.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
+      }
     }
   }
 }
@@ -339,10 +345,20 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           getAnnouncementList()
         } else {
-          ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + response.message)
+          // 只在response.message不为空时显示详细错误信息
+          if (response.message) {
+            ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + response.message)
+          } else {
+            ElMessage.error(isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed'))
+          }
         }
       } catch (error) {
-        ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + error.message)
+        // 只在error.message不为空时显示详细错误信息
+        if (error.message) {
+          ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + error.message)
+        } else {
+          ElMessage.error(isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed'))
+        }
       }
     }
   })

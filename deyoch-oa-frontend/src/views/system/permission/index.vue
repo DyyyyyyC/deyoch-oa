@@ -238,7 +238,10 @@ const getPermissionList = async () => {
     // 过滤出父权限列表（用于添加/编辑时选择父权限）
     parentPermissionList.value = permData.filter(perm => perm.parentId === 0)
   } catch (error) {
-    ElMessage.error('获取权限列表失败：' + error.message)
+    // 只在error.message不为空时显示错误信息
+    if (error.message) {
+      ElMessage.error('获取权限列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -258,7 +261,10 @@ const getPermissionTree = async () => {
     const treeData = await get('/permission/tree')
     permissionTree.value = treeData
   } catch (error) {
-    ElMessage.error('获取权限树失败：' + error.message)
+    // 只在error.message不为空时显示错误信息
+    if (error.message) {
+      ElMessage.error('获取权限树失败：' + error.message)
+    }
   } finally {
     treeLoading.value = false
   }
@@ -343,7 +349,10 @@ const handleBatchDelete = async () => {
     selectedPermissions.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除权限失败：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('删除权限失败：' + error.message)
+      }
     }
   }
 }
@@ -356,7 +365,10 @@ const handleStatusChange = async (row) => {
       status: row.status
     })
   } catch (error) {
-    ElMessage.error('更新状态失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('更新状态失败：' + error.message)
+    }
     // 恢复原来的状态
     getPermissionList()
   }
@@ -382,7 +394,12 @@ const handleSubmit = async () => {
     getPermissionList()
     getPermissionTree()
   } catch (error) {
-    ElMessage.error((form.id ? '编辑权限失败' : '添加权限失败') + '：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error((form.id ? '编辑权限失败' : '添加权限失败') + '：' + error.message)
+    } else {
+      ElMessage.error(form.id ? '编辑权限失败' : '添加权限失败')
+    }
   }
 }
 

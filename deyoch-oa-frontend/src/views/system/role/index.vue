@@ -226,7 +226,10 @@ const getRoleList = async () => {
     roleList.value = roleData
     pagination.total = roleData.length
   } catch (error) {
-    ElMessage.error('获取角色列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取角色列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -246,7 +249,10 @@ const getPermissionTree = async () => {
     const treeData = await get('/permission/tree')
     permissionTree.value = treeData
   } catch (error) {
-    ElMessage.error('获取权限树失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取权限树失败：' + error.message)
+    }
   } finally {
     permissionLoading.value = false
   }
@@ -324,7 +330,10 @@ const handleBatchDelete = async () => {
     selectedRoles.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除角色失败：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('删除角色失败：' + error.message)
+      }
     }
   }
 }
@@ -335,7 +344,10 @@ const handleStatusChange = async (row) => {
     // 使用现有的更新角色端点，直接传递包含status的完整row对象
     await put('/role/' + row.id, row)
   } catch (error) {
-    ElMessage.error('更新状态失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('更新状态失败：' + error.message)
+    }
     // 恢复原来的状态
     getRoleList()
   }
@@ -362,7 +374,10 @@ const handleSubmit = async () => {
     getRoleList()
   } catch (error) {
     if (error.name === 'Error') {
-      ElMessage.error('提交失败：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('提交失败：' + error.message)
+      }
     }
   }
 }
@@ -395,7 +410,10 @@ const getRolePermissions = async (roleId) => {
       }
     }, 100)
   } catch (error) {
-    ElMessage.error('获取角色权限失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取角色权限失败：' + error.message)
+    }
   }
 }
 
@@ -412,7 +430,10 @@ const handlePermissionSubmit = async () => {
     ElMessage.success('分配权限成功')
     permissionDialogVisible.value = false
   } catch (error) {
-    ElMessage.error('分配权限失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('分配权限失败：' + error.message)
+    }
   }
 }
 

@@ -254,7 +254,10 @@ const getScheduleList = async () => {
   } catch (error) {
     scheduleList.value = []
     pagination.total = 0
-    ElMessage.error('获取日程列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取日程列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -350,7 +353,10 @@ const handleBatchDelete = async () => {
     selectedSchedules.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除日程失败：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('删除日程失败：' + error.message)
+      }
     }
   }
 }
@@ -387,10 +393,20 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           getScheduleList()
         } else {
-          ElMessage.error((isEditMode.value ? '编辑日程失败' : '添加日程失败') + '：' + response.message)
+          // 只在response.message不为空时显示详细错误信息
+          if (response.message) {
+            ElMessage.error((isEditMode.value ? '编辑日程失败' : '添加日程失败') + '：' + response.message)
+          } else {
+            ElMessage.error(isEditMode.value ? '编辑日程失败' : '添加日程失败')
+          }
         }
       } catch (error) {
-        ElMessage.error((isEditMode.value ? '编辑日程失败' : '添加日程失败') + '：' + error.message)
+        // 只在error.message不为空时显示详细错误信息
+        if (error.message) {
+          ElMessage.error((isEditMode.value ? '编辑日程失败' : '添加日程失败') + '：' + error.message)
+        } else {
+          ElMessage.error(isEditMode.value ? '编辑日程失败' : '添加日程失败')
+        }
       }
     }
   })
@@ -405,10 +421,20 @@ const handleUpdateScheduleStatus = async (row, status) => {
       ElMessage.success(`日程已${statusText}`)
       getScheduleList()
     } else {
-      ElMessage.error('更新日程状态失败：' + response.message)
+      // 只在response.message不为空时显示详细错误信息
+      if (response.message) {
+        ElMessage.error('更新日程状态失败：' + response.message)
+      } else {
+        ElMessage.error('更新日程状态失败')
+      }
     }
   } catch (error) {
-    ElMessage.error('更新日程状态失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('更新日程状态失败：' + error.message)
+    } else {
+      ElMessage.error('更新日程状态失败')
+    }
   }
 }
 

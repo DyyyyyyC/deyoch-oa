@@ -219,7 +219,10 @@ const getUserList = async () => {
     userList.value = userData
     pagination.total = userData.length
   } catch (error) {
-    ElMessage.error('获取用户列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取用户列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -232,7 +235,10 @@ const getRoleList = async () => {
     const roleData = await get('/role/list')
     roleList.value = roleData
   } catch (error) {
-    ElMessage.error('获取角色列表失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取角色列表失败：' + error.message)
+    }
   }
 }
 
@@ -325,7 +331,10 @@ const handleBatchDelete = async () => {
     selectedUsers.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error('删除用户失败：' + error.message)
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('删除用户失败：' + error.message)
+      }
     }
   }
 }
@@ -337,7 +346,10 @@ const handleStatusChange = async (row) => {
     // 后端使用@RequestParam接收status参数，所以通过查询字符串传递
     await put(`/user/${row.id}/status?status=${row.status}`)
   } catch (error) {
-    ElMessage.error('更新状态失败：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('更新状态失败：' + error.message)
+    }
     // 恢复原来的状态
     getUserList()
   }
@@ -362,7 +374,12 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     getUserList()
   } catch (error) {
-    ElMessage.error((form.id ? '编辑用户失败' : '添加用户失败') + '：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error((form.id ? '编辑用户失败' : '添加用户失败') + '：' + error.message)
+    } else {
+      ElMessage.error(form.id ? '编辑用户失败' : '添加用户失败')
+    }
   }
 }
 

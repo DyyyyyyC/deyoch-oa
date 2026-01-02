@@ -268,7 +268,10 @@ const getTaskList = async () => {
   } catch (error) {
     taskList.value = []
     pagination.total = 0
-    ElMessage.error('获取任务列表失败：' + error.message)
+    // 只在error.message不为空时显示错误信息
+    if (error.message) {
+      ElMessage.error('获取任务列表失败：' + error.message)
+    }
   } finally {
     loading.value = false
   }
@@ -364,7 +367,10 @@ const handleBatchDelete = async () => {
     selectedTasks.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
+      // 只在error.message不为空时显示错误信息
+      if (error.message) {
+        ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
+      }
     }
   }
 }
@@ -401,10 +407,20 @@ const handleSubmit = async () => {
           dialogVisible.value = false
           getTaskList()
         } else {
-          ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + response.message)
+          // 只在response.message不为空时显示详细错误信息
+          if (response.message) {
+            ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + response.message)
+          } else {
+            ElMessage.error(isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed'))
+          }
         }
       } catch (error) {
-        ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + error.message)
+        // 只在error.message不为空时显示详细错误信息
+        if (error.message) {
+          ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + error.message)
+        } else {
+          ElMessage.error(isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed'))
+        }
       }
     }
   })
@@ -420,10 +436,20 @@ const handleUpdateTaskStatus = async (row, status) => {
       ElMessage.success(t('taskManagement.updateStatusSuccess'))
       getTaskList()
     } else {
-      ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + response.message)
+      // 只在response.message不为空时显示详细错误信息
+      if (response.message) {
+        ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + response.message)
+      } else {
+        ElMessage.error(t('taskManagement.updateStatusFailed'))
+      }
     }
   } catch (error) {
-    ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + error.message)
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + error.message)
+    } else {
+      ElMessage.error(t('taskManagement.updateStatusFailed'))
+    }
   }
 }
 
