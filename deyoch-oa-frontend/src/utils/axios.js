@@ -69,8 +69,8 @@ service.interceptors.response.use(
     // 统一处理响应码
       // 这里假设后端约定：code=200表示成功，其他表示失败
       if (res.code !== 200) {
-        // 特殊处理401错误：未登录或登录过期
-        if (res.code === 401) {
+        // 特殊处理401和403错误：未登录或登录过期、权限不足
+        if (res.code === 401 || res.code === 403) {
           // 获取用户Store实例
           const userStore = useUserStore()
           // 使用i18n翻译提示信息
@@ -101,8 +101,31 @@ service.interceptors.response.use(
    * @returns {Promise} - 被拒绝的Promise
    */
   (error) => {
-    // 不显示错误消息，由调用者自行处理
+    // 统一处理响应错误
     console.error('Axios response error:', error)
+    
+    // 获取用户Store实例和i18n翻译
+    const userStore = useUserStore()
+    const t = i18n.global.t
+    
+    // 处理403错误：权限不足或token过期
+    if (error.response && error.response.status === 403) {
+      // 显示确认对话框，提示用户重新登录
+      ElMessageBox.confirm(t('auth.unauthorized'), t('auth.prompt'), {
+        confirmButtonText: t('auth.loginAgain'), // 确认按钮文本
+        cancelButtonText: t('common.cancel'), // 取消按钮文本
+        type: 'warning' // 对话框类型为警告
+      }).then(() => {
+        // 用户确认后，执行登出操作
+        userStore.logout()
+        // 刷新页面，重新进入登录流程
+        location.reload()
+      })
+    } else {
+      // 其他错误，显示错误消息
+      ElMessage.error(error.message || t('common.operationFailed'))
+    }
+    
     // 将错误传递给调用者
     return Promise.reject(error)
   }

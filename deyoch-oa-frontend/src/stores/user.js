@@ -15,6 +15,7 @@ export const useUserStore = defineStore('user', {
     const userInfo = userInfoStr ? JSON.parse(userInfoStr) : null
     return {
       token: localStorage.getItem('token'), // 用户认证token，从本地存储获取
+      tokenExpireTime: localStorage.getItem('tokenExpireTime'), // token过期时间，从本地存储获取
       userInfo: userInfo,                   // 用户详细信息，从本地存储获取
       roles: userInfo?.roles || [],         // 用户角色列表，从userInfo中获取
       permissions: userInfo?.permissions || [], // 用户权限列表，从userInfo中获取
@@ -32,7 +33,7 @@ export const useUserStore = defineStore('user', {
       {
         key: 'user', // 存储键名
         storage: localStorage, // 存储方式：localStorage
-        paths: ['token', 'userInfo', 'roles', 'permissions'] // 需要持久化的字段
+        paths: ['token', 'tokenExpireTime', 'userInfo', 'roles', 'permissions'] // 需要持久化的字段，添加tokenExpireTime
       }
     ]
   },
@@ -55,6 +56,15 @@ export const useUserStore = defineStore('user', {
      */
     hasPermission: (state) => (permission) => {
       return state.permissions.includes(permission) // 检查权限列表中是否包含指定权限
+    },
+    
+    /**
+     * 检查token是否过期
+     * @returns {boolean} 是否过期
+     */
+    isTokenExpired: (state) => {
+      if (!state.tokenExpireTime) return false
+      return new Date().getTime() > new Date(state.tokenExpireTime).getTime()
     }
   },
   
@@ -72,8 +82,15 @@ export const useUserStore = defineStore('user', {
       // 确保userInfo是对象
       const validUserInfo = userInfo || {};
       
+      // 计算token过期时间
+      // 假设后端返回expireTime或设置默认过期时间24小时
+      const now = new Date();
+      const expiresIn = validUserInfo.expiresIn || 24 * 60 * 60 * 1000; // 默认24小时
+      const tokenExpireTime = validUserInfo.expireTime || new Date(now.getTime() + expiresIn).toISOString();
+      
       // 更新状态
       this.token = token;
+      this.tokenExpireTime = tokenExpireTime;
       this.userInfo = validUserInfo;
       this.roles = validUserInfo.roles || [];       // 处理角色，默认空数组
       this.permissions = validUserInfo.permissions || []; // 处理权限，默认空数组
@@ -81,6 +98,7 @@ export const useUserStore = defineStore('user', {
       
       // 保存到本地存储，实现状态持久化
       localStorage.setItem('token', token);
+      localStorage.setItem('tokenExpireTime', tokenExpireTime);
       localStorage.setItem('userInfo', JSON.stringify(validUserInfo));
     },
     
@@ -91,6 +109,7 @@ export const useUserStore = defineStore('user', {
     logout() {
       // 清除状态
       this.token = null
+      this.tokenExpireTime = null
       this.userInfo = null
       this.roles = []
       this.permissions = []
@@ -98,6 +117,7 @@ export const useUserStore = defineStore('user', {
       
       // 清除本地存储
       localStorage.removeItem('token')
+      localStorage.removeItem('tokenExpireTime')
       localStorage.removeItem('userInfo')
     },
     
