@@ -1,5 +1,5 @@
 <template>
-  <div class="role-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('roleManagement.title') }}</h2>
@@ -51,9 +51,9 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="roleName" :label="$t('roleManagement.roleName')" />
-        <el-table-column prop="roleCode" :label="$t('roleManagement.roleCode')" />
-        <el-table-column prop="description" :label="$t('roleManagement.description')" />
+        <el-table-column prop="roleName" :label="$t('roleManagement.roleName')" width="120" />
+        <el-table-column prop="roleCode" :label="$t('roleManagement.roleCode')" width="120" />
+        <el-table-column prop="description" :label="$t('roleManagement.description')" width="200" />
         <el-table-column prop="status" :label="$t('roleManagement.status')" width="120">
           <template #default="scope">
             <el-switch
@@ -64,8 +64,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" width="200" />
+        <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -296,22 +296,26 @@ const handleAddRole = () => {
 }
 
 // 批量编辑角色
-const handleBatchEdit = (row) => {
+const handleBatchEdit = () => {
+  if (selectedRoles.value.length !== 1) {
+    ElMessage.warning('请选择一个角色进行编辑')
+    return
+  }
   // 填充表单数据
-  Object.assign(form, selectedRoles[0])
+  Object.assign(form, selectedRoles.value[0])
   // 打开对话框
   dialogVisible.value = true
 }
 
 // 批量删除角色
 const handleBatchDelete = async () => {
-  if (selectedRoles.length === 0) {
+  if (selectedRoles.value.length === 0) {
     ElMessage.warning('请选择要删除的角色')
     return
   }
   
   try {
-    const roleNames = selectedRoles.map(role => role.roleName).join(', ')
+    const roleNames = selectedRoles.value.map(role => role.roleName).join(', ')
     await ElMessageBox.confirm('确定要删除角色 ' + roleNames + ' 吗？', '警告', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -319,7 +323,7 @@ const handleBatchDelete = async () => {
     })
     
     // 批量删除
-    for (const role of selectedRoles) {
+    for (const role of selectedRoles.value) {
       // axios拦截器已经处理了code检查，直接返回data字段
       await del('/role/' + role.id)
     }
@@ -384,16 +388,16 @@ const handleSubmit = async () => {
 
 // 批量打开分配权限对话框
 const handleBatchAssignPermission = async () => {
-  if (selectedRoles.length !== 1) {
+  if (selectedRoles.value.length !== 1) {
     ElMessage.warning('请选择一个角色进行权限分配')
     return
   }
   // 保存当前角色ID
-  currentRoleId.value = selectedRoles[0].id
+  currentRoleId.value = selectedRoles.value[0].id
   // 加载权限树
   await getPermissionTree()
   // 获取角色已分配的权限
-  await getRolePermissions(selectedRoles[0].id)
+  await getRolePermissions(selectedRoles.value[0].id)
   // 打开对话框
   permissionDialogVisible.value = true
 }
@@ -444,38 +448,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.role-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    padding: 10px 0;
-  }
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
+/* 角色管理页面特定样式 */
 .dialog-footer {
   text-align: right;
 }

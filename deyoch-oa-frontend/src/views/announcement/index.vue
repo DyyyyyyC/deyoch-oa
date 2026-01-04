@@ -1,5 +1,5 @@
 <template>
-  <div class="announcement-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('announcementManagement.title') }}</h2>
@@ -44,9 +44,9 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('announcementManagement.title')" />
-        <el-table-column prop="publisher" :label="$t('announcementManagement.publisher')" />
-        <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="200" />
+        <el-table-column prop="title" :label="$t('announcementManagement.title')" width="180" />
+        <el-table-column prop="publisher" :label="$t('announcementManagement.publisher')" width="120" />
+        <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="180" />
         <el-table-column prop="status" :label="$t('announcementManagement.status')" width="120">
           <template #default="scope">
             <el-switch
@@ -57,8 +57,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -260,12 +260,12 @@ const handleAddAnnouncement = () => {
 
 // 批量编辑公告
 const handleBatchEdit = () => {
-  if (selectedAnnouncements.length !== 1) {
+  if (selectedAnnouncements.value.length !== 1) {
     ElMessage.warning('请选择一个公告进行编辑')
     return
   }
   // 填充表单数据
-  const row = selectedAnnouncements[0]
+  const row = selectedAnnouncements.value[0]
   isEditMode.value = true
   announcementForm.id = row.id
   announcementForm.title = row.title
@@ -277,13 +277,13 @@ const handleBatchEdit = () => {
 
 // 批量删除公告
 const handleBatchDelete = async () => {
-  if (selectedAnnouncements.length === 0) {
+  if (selectedAnnouncements.value.length === 0) {
     ElMessage.warning('请选择要删除的公告')
     return
   }
   
   try {
-    const titles = selectedAnnouncements.map(announcement => announcement.title).join(', ')
+    const titles = selectedAnnouncements.value.map(announcement => announcement.title).join(', ')
     await ElMessageBox.confirm(
       t('common.confirmDelete'),
       t('common.confirm'),
@@ -295,11 +295,8 @@ const handleBatchDelete = async () => {
     )
     
     // 批量删除
-    for (const announcement of selectedAnnouncements) {
-      const response = await deleteAnnouncement(announcement.id)
-      if (response.code !== 200) {
-        throw new Error(response.message)
-      }
+    for (const announcement of selectedAnnouncements.value) {
+      await deleteAnnouncement(announcement.id)
     }
     
     ElMessage.success(t('announcementManagement.deleteSuccess'))
@@ -308,10 +305,8 @@ const handleBatchDelete = async () => {
     selectedAnnouncements.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      // 只在error.message不为空时显示详细错误信息
-      if (error.message) {
-        ElMessage.error(t('announcementManagement.deleteFailed') + '：' + error.message)
-      }
+      // 错误信息已在axios拦截器中处理，这里无需重复处理
+      console.error('Delete error:', error)
     }
   }
 }
@@ -331,45 +326,30 @@ const resetForm = () => {
 // 提交表单
 const handleSubmit = async () => {
   if (!announcementFormRef.value) return
-  await announcementFormRef.value.validate(async (valid) => {
-    if (valid) {
-      try {
-        let response
-        if (isEditMode.value) {
-          response = await updateAnnouncement(announcementForm.id, announcementForm)
-        } else {
-          response = await createAnnouncement(announcementForm)
-        }
-        if (response.code === 200) {
-          ElMessage.success(isEditMode.value ? t('announcementManagement.editSuccess') : t('announcementManagement.addSuccess'))
-          dialogVisible.value = false
-          getAnnouncementList()
-        } else {
-          // 只在response.message不为空时显示详细错误信息
-          if (response.message) {
-            ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + response.message)
-          } else {
-            ElMessage.error(isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed'))
-          }
-        }
-      } catch (error) {
-        // 只在error.message不为空时显示详细错误信息
-        if (error.message) {
-          ElMessage.error((isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed')) + '：' + error.message)
-        } else {
-          ElMessage.error(isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed'))
-        }
-      }
+  try {
+    await announcementFormRef.value.validate()
+    if (isEditMode.value) {
+      await updateAnnouncement(announcementForm.id, announcementForm)
+      ElMessage.success(t('announcementManagement.editSuccess'))
+    } else {
+      await createAnnouncement(announcementForm)
+      ElMessage.success(t('announcementManagement.addSuccess'))
     }
-  })
+    dialogVisible.value = false
+    getAnnouncementList()
+  } catch (error) {
+    // 验证失败或API调用失败会进入这里
+    // 错误信息已在axios拦截器中处理，这里无需重复处理
+    console.error('Submit error:', error)
+  }
 }
 
 // 状态变更
 const handleStatusChange = async (row) => {
+  // 保存原始状态，用于失败时恢复
+  const originalStatus = row.status
+  
   try {
-    // 保存原始状态，用于失败时恢复
-    const originalStatus = row.status
-    
     // 调用API
     if (row.status === 1) {
       await publishAnnouncement(row.id)
@@ -383,8 +363,9 @@ const handleStatusChange = async (row) => {
     getAnnouncementList()
   } catch (error) {
     // 如果失败，恢复原来的状态
-    row.status = row.status === 1 ? 0 : 1
-    ElMessage.error(t('common.operationFailed') + '：' + (error.message || '未知错误'))
+    row.status = originalStatus
+    // 错误信息已在axios拦截器中处理，这里无需重复处理
+    console.error('Status change error:', error)
   }
 }
 
@@ -395,35 +376,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.announcement-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-  display: flex;
-  gap: 5px; /* 减小按钮间距 */
-  margin-bottom: 15px;
-  padding: 10px 0;
-}
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+/* 公告管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
 }
 </style>

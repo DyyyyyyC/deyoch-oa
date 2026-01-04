@@ -1,5 +1,5 @@
 <template>
-  <div class="schedule-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('scheduleManagement.title') }}</h2>
@@ -44,12 +44,12 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" min-width="170"/>
-        <el-table-column prop="content" :label="$t('scheduleManagement.content')" min-width="200" />
-        <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="200" />
-        <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="200" />
-        <el-table-column prop="location" :label="$t('scheduleManagement.location')" width="200" />
-        <el-table-column prop="reminderTime" :label="$t('scheduleManagement.reminderTime')" width="200" />
+        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" width="150"/>
+        <el-table-column prop="content" :label="$t('scheduleManagement.content')" width="180" />
+        <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="180" />
+        <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="180" />
+        <el-table-column prop="location" :label="$t('scheduleManagement.location')" width="150" />
+        <el-table-column prop="reminderTime" :label="$t('scheduleManagement.reminderTime')" width="180" />
         <el-table-column prop="status" :label="$t('scheduleManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 0 ? 'warning' : scope.row.status === 1 ? 'success' : 'danger'">
@@ -57,8 +57,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -302,12 +302,12 @@ const handleAddSchedule = () => {
 
 // 批量编辑日程
 const handleBatchEdit = () => {
-  if (selectedSchedules.length !== 1) {
+  if (selectedSchedules.value.length !== 1) {
     ElMessage.warning('请选择一个日程进行编辑')
     return
   }
   // 填充表单数据
-  const row = selectedSchedules[0]
+  const row = selectedSchedules.value[0]
   isEditMode.value = true
   scheduleForm.id = row.id
   scheduleForm.title = row.title
@@ -322,13 +322,13 @@ const handleBatchEdit = () => {
 
 // 批量删除日程
 const handleBatchDelete = async () => {
-  if (selectedSchedules.length === 0) {
+  if (selectedSchedules.value.length === 0) {
     ElMessage.warning('请选择要删除的日程')
     return
   }
   
   try {
-    const titles = selectedSchedules.map(schedule => schedule.title).join(', ')
+    const titles = selectedSchedules.value.map(schedule => schedule.title).join(', ')
     await ElMessageBox.confirm(
       '确定要删除选中的日程吗？',
       '删除确认',
@@ -340,11 +340,8 @@ const handleBatchDelete = async () => {
     )
     
     // 批量删除
-    for (const schedule of selectedSchedules) {
-      const response = await deleteSchedule(schedule.id)
-      if (response.code !== 200) {
-        throw new Error(response.message)
-      }
+    for (const schedule of selectedSchedules.value) {
+      await deleteSchedule(schedule.id)
     }
     
     ElMessage.success('删除日程成功')
@@ -382,24 +379,14 @@ const handleSubmit = async () => {
   await scheduleFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        let response
         if (isEditMode.value) {
-          response = await updateSchedule(scheduleForm.id, scheduleForm)
+          await updateSchedule(scheduleForm.id, scheduleForm)
         } else {
-          response = await createSchedule(scheduleForm)
+          await createSchedule(scheduleForm)
         }
-        if (response.code === 200) {
-          ElMessage.success(isEditMode.value ? '编辑日程成功' : '添加日程成功')
-          dialogVisible.value = false
-          getScheduleList()
-        } else {
-          // 只在response.message不为空时显示详细错误信息
-          if (response.message) {
-            ElMessage.error((isEditMode.value ? '编辑日程失败' : '添加日程失败') + '：' + response.message)
-          } else {
-            ElMessage.error(isEditMode.value ? '编辑日程失败' : '添加日程失败')
-          }
-        }
+        ElMessage.success(isEditMode.value ? '编辑日程成功' : '添加日程成功')
+        dialogVisible.value = false
+        getScheduleList()
       } catch (error) {
         // 只在error.message不为空时显示详细错误信息
         if (error.message) {
@@ -415,19 +402,10 @@ const handleSubmit = async () => {
 // 更新日程状态
 const handleUpdateScheduleStatus = async (row, status) => {
   try {
-    const response = await updateScheduleStatus(row.id, status)
-    if (response.code === 200) {
-      const statusText = status === 0 ? '未开始' : status === 1 ? '进行中' : status === 2 ? '已结束' : '已取消'
-      ElMessage.success(`日程已${statusText}`)
-      getScheduleList()
-    } else {
-      // 只在response.message不为空时显示详细错误信息
-      if (response.message) {
-        ElMessage.error('更新日程状态失败：' + response.message)
-      } else {
-        ElMessage.error('更新日程状态失败')
-      }
-    }
+    await updateScheduleStatus(row.id, status)
+    const statusText = status === 0 ? '未开始' : status === 1 ? '进行中' : status === 2 ? '已结束' : '已取消'
+    ElMessage.success(`日程已${statusText}`)
+    getScheduleList()
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -445,35 +423,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.schedule-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-  display: flex;
-  gap: 5px; /* 减小按钮间距 */
-  margin-bottom: 15px;
-  padding: 10px 0;
-}
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+/* 日程管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
 }
 </style>

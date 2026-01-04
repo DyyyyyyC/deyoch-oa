@@ -1,6 +1,7 @@
 import { createApp } from 'vue'
 import App from './App.vue'
 import './style.css'
+import './style/management-layout.css' // 引入统一管理页面布局样式
 import router from './router' // 引入路由配置
 import pinia from './stores' // 引入Pinia配置
 import setupElementPlus from './plugins/element-plus' // 引入Element Plus配置

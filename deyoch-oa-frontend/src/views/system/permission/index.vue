@@ -1,5 +1,5 @@
 <template>
-  <div class="permission-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('permissionManagement.title') }}</h2>
@@ -47,11 +47,20 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="permName" :label="$t('permissionManagement.permName')" />
-        <el-table-column prop="permCode" :label="$t('permissionManagement.permCode')" />
+        <el-table-column prop="permName" :label="$t('permissionManagement.permName')" width="150" />
+        <el-table-column prop="permCode" :label="$t('permissionManagement.permCode')" width="150" />
+        <el-table-column prop="permType" :label="$t('permissionManagement.permType')" width="120">
+          <template #default="scope">
+            <el-tag :type="scope.row.permType === 'menu' ? 'success' : 'warning'">
+              {{ scope.row.permType === 'menu' ? '菜单' : '按钮' }}
+            </el-tag>
+          </template>
+        </el-table-column>
         <el-table-column prop="parentId" :label="$t('permissionManagement.parentId')" width="120" />
-        <el-table-column prop="parentName" :label="$t('permissionManagement.parentName')" />
-        <el-table-column prop="url" :label="$t('permissionManagement.url')" />
+        <el-table-column prop="parentName" :label="$t('permissionManagement.parentName')" width="120" />
+        <el-table-column prop="path" :label="$t('permissionManagement.path')" width="180" />
+        <el-table-column prop="component" :label="$t('permissionManagement.component')" width="200" />
+        <el-table-column prop="icon" :label="$t('permissionManagement.icon')" width="120" />
         <el-table-column prop="sort" :label="$t('permissionManagement.sort')" width="100" />
         <el-table-column prop="status" :label="$t('permissionManagement.status')" width="120">
           <template #default="scope">
@@ -63,8 +72,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" width="200" />
+        <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -99,19 +108,31 @@
         <el-form-item :label="$t('permissionManagement.permCode')" prop="permCode">
           <el-input v-model="form.permCode" :placeholder="$t('permissionManagement.enterPermCode')" />
         </el-form-item>
-        <el-form-item :label="$t('permissionManagement.parentPermission')" prop="parentId">
-          <el-select v-model="form.parentId" :placeholder="$t('permissionManagement.selectParentPermission')">
-            <el-option :label="$t('permissionManagement.rootPermission')" value="0" />
-            <el-option
-              v-for="perm in parentPermissionList"
-              :key="perm.id"
-              :label="perm.permName"
-              :value="perm.id"
-            />
+        <el-form-item :label="$t('permissionManagement.permType')" prop="permType">
+          <el-select v-model="form.permType" :placeholder="$t('permissionManagement.selectPermType')">
+            <el-option label="菜单" value="menu" />
+            <el-option label="按钮" value="button" />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('permissionManagement.url')" prop="url">
-          <el-input v-model="form.url" :placeholder="$t('permissionManagement.enterUrl')" />
+        <el-form-item :label="$t('permissionManagement.parentPermission')" prop="parentId">
+          <el-select v-model="form.parentId" :placeholder="$t('permissionManagement.selectParentPermission')">
+              <el-option :label="$t('permissionManagement.rootPermission')" :value="0" />
+              <el-option
+                v-for="perm in parentPermissionList"
+                :key="perm.id"
+                :label="perm.permName"
+                :value="perm.id"
+              />
+            </el-select>
+        </el-form-item>
+        <el-form-item :label="$t('permissionManagement.path')" prop="path">
+          <el-input v-model="form.path" :placeholder="$t('permissionManagement.enterPath')" />
+        </el-form-item>
+        <el-form-item :label="$t('permissionManagement.component')" prop="component">
+          <el-input v-model="form.component" :placeholder="$t('permissionManagement.enterComponent')" />
+        </el-form-item>
+        <el-form-item :label="$t('permissionManagement.icon')" prop="icon">
+          <el-input v-model="form.icon" :placeholder="$t('permissionManagement.enterIcon')" />
         </el-form-item>
         <el-form-item :label="$t('permissionManagement.sort')" prop="sort">
           <el-input-number v-model="form.sort" :min="0" :step="1" :placeholder="$t('permissionManagement.enterSort')" />
@@ -193,12 +214,16 @@ const pagination = reactive({
 // 对话框控制
 const dialogVisible = ref(false)
 const formRef = ref(null)
+// 权限表单数据
 const form = reactive({
   id: null,
   permName: '',
   permCode: '',
+  permType: 'menu', // 默认权限类型为菜单
   parentId: 0,
-  url: '',
+  path: '',
+  component: '',
+  icon: '',
   sort: 0,
   status: 1
 })
@@ -232,11 +257,24 @@ const getPermissionList = async () => {
   try {
     // axios拦截器已经处理了code检查，直接返回data字段
     const permData = await get('/permission/list')
-    permissionList.value = permData
-    pagination.total = permData.length
+    
+    // 处理parentName字段
+    const processedData = permData.map(perm => {
+      let parentName = ''
+      if (perm.parentId === 0) {
+        parentName = '根权限'
+      } else {
+        const parentPerm = permData.find(p => p.id === perm.parentId)
+        parentName = parentPerm ? parentPerm.permName : '未知权限'
+      }
+      return { ...perm, parentName }
+    })
+    
+    permissionList.value = processedData
+    pagination.total = processedData.length
     
     // 过滤出父权限列表（用于添加/编辑时选择父权限）
-    parentPermissionList.value = permData.filter(perm => perm.parentId === 0)
+    parentPermissionList.value = processedData.filter(perm => perm.parentId === 0)
   } catch (error) {
     // 只在error.message不为空时显示错误信息
     if (error.message) {
@@ -301,8 +339,11 @@ const handleAddPermission = () => {
   form.id = null
   form.permName = ''
   form.permCode = ''
+  form.permType = 'menu' // 默认权限类型为菜单
   form.parentId = 0
-  form.url = ''
+  form.path = ''
+  form.component = ''
+  form.icon = ''
   form.sort = 0
   form.status = 1
   // 打开对话框
@@ -311,25 +352,25 @@ const handleAddPermission = () => {
 
 // 批量编辑权限
 const handleBatchEdit = () => {
-  if (selectedPermissions.length !== 1) {
+  if (selectedPermissions.value.length !== 1) {
     ElMessage.warning('请选择一个权限进行编辑')
     return
   }
   // 填充表单数据
-  Object.assign(form, selectedPermissions[0])
+  Object.assign(form, selectedPermissions.value[0])
   // 打开对话框
   dialogVisible.value = true
 }
 
 // 批量删除权限
 const handleBatchDelete = async () => {
-  if (selectedPermissions.length === 0) {
+  if (selectedPermissions.value.length === 0) {
     ElMessage.warning('请选择要删除的权限')
     return
   }
   
   try {
-    const permNames = selectedPermissions.map(perm => perm.permName).join(', ')
+    const permNames = selectedPermissions.value.map(perm => perm.permName).join(', ')
     await ElMessageBox.confirm('确定要删除权限 ' + permNames + ' 吗？', '警告', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -337,7 +378,7 @@ const handleBatchDelete = async () => {
     })
     
     // 批量删除
-    for (const perm of selectedPermissions) {
+    for (const perm of selectedPermissions.value) {
       // axios拦截器已经处理了code检查，直接返回data字段
       await del('/permission/' + perm.id)
     }
@@ -411,38 +452,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.permission-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    padding: 10px 0;
-  }
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
+/* 权限管理页面特定样式 */
 .dialog-footer {
   text-align: right;
 }

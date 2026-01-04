@@ -1,0 +1,139 @@
+/* 统一管理页面布局样式 */
+.management-page {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 64px); /* 减去头部高度 */
+}
+
+/* 页面标题 */
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.page-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+/* 搜索卡片 */
+.search-card {
+  margin-bottom: 20px;
+  padding: 16px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 数据表格卡片 */
+.table-card {
+  margin-bottom: 20px;
+  border-radius: 4px;
+  background-color: #ffffff;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* 操作按钮区域 */
+.action-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 16px 16px 0;
+  align-items: center;
+}
+
+.action-area .el-button {
+  font-size: 14px;
+}
+
+/* 表格样式 */
+.table-card .el-table {
+  margin: 0 16px;
+}
+
+.table-card .el-table__inner-wrapper {
+  border-radius: 4px;
+}
+
+/* 调整表格列宽，使其更紧凑 */
+.table-card .el-table th,
+.table-card .el-table td {
+  padding: 8px 12px; /* 减少单元格内边距 */
+  font-size: 14px; /* 保持字体大小适中 */
+}
+
+/* 分页容器 */
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}
+
+/* 对话框样式统一 */
+.el-dialog {
+  border-radius: 4px;
+}
+
+.el-dialog__header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.el-dialog__body {
+  padding: 20px;
+}
+
+.el-dialog__footer {
+  padding: 12px 20px;
+  border-top: 1px solid #e4e7ed;
+  text-align: right;
+}
+
+/* 表单样式统一 */
+.el-form-item {
+  margin-bottom: 20px;
+}
+
+.el-form-item--medium .el-form-item__label {
+  font-size: 14px;
+}
+
+.el-form-item--medium .el-input__wrapper {
+  font-size: 14px;
+}
+
+/* 响应式设计 */
+@media (max-width: 768px) {
+  .management-page {
+    padding: 12px;
+  }
+  
+  .page-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .action-area {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+  
+  .search-card .el-form {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 12px;
+  }
+  
+  .search-card .el-form-item {
+    margin-bottom: 0;
+  }
+}

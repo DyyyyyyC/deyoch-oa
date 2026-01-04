@@ -5,12 +5,15 @@ import lombok.NoArgsConstructor;
 import lombok.AllArgsConstructor;
 import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.baomidou.mybatisplus.annotation.IdType;
+import com.baomidou.mybatisplus.annotation.TableId;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 public class DeyochDept {
 
+  @TableId(type = IdType.AUTO)
   private Long id;
   private String deptName;
   private Long parentId;

@@ -1,5 +1,5 @@
 <template>
-  <div class="user-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('userManagement.title') }}</h2>
@@ -50,11 +50,11 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="username" :label="$t('userManagement.username')" />
-        <el-table-column prop="nickname" :label="$t('userManagement.nickname')" />
-        <el-table-column prop="email" :label="$t('userManagement.email')" />
-        <el-table-column prop="phone" :label="$t('userManagement.phone')" />
-        <el-table-column prop="roleId" :label="$t('userManagement.roleId')" width="100" />
+        <el-table-column prop="username" :label="$t('userManagement.username')" width="120" />
+        <el-table-column prop="nickname" :label="$t('userManagement.nickname')" width="120" />
+        <el-table-column prop="email" :label="$t('userManagement.email')" width="180" />
+        <el-table-column prop="phone" :label="$t('userManagement.phone')" width="150" />
+        <el-table-column prop="roleName" :label="$t('userManagement.role')" width="120" />
         <el-table-column prop="status" :label="$t('userManagement.status')" width="120">
           <template #default="scope">
             <el-switch
@@ -65,8 +65,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" width="200" />
+        <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -97,9 +97,6 @@
       >
         <el-form-item :label="$t('userManagement.username')" prop="username">
           <el-input v-model="form.username" :placeholder="$t('userManagement.enterUsername')" :disabled="!!form.id" />
-          <div v-if="form.id" class="el-form-item__error" style="color: #67c23a; margin-top: 4px; font-size: 12px;">
-            {{ $t('userManagement.usernameCannotBeModified') }}
-          </div>
         </el-form-item>
         <el-form-item :label="$t('userManagement.nickname')" prop="nickname">
           <el-input v-model="form.nickname" :placeholder="$t('userManagement.enterNickname')" />
@@ -124,7 +121,7 @@
           </el-select>
         </el-form-item>
         <el-form-item :label="$t('userManagement.status')" prop="status">
-          <el-switch v-model="form.status" active-value="1" inactive-value="0" />
+          <el-switch v-model="form.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -210,24 +207,6 @@ const rules = {
   ]
 }
 
-// 获取用户列表
-const getUserList = async () => {
-  loading.value = true
-  try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const userData = await get('/user/list')
-    userList.value = userData
-    pagination.total = userData.length
-  } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('获取用户列表失败：' + error.message)
-    }
-  } finally {
-    loading.value = false
-  }
-}
-
 // 获取角色列表
 const getRoleList = async () => {
   try {
@@ -239,6 +218,39 @@ const getRoleList = async () => {
     if (error.message) {
       ElMessage.error('获取角色列表失败：' + error.message)
     }
+  }
+}
+
+// 获取用户列表
+const getUserList = async () => {
+  loading.value = true
+  try {
+    // 确保角色列表已加载
+    if (roleList.value.length === 0) {
+      await getRoleList()
+    }
+    
+    // axios拦截器已经处理了code检查，直接返回data字段
+    const userData = await get('/user/list')
+    
+    // 将用户数据与角色名称关联
+    const userListWithRoleName = userData.map(user => {
+      const role = roleList.value.find(role => role.id === user.roleId)
+      return {
+        ...user,
+        roleName: role ? role.roleName : '未知角色'
+      }
+    })
+    
+    userList.value = userListWithRoleName
+    pagination.total = userListWithRoleName.length
+  } catch (error) {
+    // 只在error.message不为空时显示详细错误信息
+    if (error.message) {
+      ElMessage.error('获取用户列表失败：' + error.message)
+    }
+  } finally {
+    loading.value = false
   }
 }
 
@@ -292,12 +304,32 @@ const handleAddUser = async () => {
 
 // 批量编辑用户
 const handleBatchEdit = async () => {
-  if (selectedUsers.length !== 1) {
+  if (selectedUsers.value.length !== 1) {
     ElMessage.warning('请选择一个用户进行编辑')
     return
   }
   // 填充表单数据
-  Object.assign(form, selectedUsers[0])
+  const user = selectedUsers.value[0]
+  
+  // 重置表单
+  form.id = null
+  form.username = ''
+  form.nickname = ''
+  form.email = ''
+  form.phone = ''
+  form.password = ''
+  form.roleId = null
+  form.status = 1
+  
+  // 填充数据
+  form.id = user.id
+  form.username = user.username
+  form.nickname = user.nickname
+  form.email = user.email
+  form.phone = user.phone
+  form.roleId = Number(user.roleId)
+  form.status = Number(user.status)
+  
   // 打开对话框前加载角色列表
   await getRoleList()
   // 打开对话框
@@ -306,13 +338,13 @@ const handleBatchEdit = async () => {
 
 // 批量删除用户
 const handleBatchDelete = async () => {
-  if (selectedUsers.length === 0) {
+  if (selectedUsers.value.length === 0) {
     ElMessage.warning('请选择要删除的用户')
     return
   }
   
   try {
-    const usernames = selectedUsers.map(user => user.username).join(', ')
+    const usernames = selectedUsers.value.map(user => user.username).join(', ')
     await ElMessageBox.confirm('确定要删除用户 ' + usernames + ' 吗？', '警告', {
       confirmButtonText: '确定',
       cancelButtonText: '取消',
@@ -320,7 +352,7 @@ const handleBatchDelete = async () => {
     })
     
     // 批量删除
-    for (const user of selectedUsers) {
+    for (const user of selectedUsers.value) {
       // axios拦截器已经处理了code检查，直接返回data字段
       await del('/user/' + user.id)
     }
@@ -391,38 +423,7 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.user-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-    display: flex;
-    gap: 5px;
-    margin-bottom: 20px;
-    padding: 10px 0;
-  }
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
-}
-
+/* 用户管理页面特定样式 */
 .dialog-footer {
   text-align: right;
 }

@@ -9,6 +9,7 @@ import com.deyoch.service.ScheduleService;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -20,6 +21,7 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ScheduleServiceImpl implements ScheduleService {
 
     private final DeyochScheduleMapper deyochScheduleMapper;
@@ -68,10 +70,17 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<DeyochSchedule> createSchedule(DeyochSchedule schedule) {
         try {
-            // 从JWT token中直接获取用户ID，无需查询数据库
-            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
-            if (userId == null) {
+            // 获取当前用户信息，优先从Token中获取，其次从SecurityContext获取
+            UserContextUtil.UserInfo userInfo = UserContextUtil.getCurrentUserInfo(jwtUtil);
+            if (userInfo == null) {
                 return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建日程");
+            }
+            
+            Long userId = userInfo.getUserId();
+            if (userId == null) {
+                // 如果用户ID为null，这里可以记录日志或者抛出更详细的错误
+                log.error("用户信息中缺失用户ID，无法创建日程");
+                return Result.error(ResultCode.UNAUTHORIZED, "用户信息不完整，无法创建日程");
             }
             
             // 设置创建时间和更新时间
@@ -86,7 +95,9 @@ public class ScheduleServiceImpl implements ScheduleService {
             deyochScheduleMapper.insert(schedule);
             return Result.success(schedule);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "创建日程失败：" + e.getMessage());
+            log.error("创建日程失败：", e);
+            // 不再暴露详细错误信息给前端
+            return Result.error(ResultCode.SYSTEM_ERROR, "创建日程失败，请稍后重试");
         }
     }
 

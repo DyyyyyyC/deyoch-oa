@@ -1,12 +1,8 @@
 <template>
-  <div class="process-instance-management">
-    <!-- 页面标题和操作按钮 -->
+  <div class="management-page">
+    <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('processInstanceManagement.title') }}</h2>
-      <el-button type="primary" @click="handleAddProcessInstance">
-        <el-icon><Plus /></el-icon>
-        {{ $t('processInstanceManagement.addProcessInstance') }}
-      </el-button>
     </div>
 
     <!-- 搜索表单 -->
@@ -24,18 +20,36 @@
 
     <!-- 流程实例列表 -->
     <el-card class="table-card">
+      <!-- 操作区域 -->
+      <div class="action-area">
+        <el-button type="primary" @click="handleAddProcessInstance">
+          <el-icon><Plus /></el-icon>
+          {{ $t('processInstanceManagement.addProcessInstance') }}
+        </el-button>
+        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcessInstances.length !== 1">
+          <el-icon><Edit /></el-icon>
+          {{ $t('common.edit') }}
+        </el-button>
+        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcessInstances.length === 0">
+          <el-icon><Delete /></el-icon>
+          {{ $t('common.delete') }}
+        </el-button>
+      </div>
+      
       <el-table
         v-loading="loading"
         :data="processInstanceList"
         border
         style="width: 100%"
+        @selection-change="handleSelectionChange"
       >
+        <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" />
-        <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" width="180" />
-        <el-table-column prop="initiator" :label="$t('processInstanceManagement.initiator')" />
-        <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" width="200" />
-        <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" width="200" />
+        <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" width="180" />
+        <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" width="150" />
+        <el-table-column prop="initiator" :label="$t('processInstanceManagement.initiator')" width="120" />
+        <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" width="180" />
+        <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" width="180" />
         <el-table-column prop="status" :label="$t('processInstanceManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="getStatusTagType(scope.row.status)">
@@ -43,24 +57,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
-        <el-table-column :label="$t('common.actions')" min-width="270" fixed="right">
-          <template #default="scope">
-            <el-button size="small" type="primary" @click="handleStartProcessInstance(scope.row)" :disabled="scope.row.status !== 0">
-              <el-icon><VideoPlay /></el-icon>
-              {{ $t('processInstanceManagement.start') }}
-            </el-button>
-            <el-button size="small" type="success" @click="handleCompleteProcessInstance(scope.row)" :disabled="scope.row.status !== 1">
-              <el-icon><CircleCheck /></el-icon>
-              {{ $t('processInstanceManagement.complete') }}
-            </el-button>
-            <el-button size="small" type="danger" @click="handleDeleteProcessInstance(scope.row)">
-              <el-icon><Delete /></el-icon>
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -163,6 +161,9 @@ const processInstanceList = ref([])
 // 流程列表（用于关联流程实例）
 const processList = ref([])
 
+// 选中的流程实例
+const selectedProcessInstances = ref([])
+
 // 分页信息
 const pagination = reactive({
   currentPage: 1,
@@ -242,6 +243,12 @@ const getProcessInstanceList = async () => {
   }
 }
 
+// 处理多选框选择变化
+const handleSelectionChange = (selection) => {
+  selectedProcessInstances.value = selection
+  console.log('选中的流程实例：', selectedProcessInstances.value)
+}
+
 // 搜索流程实例
 const handleSearch = () => {
   getProcessInstanceList()
@@ -274,6 +281,23 @@ const handleAddProcessInstance = () => {
 
 // 打开编辑流程实例对话框
 const handleEditProcessInstance = (row) => {
+  isEditMode.value = true
+  processInstanceForm.id = row.id
+  processInstanceForm.processId = row.processId
+  processInstanceForm.instanceName = row.instanceName
+  processInstanceForm.initiator = row.initiator
+  processInstanceForm.status = row.status
+  dialogVisible.value = true
+}
+
+// 批量编辑流程实例
+const handleBatchEdit = () => {
+  if (selectedProcessInstances.value.length !== 1) {
+    ElMessage.warning('请选择一个流程实例进行编辑')
+    return
+  }
+  // 填充表单数据
+  const row = selectedProcessInstances.value[0]
   isEditMode.value = true
   processInstanceForm.id = row.id
   processInstanceForm.processId = row.processId
@@ -324,58 +348,41 @@ const handleSubmit = async () => {
   })
 }
 
-// 删除流程实例
-const handleDeleteProcessInstance = async (row) => {
+// 批量删除流程实例
+const handleBatchDelete = async () => {
+  if (selectedProcessInstances.value.length === 0) {
+    ElMessage.warning('请选择要删除的流程实例')
+    return
+  }
+  
   try {
-    await ElMessageBox.confirm(
-      t('common.confirmDelete'),
-      t('common.confirm'),
-      {
-        confirmButtonText: t('common.confirm'),
-        cancelButtonText: t('common.cancel'),
-        type: 'warning'
-      }
-    )
-    const response = await deleteProcessInstance(row.id)
-    ElMessage.success(t('processInstanceManagement.deleteSuccess'))
+    const instanceNames = selectedProcessInstances.value.map(instance => instance.instanceName).join(', ')
+    await ElMessageBox.confirm('确定要删除流程实例 ' + instanceNames + ' 吗？', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    // 批量删除
+    for (const instance of selectedProcessInstances.value) {
+      await deleteProcessInstance(instance.id)
+    }
+    
+    ElMessage.success('删除流程实例成功')
     getProcessInstanceList()
+    // 清空选择
+    selectedProcessInstances.value = []
   } catch (error) {
     if (error !== 'cancel') {
       // 只在error.message不为空时显示详细错误信息
       if (error.message) {
-        ElMessage.error(t('processInstanceManagement.deleteFailed') + '：' + error.message)
+        ElMessage.error('删除流程实例失败：' + error.message)
       }
     }
   }
 }
 
-// 启动流程实例
-const handleStartProcessInstance = async (row) => {
-  try {
-    const response = await startProcessInstance(row.id)
-    ElMessage.success(t('processInstanceManagement.startSuccess'))
-    getProcessInstanceList()
-  } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error(t('processInstanceManagement.startFailed') + '：' + error.message)
-    }
-  }
-}
 
-// 完成流程实例
-const handleCompleteProcessInstance = async (row) => {
-  try {
-    const response = await completeProcessInstance(row.id)
-    ElMessage.success(t('processInstanceManagement.completeSuccess'))
-    getProcessInstanceList()
-  } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error(t('processInstanceManagement.completeFailed') + '：' + error.message)
-    }
-  }
-}
 
 // 根据状态获取标签类型
 const getStatusTagType = (status) => {
@@ -406,28 +413,8 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.process-instance-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+/* 流程实例管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
 }
 </style>

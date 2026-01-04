@@ -11,6 +11,7 @@ import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.PermissionService;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -25,6 +26,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class PermissionServiceImpl implements PermissionService {
 
     private final DeyochPermissionMapper deyochPermissionMapper;
@@ -99,6 +101,10 @@ public class PermissionServiceImpl implements PermissionService {
             if (permission.getStatus() == null) {
                 permission.setStatus(1L);
             }
+            // 确保权限类型不为空
+            if (permission.getPermType() == null || permission.getPermType().isEmpty()) {
+                permission.setPermType("menu"); // 默认权限类型为菜单
+            }
 
             // 设置创建时间和更新时间
             LocalDateTime now = LocalDateTime.now();
@@ -109,7 +115,10 @@ public class PermissionServiceImpl implements PermissionService {
             deyochPermissionMapper.insert(permission);
             return Result.success(permission);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "创建权限失败：" + e.getMessage());
+            // 记录详细日志
+            log.error("创建权限失败：", e);
+            // 不再暴露详细错误信息给前端
+            return Result.error(ResultCode.SYSTEM_ERROR, "创建权限失败，请稍后重试");
         }
     }
 

@@ -1,5 +1,5 @@
 <template>
-  <div class="process-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('processManagement.title') }}</h2>
@@ -45,10 +45,10 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="200" />
-        <el-table-column prop="processName" :label="$t('processManagement.processName')" min-width="180" />
-        <el-table-column prop="processKey" :label="$t('processManagement.processKey')" min-width="150" />
-        <el-table-column prop="description" :label="$t('processManagement.description')" min-width="200" />
+        <el-table-column prop="id" label="ID" width="150" />
+        <el-table-column prop="processName" :label="$t('processManagement.processName')" width="150" />
+        <el-table-column prop="processKey" :label="$t('processManagement.processKey')" width="120" />
+        <el-table-column prop="description" :label="$t('processManagement.description')" width="180" />
         <el-table-column prop="status" :label="$t('processManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
@@ -263,6 +263,23 @@ const handleEditProcess = (row) => {
   dialogVisible.value = true
 }
 
+// 批量编辑流程
+const handleBatchEdit = () => {
+  if (selectedProcesses.value.length !== 1) {
+    ElMessage.warning('请选择一个流程进行编辑')
+    return
+  }
+  // 填充表单数据
+  const row = selectedProcesses.value[0]
+  isEditMode.value = true
+  processForm.id = row.id
+  processForm.processName = row.processName
+  processForm.processKey = row.processKey
+  processForm.description = row.description
+  processForm.status = row.status
+  dialogVisible.value = true
+}
+
 // 重置表单
 const resetForm = () => {
   if (processFormRef.value) {
@@ -281,23 +298,23 @@ const handleSubmit = async () => {
   await processFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        let response
-        if (isEditMode.value) {
-          response = await updateProcess(processForm.id, processForm)
-        } else {
-          response = await createProcess(processForm)
+          let response
+          if (isEditMode.value) {
+            response = await updateProcess(processForm.id, processForm)
+          } else {
+            response = await createProcess(processForm)
+          }
+          ElMessage.success(isEditMode.value ? t('processManagement.editSuccess') : t('processManagement.addSuccess'))
+          dialogVisible.value = false
+          getProcessList()
+        } catch (error) {
+          // 只在error.message不为空时显示详细错误信息
+          if (error.message) {
+            ElMessage.error((isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed')) + '：' + error.message)
+          } else {
+            ElMessage.error(isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed'))
+          }
         }
-        ElMessage.success(isEditMode.value ? t('processManagement.editSuccess') : t('processManagement.addSuccess'))
-        dialogVisible.value = false
-        getProcessList()
-      } catch (error) {
-        // 只在error.message不为空时显示详细错误信息
-        if (error.message) {
-          ElMessage.error((isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed')) + '：' + error.message)
-        } else {
-          ElMessage.error(isEditMode.value ? t('processManagement.editFailed') : t('processManagement.addFailed'))
-        }
-      }
     }
   })
 }
@@ -327,6 +344,40 @@ const handleDeleteProcess = async (row) => {
   }
 }
 
+// 批量删除流程
+const handleBatchDelete = async () => {
+  if (selectedProcesses.value.length === 0) {
+    ElMessage.warning('请选择要删除的流程')
+    return
+  }
+  
+  try {
+    const processNames = selectedProcesses.value.map(process => process.processName).join(', ')
+    await ElMessageBox.confirm('确定要删除流程 ' + processNames + ' 吗？', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    
+    // 批量删除
+    for (const process of selectedProcesses.value) {
+      await deleteProcess(process.id)
+    }
+    
+    ElMessage.success('删除流程成功')
+    getProcessList()
+    // 清空选择
+    selectedProcesses.value = []
+  } catch (error) {
+    if (error !== 'cancel') {
+      // 只在error.message不为空时显示详细错误信息
+      if (error.message) {
+        ElMessage.error('删除流程失败：' + error.message)
+      }
+    }
+  }
+}
+
 // 组件挂载时获取数据
 onMounted(() => {
   getProcessList()
@@ -334,29 +385,9 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.process-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+/* 流程管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
 }
 
 /* 修复英文模式下标签和星号之间的间隔问题 */

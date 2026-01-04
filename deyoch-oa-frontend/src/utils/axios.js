@@ -118,7 +118,9 @@ service.interceptors.response.use(
     const res = response.data
     
     // 统一处理响应码
-      // 这里假设后端约定：code=200表示成功，其他表示失败
+    // 检查是否有code字段
+    if (res.code !== undefined) {
+      // 有code字段，使用code判断
       if (res.code !== 200) {
         // 特殊处理401和403错误：未登录或登录过期、权限不足
         if (res.code === 401 || res.code === 403) {
@@ -153,9 +155,14 @@ service.interceptors.response.use(
         // 其他错误，传递给调用者，显示错误消息
         return Promise.reject(new Error(res.message || 'Error'))
       } else {
-        // 响应成功，返回res.data，这是前端组件期望的数组格式
-      return res.data
+        // 响应成功，返回res.data，这是前端组件期望的格式
+        return res.data
       }
+    } else {
+      // 没有code字段，兼容后端直接返回数据的格式
+      // 直接返回整个响应数据
+      return res
+    }
   },
   /**
    * 响应失败处理函数

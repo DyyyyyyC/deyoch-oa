@@ -1,5 +1,5 @@
 <template>
-  <div class="task-management">
+  <div class="management-page">
     <!-- 页面标题 -->
     <div class="page-header">
       <h2>{{ $t('taskManagement.title') }}</h2>
@@ -47,9 +47,10 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('taskManagement.title')" />
-        <el-table-column prop="assignee" :label="$t('taskManagement.assignee')" />
-        <el-table-column prop="creator" :label="$t('taskManagement.creator')" />
+        <el-table-column prop="title" :label="$t('taskManagement.title')" width="180" />
+        <el-table-column prop="content" :label="$t('taskManagement.description')" width="200" show-overflow-tooltip />
+        <el-table-column prop="assignee" :label="$t('taskManagement.assignee')" width="120" />
+        <el-table-column prop="creator" :label="$t('taskManagement.creator')" width="120" />
         <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">
@@ -64,10 +65,10 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startTime" :label="$t('taskManagement.startTime')" width="200" />
-        <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" width="200" />
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="200" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="200" />
+        <el-table-column prop="startTime" :label="$t('taskManagement.startTime')" width="180" />
+        <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
       </el-table>
 
       <!-- 分页 -->
@@ -105,9 +106,9 @@
             show-word-limit
           />
         </el-form-item>
-        <el-form-item :label="$t('taskManagement.description')" prop="description">
+        <el-form-item :label="$t('taskManagement.description')" prop="content">
           <el-input
-            v-model="taskForm.description"
+            v-model="taskForm.content"
             type="textarea"
             :placeholder="$t('taskManagement.enterDescription')"
             :rows="4"
@@ -219,7 +220,7 @@ const dialogTitle = computed(() => {
 const taskForm = reactive({
   id: null,
   title: '',
-  description: '',
+  content: '',
   assignee: '',
   priority: 2, // 默认中优先级
   status: 0, // 默认未开始
@@ -317,16 +318,16 @@ const handleAddTask = () => {
 
 // 批量编辑任务
 const handleBatchEdit = () => {
-  if (selectedTasks.length !== 1) {
+  if (selectedTasks.value.length !== 1) {
     ElMessage.warning('请选择一个任务进行编辑')
     return
   }
   // 填充表单数据
-  const row = selectedTasks[0]
+  const row = selectedTasks.value[0]
   isEditMode.value = true
   taskForm.id = row.id
   taskForm.title = row.title
-  taskForm.description = row.description
+  taskForm.content = row.content
   taskForm.assignee = row.assignee
   taskForm.priority = row.priority
   taskForm.status = row.status
@@ -337,7 +338,7 @@ const handleBatchEdit = () => {
 
 // 批量删除任务
 const handleBatchDelete = async () => {
-  if (selectedTasks.length === 0) {
+  if (selectedTasks.value.length === 0) {
     ElMessage.warning('请选择要删除的任务')
     return
   }
@@ -354,11 +355,8 @@ const handleBatchDelete = async () => {
     )
     
     // 批量删除
-    for (const task of selectedTasks) {
-      const response = await deleteTask(task.id)
-      if (response.code !== 200) {
-        throw new Error(response.message)
-      }
+    for (const task of selectedTasks.value) {
+      await deleteTask(task.id)
     }
     
     ElMessage.success(t('taskManagement.deleteSuccess'))
@@ -382,7 +380,7 @@ const resetForm = () => {
   }
   taskForm.id = null
   taskForm.title = ''
-  taskForm.description = ''
+  taskForm.content = ''
   taskForm.assignee = ''
   taskForm.priority = 2
   taskForm.status = 0
@@ -396,24 +394,14 @@ const handleSubmit = async () => {
   await taskFormRef.value.validate(async (valid) => {
     if (valid) {
       try {
-        let response
         if (isEditMode.value) {
-          response = await updateTask(taskForm.id, taskForm)
+          await updateTask(taskForm.id, taskForm)
         } else {
-          response = await createTask(taskForm)
+          await createTask(taskForm)
         }
-        if (response.code === 200) {
-          ElMessage.success(isEditMode.value ? t('taskManagement.editSuccess') : t('taskManagement.addSuccess'))
-          dialogVisible.value = false
-          getTaskList()
-        } else {
-          // 只在response.message不为空时显示详细错误信息
-          if (response.message) {
-            ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + response.message)
-          } else {
-            ElMessage.error(isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed'))
-          }
-        }
+        ElMessage.success(isEditMode.value ? t('taskManagement.editSuccess') : t('taskManagement.addSuccess'))
+        dialogVisible.value = false
+        getTaskList()
       } catch (error) {
         // 只在error.message不为空时显示详细错误信息
         if (error.message) {
@@ -429,20 +417,11 @@ const handleSubmit = async () => {
 // 更新任务状态
 const handleUpdateTaskStatus = async (row, status) => {
   try {
-    const response = await updateTaskStatus(row.id, status)
-    if (response.code === 200) {
-      // 根据状态获取对应的文本
-      const statusText = status === 0 ? t('common.notStarted') : status === 1 ? t('common.inProgress') : status === 2 ? t('common.completed') : t('common.cancelled')
-      ElMessage.success(t('taskManagement.updateStatusSuccess'))
-      getTaskList()
-    } else {
-      // 只在response.message不为空时显示详细错误信息
-      if (response.message) {
-        ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + response.message)
-      } else {
-        ElMessage.error(t('taskManagement.updateStatusFailed'))
-      }
-    }
+    await updateTaskStatus(row.id, status)
+    // 根据状态获取对应的文本
+    const statusText = status === 0 ? t('common.notStarted') : status === 1 ? t('common.inProgress') : status === 2 ? t('common.completed') : t('common.cancelled')
+    ElMessage.success(t('taskManagement.updateStatusSuccess'))
+    getTaskList()
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -460,35 +439,8 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.task-management {
-  padding: 20px;
-}
-
-.page-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 20px;
-}
-
-.action-area {
-  display: flex;
-  gap: 5px; /* 减小按钮间距 */
-  margin-bottom: 15px;
-  padding: 10px 0;
-}
-
-.search-card {
-  margin-bottom: 20px;
-}
-
-.table-card {
-  margin-bottom: 20px;
-}
-
-.pagination-container {
-  display: flex;
-  justify-content: flex-end;
-  margin-top: 20px;
+/* 任务管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
 }
 </style>
