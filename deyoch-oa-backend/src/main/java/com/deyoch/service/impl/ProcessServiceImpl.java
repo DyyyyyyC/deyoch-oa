@@ -24,78 +24,58 @@ public class ProcessServiceImpl implements ProcessService {
 
     @Override
     public Result<List<DeyochProcess>> getProcessList() {
-        try {
-            // 查询所有流程，按创建时间倒序排列
-            LambdaQueryWrapper<DeyochProcess> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.orderByDesc(DeyochProcess::getCreatedAt);
-            List<DeyochProcess> processList = deyochProcessMapper.selectList(queryWrapper);
-            return Result.success(processList);
-        } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取流程列表失败：" + e.getMessage());
-        }
+        // 查询所有流程，按创建时间倒序排列
+        LambdaQueryWrapper<DeyochProcess> queryWrapper = new LambdaQueryWrapper<>();
+        queryWrapper.orderByDesc(DeyochProcess::getCreatedAt);
+        List<DeyochProcess> processList = deyochProcessMapper.selectList(queryWrapper);
+        return Result.success(processList);
     }
 
     @Override
     public Result<DeyochProcess> getProcessById(Long id) {
-        try {
-            DeyochProcess process = deyochProcessMapper.selectById(id);
-            if (process == null) {
-                return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
-            }
-            return Result.success(process);
-        } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取流程详情失败：" + e.getMessage());
+        DeyochProcess process = deyochProcessMapper.selectById(id);
+        if (process == null) {
+            return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
+        return Result.success(process);
     }
 
     @Override
     public Result<DeyochProcess> createProcess(DeyochProcess process) {
-        try {
-            // 设置创建时间和更新时间
-            LocalDateTime now = LocalDateTime.now();
-            process.setCreatedAt(now);
-            process.setUpdatedAt(now);
-            // 默认状态为启用
-            process.setStatus(1L);
-            // 创建流程
-            deyochProcessMapper.insert(process);
-            return Result.success(process);
-        } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "创建流程失败：" + e.getMessage());
-        }
+        // 设置创建时间和更新时间
+        LocalDateTime now = LocalDateTime.now();
+        process.setCreatedAt(now);
+        process.setUpdatedAt(now);
+        // 默认状态为启用
+        process.setStatus(1L);
+        // 创建流程
+        deyochProcessMapper.insert(process);
+        return Result.success(process);
     }
 
     @Override
     public Result<DeyochProcess> updateProcess(DeyochProcess process) {
-        try {
-            // 检查流程是否存在
-            DeyochProcess existingProcess = deyochProcessMapper.selectById(process.getId());
-            if (existingProcess == null) {
-                return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
-            }
-            // 设置更新时间
-            process.setUpdatedAt(LocalDateTime.now());
-            // 更新流程
-            deyochProcessMapper.updateById(process);
-            return Result.success(process);
-        } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "更新流程失败：" + e.getMessage());
+        // 检查流程是否存在
+        DeyochProcess existingProcess = deyochProcessMapper.selectById(process.getId());
+        if (existingProcess == null) {
+            return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
+        // 设置更新时间
+        process.setUpdatedAt(LocalDateTime.now());
+        // 更新流程
+        deyochProcessMapper.updateById(process);
+        return Result.success(process);
     }
 
     @Override
     public Result<Void> deleteProcess(Long id) {
-        try {
-            // 检查流程是否存在
-            DeyochProcess process = deyochProcessMapper.selectById(id);
-            if (process == null) {
-                return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
-            }
-            // 删除流程
-            deyochProcessMapper.deleteById(id);
-            return Result.success();
-        } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "删除流程失败：" + e.getMessage());
+        // 检查流程是否存在
+        DeyochProcess process = deyochProcessMapper.selectById(id);
+        if (process == null) {
+            return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
+        // 删除流程
+        deyochProcessMapper.deleteById(id);
+        return Result.success();
     }
 }
