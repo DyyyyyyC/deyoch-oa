@@ -145,6 +145,7 @@ INSERT INTO `deyoch_permission` VALUES (7, '公告管理', 'oa:announcement:mana
 INSERT INTO `deyoch_permission` VALUES (8, '流程管理', 'oa:process:manage', 'menu', 0, '/process', 'Layout', 'View', 3, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (9, '任务管理', 'oa:task:manage', 'menu', 0, '/task', 'task/index', 'List', 4, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (10, '日程管理', 'oa:schedule:manage', 'menu', 0, '/schedule', 'schedule/index', 'Calendar', 5, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
+INSERT INTO `deyoch_permission` VALUES (11, '文档管理', 'oa:document:manage', 'menu', 0, '/document', 'document/index', 'Document', 6, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (12, '流程定义', 'oa:process:definition', 'menu', 8, '/process/definition', 'process/definition/index', 'FileText', 1, 1, '2026-01-04 16:34:39', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (13, '流程实例', 'oa:process:instance', 'menu', 8, '/process/instance', 'process/instance/index', 'PlayCircle', 2, 1, '2026-01-04 16:34:39', '2026-01-04 16:34:39');
 
@@ -252,6 +253,7 @@ INSERT INTO `deyoch_role_permission` VALUES (16, 1, 7);
 INSERT INTO `deyoch_role_permission` VALUES (17, 1, 8);
 INSERT INTO `deyoch_role_permission` VALUES (18, 1, 9);
 INSERT INTO `deyoch_role_permission` VALUES (19, 1, 10);
+INSERT INTO `deyoch_role_permission` VALUES (26, 1, 11);
 INSERT INTO `deyoch_role_permission` VALUES (24, 1, 12);
 INSERT INTO `deyoch_role_permission` VALUES (25, 1, 13);
 

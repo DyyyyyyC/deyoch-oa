@@ -14,9 +14,12 @@ public interface DocumentService {
 
     /**
      * 获取文档列表
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
      * @return 文档列表
      */
-    Result<List<DeyochDocument>> getDocumentList();
+    Result<List<DeyochDocument>> getDocumentList(Integer page, Integer size, String keyword);
 
     /**
      * 根据ID获取文档详情

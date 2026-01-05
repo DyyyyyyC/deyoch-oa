@@ -344,6 +344,11 @@ const handleDeleteProcess = async (row) => {
   }
 }
 
+// 表格行选择事件处理
+const handleSelectionChange = (selection) => {
+  selectedProcesses.value = selection
+}
+
 // 批量删除流程
 const handleBatchDelete = async () => {
   if (selectedProcesses.value.length === 0) {

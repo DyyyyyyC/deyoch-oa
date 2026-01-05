@@ -29,8 +29,7 @@ const handleCommand = (command) => {
   locale.value = command
   // 保存到localStorage
   localStorage.setItem('locale', command)
-  // 刷新页面，让Element Plus重新加载对应语言包
-  window.location.reload()
+  // 无需刷新页面，el-config-provider会自动更新Element Plus语言
 }
 </script>
 

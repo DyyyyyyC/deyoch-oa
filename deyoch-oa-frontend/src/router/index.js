@@ -190,6 +190,28 @@ const asyncRoutes = [
         }
       }
     ]
+  },
+  // 文档管理菜单
+  {
+    path: '/document',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '文档管理',
+      requiresAuth: true,
+      permission: 'oa:document:manage'
+    },
+    children: [
+      {
+        path: 'list',
+        name: 'DocumentList',
+        component: () => import('@/views/document/index.vue'),
+        meta: {
+          title: '文档列表',
+          requiresAuth: true,
+          permission: 'oa:document:manage'
+        }
+      }
+    ]
   }
 ]
 

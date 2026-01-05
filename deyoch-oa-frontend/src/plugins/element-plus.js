@@ -1,28 +1,20 @@
 import ElementPlus from 'element-plus'
 import 'element-plus/dist/index.css'
+// 导入Element Plus语言包
+import zhCn from 'element-plus/dist/locale/zh-cn.mjs'
+import en from 'element-plus/dist/locale/en.mjs'
 
-// 动态导入Element Plus的语言包
-const loadElementPlusLocale = async (locale) => {
-  switch (locale) {
-    case 'zh-CN':
-      return (await import('element-plus/dist/locale/zh-cn.mjs')).default
-    case 'en':
-      return (await import('element-plus/dist/locale/en.mjs')).default
-    default:
-      return (await import('element-plus/dist/locale/zh-cn.mjs')).default
-  }
-}
-
-export default async function setupElementPlus(app) {
+// 安装Element Plus，配置语言
+export default function setupElementPlus(app) {
   // 获取当前语言
-  const currentLocale = localStorage.getItem('locale') || 'zh-CN'
-  // 加载对应语言包
-  const elementLocale = await loadElementPlusLocale(currentLocale)
+  const locale = localStorage.getItem('locale') || 'zh-CN'
+  // 根据当前语言选择对应的Element Plus语言包
+  const elementLocale = locale === 'zh-CN' ? zhCn : en
   
-  // 安装Element Plus
+  // 安装Element Plus，传入语言配置
   app.use(ElementPlus, {
-    locale: elementLocale,
+    locale: elementLocale
   })
   
-  return app
+  return Promise.resolve(app)
 }

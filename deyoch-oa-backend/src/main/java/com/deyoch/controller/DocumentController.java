@@ -27,13 +27,19 @@ public class DocumentController {
 
     /**
      * 获取文档列表
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
      * @return 文档列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "获取文档列表", description = "获取所有文档的列表")
-    public Result<List<DeyochDocument>> getDocumentList() {
-        return documentService.getDocumentList();
+    public Result<List<DeyochDocument>> getDocumentList(
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
+        return documentService.getDocumentList(page, size, keyword);
     }
 
     /**

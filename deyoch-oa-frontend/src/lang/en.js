@@ -63,6 +63,7 @@ export default {
     createdAt: 'Created At',
     updatedAt: 'Updated At',
     actions: 'Actions',
+    action: 'Action',
     pleaseSelect: 'Please select {name}',
     confirmDelete: 'Are you sure you want to delete this item?',
     fieldLength: '{field} length must be between {min} and {max} characters',
@@ -88,7 +89,10 @@ export default {
     serverError: 'Server error',
     networkError: 'Network error',
     badRequest: 'Bad request',
-    forbidden: 'Forbidden'
+    forbidden: 'Forbidden',
+    enabled: 'Enabled',
+    disabled: 'Disabled',
+    download: 'Download'
   },
   systemManagement: {
     title: 'System Management'
@@ -309,6 +313,32 @@ export default {
     status: 'Status'
   },
   documentManagement: {
-    title: 'Document Management'
+    title: 'Document Management',
+    addDocument: 'Add Document',
+    editDocument: 'Edit Document',
+    documentTitle: 'Document Title',
+    uploader: 'Uploader',
+    fileType: 'File Type',
+    fileSize: 'File Size',
+    status: 'Status',
+    uploadTime: 'Upload Time',
+    searchPlaceholder: 'Please enter document title or uploader',
+    enterTitle: 'Please enter document title',
+    enterContent: 'Please enter document content',
+    file: 'File',
+    chooseFile: 'Choose File',
+    uploadTip: 'Supports multiple file formats, recommended size not exceeding 50MB',
+    titleRequired: 'Please enter document title',
+    titleLength: 'Document title length between 2 and 100 characters',
+    contentRequired: 'Please enter document content',
+    addSuccess: 'Add document success',
+    addFailed: 'Add document failed',
+    editSuccess: 'Edit document success',
+    editFailed: 'Edit document failed',
+    deleteConfirm: 'Are you sure you want to delete this document?',
+    deleteSuccess: 'Delete document success',
+    deleteFailed: 'Delete document failed',
+    downloadSuccess: 'Download document success',
+    downloadFailed: 'Download document failed'
   }
 }

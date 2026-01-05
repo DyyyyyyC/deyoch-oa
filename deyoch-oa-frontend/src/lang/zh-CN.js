@@ -63,6 +63,7 @@ export default {
     createdAt: '创建时间',
     updatedAt: '更新时间',
     actions: '操作',
+    action: '操作',
     pleaseSelect: '请选择{name}',
     confirmDelete: '确定要删除这条记录吗？',
     fieldLength: '{field}长度在 {min} 到 {max} 个字符',
@@ -88,7 +89,10 @@ export default {
     serverError: '服务器错误',
     networkError: '网络错误',
     badRequest: '请求参数错误',
-    forbidden: '没有权限执行此操作'
+    forbidden: '没有权限执行此操作',
+    enabled: '启用',
+    disabled: '禁用',
+    download: '下载'
   },
   systemManagement: {
     title: '系统管理'
@@ -309,6 +313,32 @@ export default {
     status: '状态'
   },
   documentManagement: {
-    title: '文档管理'
+    title: '文档管理',
+    addDocument: '添加文档',
+    editDocument: '编辑文档',
+    documentTitle: '文档标题',
+    uploader: '上传人',
+    fileType: '文件类型',
+    fileSize: '文件大小',
+    status: '状态',
+    uploadTime: '上传时间',
+    searchPlaceholder: '请输入文档标题或上传人',
+    enterTitle: '请输入文档标题',
+    enterContent: '请输入文档内容',
+    file: '文件',
+    chooseFile: '选择文件',
+    uploadTip: '支持上传多种格式文件，建议大小不超过50MB',
+    titleRequired: '请输入文档标题',
+    titleLength: '文档标题长度在2到100个字符之间',
+    contentRequired: '请输入文档内容',
+    addSuccess: '添加文档成功',
+    addFailed: '添加文档失败',
+    editSuccess: '编辑文档成功',
+    editFailed: '编辑文档失败',
+    deleteConfirm: '确定要删除该文档吗？',
+    deleteSuccess: '删除文档成功',
+    deleteFailed: '删除文档失败',
+    downloadSuccess: '下载文档成功',
+    downloadFailed: '下载文档失败'
   }
 }

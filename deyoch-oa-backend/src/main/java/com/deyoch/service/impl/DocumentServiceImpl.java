@@ -32,12 +32,23 @@ public class DocumentServiceImpl implements DocumentService {
     private String uploadPath;
 
     @Override
-    public Result<List<DeyochDocument>> getDocumentList() {
+    public Result<List<DeyochDocument>> getDocumentList(Integer page, Integer size, String keyword) {
         try {
-            // 查询所有文档，按创建时间倒序排列
+            // 构建查询条件
             LambdaQueryWrapper<DeyochDocument> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 添加关键词搜索条件
+            if (keyword != null && !keyword.isEmpty()) {
+                queryWrapper.like(DeyochDocument::getTitle, keyword)
+                    .or().like(DeyochDocument::getContent, keyword);
+            }
+            
+            // 按创建时间倒序排列
             queryWrapper.orderByDesc(DeyochDocument::getCreatedAt);
+            
+            // 查询所有文档
             List<DeyochDocument> documentList = deyochDocumentMapper.selectList(queryWrapper);
+            
             return Result.success(documentList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取文档列表失败：" + e.getMessage());

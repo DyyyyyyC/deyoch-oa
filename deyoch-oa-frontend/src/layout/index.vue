@@ -108,6 +108,12 @@
               <template #title>{{ $t('processManagement.processInstance') }}</template>
             </el-menu-item>
           </el-sub-menu>
+          
+          <!-- 文档管理 -->
+          <el-menu-item index="/document/list" v-if="hasPermission('oa:document:manage')">
+            <el-icon><Document /></el-icon>
+            <template #title>{{ $t('documentManagement.title') }}</template>
+          </el-menu-item>
         </el-menu>
         <!-- 折叠按钮放在右下方 -->
         <div class="sidebar-collapse-trigger" @click="toggleCollapse">
@@ -133,7 +139,7 @@ import { useI18n } from 'vue-i18n'
 import LanguageSwitch from '@/components/LanguageSwitch.vue'
 import {
   ArrowDown, House, Setting, Bell, List, Expand, Fold,
-  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy, Calendar
+  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy, Calendar, Document
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
