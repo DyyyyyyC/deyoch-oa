@@ -317,11 +317,15 @@ export default {
     addDocument: '添加文档',
     editDocument: '编辑文档',
     documentTitle: '文档标题',
+    content: '内容',
     uploader: '上传人',
     fileType: '文件类型',
     fileSize: '文件大小',
     status: '状态',
     uploadTime: '上传时间',
+    updateTime: '更新时间',
+    fileName: '文件名',
+    department: '部门',
     searchPlaceholder: '请输入文档标题或上传人',
     enterTitle: '请输入文档标题',
     enterContent: '请输入文档内容',
@@ -339,6 +343,9 @@ export default {
     deleteSuccess: '删除文档成功',
     deleteFailed: '删除文档失败',
     downloadSuccess: '下载文档成功',
-    downloadFailed: '下载文档失败'
+    downloadFailed: '下载文档失败',
+    view: '查看',
+    download: '下载',
+    operation: '操作'
   }
 }

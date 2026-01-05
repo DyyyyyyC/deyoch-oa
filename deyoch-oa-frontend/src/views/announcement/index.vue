@@ -45,7 +45,11 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('announcementManagement.title')" width="180" />
-        <el-table-column prop="publisher" :label="$t('announcementManagement.publisher')" width="120" />
+        <el-table-column prop="userId" :label="$t('announcementManagement.publisher')" width="120">
+          <template #default="scope">
+            {{ getUserNameById(scope.row.userId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="180" />
         <el-table-column prop="status" :label="$t('announcementManagement.status')" width="120">
           <template #default="scope">
@@ -74,7 +78,7 @@
         />
       </div>
     </el-card>
-
+    
     <!-- 公告表单对话框 -->
     <el-dialog
       v-model="dialogVisible"
@@ -96,9 +100,9 @@
             show-word-limit
           />
         </el-form-item>
-        <el-form-item :label="$t('announcementManagement.publisher')" prop="publisher">
+        <el-form-item :label="$t('announcementManagement.publisher')" prop="userId">
           <el-input
-            v-model="announcementForm.publisher"
+            v-model="announcementForm.userId"
             :placeholder="$t('announcementManagement.enterPublisher')"
             maxlength="50"
             show-word-limit
@@ -125,6 +129,13 @@
     </el-dialog>
   </div>
 </template>
+
+<style scoped>
+/* 公告管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
+}
+</style>
 
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
@@ -157,7 +168,6 @@ const searchForm = reactive({
 
 // 公告列表
 const announcementList = ref([])
-
 // 选中的公告
 const selectedAnnouncements = ref([])
 
@@ -183,7 +193,7 @@ const announcementForm = reactive({
   id: null,
   title: '',
   content: '',
-  publisher: '',
+  userId: null,
   status: 0
 })
 
@@ -193,14 +203,22 @@ const formRules = {
     { required: true, message: t('announcementManagement.enterTitle'), trigger: 'blur' },
     { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('announcementManagement.title') }), trigger: 'blur' }
   ],
-  publisher: [
-    { required: true, message: t('announcementManagement.enterPublisher'), trigger: 'blur' },
-    { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('announcementManagement.publisher') }), trigger: 'blur' }
+  userId: [
+    { required: true, message: t('announcementManagement.enterPublisher'), trigger: 'blur' }
   ],
   content: [
     { required: true, message: t('announcementManagement.enterContent'), trigger: 'blur' },
     { min: 10, max: 1000, message: t('common.fieldLength', { min: 10, max: 1000, field: t('announcementManagement.content') }), trigger: 'blur' }
   ]
+}
+
+// 用户ID到用户名的映射（实际应用中应该从后端获取用户列表）
+const userNameMap = reactive({})
+
+// 根据用户ID获取用户名
+const getUserNameById = (userId) => {
+  if (!userId) return '-'
+  return userNameMap[userId] || userStore.userInfo?.username || '-'
 }
 
 // 获取公告列表
@@ -210,8 +228,15 @@ const getAnnouncementList = async () => {
     const data = await getAnnouncementListApi()
     announcementList.value = data
     pagination.total = data.length
+    
+    // 构建用户ID到用户名的映射
+    const userIds = [...new Set(data.map(item => item.userId))]
+    userIds.forEach(id => {
+      if (!userNameMap[id]) {
+        userNameMap[id] = userStore.userInfo?.username || '用户' + id
+      }
+    })
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
     if (error.message) {
       ElMessage.error('获取公告列表失败：' + error.message)
     }
@@ -253,8 +278,8 @@ const handleCurrentChange = (current) => {
 const handleAddAnnouncement = () => {
   isEditMode.value = false
   resetForm()
-  // 设置发布人为当前登录用户
-  announcementForm.publisher = userStore.userInfo?.username || ''
+  // 设置用户ID为当前登录用户ID
+  announcementForm.userId = userStore.userInfo?.id || null
   dialogVisible.value = true
 }
 
@@ -270,7 +295,7 @@ const handleBatchEdit = () => {
   announcementForm.id = row.id
   announcementForm.title = row.title
   announcementForm.content = row.content
-  announcementForm.publisher = row.publisher
+  announcementForm.userId = row.userId
   announcementForm.status = row.status
   dialogVisible.value = true
 }
@@ -305,8 +330,8 @@ const handleBatchDelete = async () => {
     selectedAnnouncements.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      // 错误信息已在axios拦截器中处理，这里无需重复处理
       console.error('Delete error:', error)
+      ElMessage.error(t('announcementManagement.deleteFailed'))
     }
   }
 }
@@ -319,7 +344,7 @@ const resetForm = () => {
   announcementForm.id = null
   announcementForm.title = ''
   announcementForm.content = ''
-  announcementForm.publisher = ''
+  announcementForm.userId = null
   announcementForm.status = 0
 }
 
@@ -338,19 +363,16 @@ const handleSubmit = async () => {
     dialogVisible.value = false
     getAnnouncementList()
   } catch (error) {
-    // 验证失败或API调用失败会进入这里
-    // 错误信息已在axios拦截器中处理，这里无需重复处理
     console.error('Submit error:', error)
+    ElMessage.error(isEditMode.value ? t('announcementManagement.editFailed') : t('announcementManagement.addFailed'))
   }
 }
 
 // 状态变更
 const handleStatusChange = async (row) => {
-  // 保存原始状态，用于失败时恢复
   const originalStatus = row.status
   
   try {
-    // 调用API
     if (row.status === 1) {
       await publishAnnouncement(row.id)
       ElMessage.success(t('announcementManagement.publishSuccess'))
@@ -359,13 +381,11 @@ const handleStatusChange = async (row) => {
       ElMessage.success(t('announcementManagement.revokeSuccess'))
     }
     
-    // 刷新列表
     getAnnouncementList()
   } catch (error) {
-    // 如果失败，恢复原来的状态
     row.status = originalStatus
-    // 错误信息已在axios拦截器中处理，这里无需重复处理
     console.error('Status change error:', error)
+    ElMessage.error(t('announcementManagement.statusChangeFailed'))
   }
 }
 
@@ -374,10 +394,3 @@ onMounted(() => {
   getAnnouncementList()
 })
 </script>
-
-<style scoped>
-/* 公告管理页面特定样式 */
-.dialog-footer {
-  text-align: right;
-}
-</style>

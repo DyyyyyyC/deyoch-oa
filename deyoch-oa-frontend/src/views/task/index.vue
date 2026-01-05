@@ -12,7 +12,7 @@
           <el-input v-model="searchForm.title" :placeholder="$t('taskManagement.enterTitle')" clearable />
         </el-form-item>
         <el-form-item :label="$t('taskManagement.assignee')">
-          <el-input v-model="searchForm.assignee" :placeholder="$t('taskManagement.enterAssignee')" clearable />
+          <el-input v-model="searchForm.assigneeId" :placeholder="$t('taskManagement.enterAssignee')" clearable />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
@@ -49,8 +49,16 @@
         <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('taskManagement.title')" width="180" />
         <el-table-column prop="content" :label="$t('taskManagement.description')" width="200" show-overflow-tooltip />
-        <el-table-column prop="assignee" :label="$t('taskManagement.assignee')" width="120" />
-        <el-table-column prop="creator" :label="$t('taskManagement.creator')" width="120" />
+        <el-table-column prop="assigneeId" :label="$t('taskManagement.assignee')" width="120">
+          <template #default="scope">
+            {{ getUserNameById(scope.row.assigneeId) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="creatorId" :label="$t('taskManagement.creator')" width="120">
+          <template #default="scope">
+            {{ getUserNameById(scope.row.creatorId) }}
+          </template>
+        </el-table-column>
         <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">
@@ -116,9 +124,9 @@
             show-word-limit
           />
         </el-form-item>
-        <el-form-item :label="$t('taskManagement.assignee')" prop="assignee">
+        <el-form-item :label="$t('taskManagement.assignee')" prop="assigneeId">
           <el-input
-            v-model="taskForm.assignee"
+            v-model="taskForm.assigneeId"
             :placeholder="$t('taskManagement.enterAssignee')"
             maxlength="50"
             show-word-limit
@@ -168,11 +176,19 @@
   </div>
 </template>
 
+<style scoped>
+/* 任务管理页面特定样式 */
+.dialog-footer {
+  text-align: right;
+}
+</style>
+
 <script setup>
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, CircleCheck, VideoPlay } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
+import { useUserStore } from '@/stores/user'
 import {
   getTaskList as getTaskListApi,
   createTask,
@@ -184,13 +200,16 @@ import {
 // 获取i18n的t函数
 const { t } = useI18n()
 
+// 获取用户store
+const userStore = useUserStore()
+
 // 加载状态
 const loading = ref(false)
 
 // 搜索表单
 const searchForm = reactive({
   title: '',
-  assignee: ''
+  assigneeId: ''
 })
 
 // 任务列表
@@ -221,7 +240,7 @@ const taskForm = reactive({
   id: null,
   title: '',
   content: '',
-  assignee: '',
+  assigneeId: '',
   priority: 2, // 默认中优先级
   status: 0, // 默认未开始
   startTime: '',
@@ -234,7 +253,7 @@ const formRules = {
     { required: true, message: t('taskManagement.enterTitle'), trigger: 'blur' },
     { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('taskManagement.title') }), trigger: 'blur' }
   ],
-  assignee: [
+  assigneeId: [
     { required: true, message: t('taskManagement.enterAssignee'), trigger: 'blur' },
     { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('taskManagement.assignee') }), trigger: 'blur' }
   ],
@@ -259,6 +278,15 @@ const formRules = {
   ]
 }
 
+// 用户ID到用户名的映射（实际应用中应该从后端获取用户列表）
+const userNameMap = reactive({})
+
+// 根据用户ID获取用户名
+const getUserNameById = (userId) => {
+  if (!userId) return '-'
+  return userNameMap[userId] || userStore.userInfo?.username || '-'
+}
+
 // 获取任务列表
 const getTaskList = async () => {
   loading.value = true
@@ -266,10 +294,17 @@ const getTaskList = async () => {
     const data = await getTaskListApi()
     taskList.value = data
     pagination.total = data.length
+    
+    // 构建用户ID到用户名的映射
+    const userIds = [...new Set(data.map(item => [item.assigneeId, item.creatorId]).flat())]
+    userIds.forEach(id => {
+      if (!userNameMap[id]) {
+        userNameMap[id] = userStore.userInfo?.username || '用户' + id
+      }
+    })
   } catch (error) {
     taskList.value = []
     pagination.total = 0
-    // 只在error.message不为空时显示错误信息
     if (error.message) {
       ElMessage.error('获取任务列表失败：' + error.message)
     }
@@ -287,7 +322,7 @@ const handleSearch = () => {
 // 重置搜索表单
 const handleReset = () => {
   searchForm.title = ''
-  searchForm.assignee = ''
+  searchForm.assigneeId = ''
   getTaskList()
 }
 
@@ -328,7 +363,7 @@ const handleBatchEdit = () => {
   taskForm.id = row.id
   taskForm.title = row.title
   taskForm.content = row.content
-  taskForm.assignee = row.assignee
+  taskForm.assigneeId = row.assigneeId
   taskForm.priority = row.priority
   taskForm.status = row.status
   taskForm.startTime = row.startTime
@@ -365,9 +400,10 @@ const handleBatchDelete = async () => {
     selectedTasks.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      // 只在error.message不为空时显示错误信息
       if (error.message) {
         ElMessage.error(t('taskManagement.deleteFailed') + '：' + error.message)
+      } else {
+        ElMessage.error(t('taskManagement.deleteFailed'))
       }
     }
   }
@@ -381,7 +417,7 @@ const resetForm = () => {
   taskForm.id = null
   taskForm.title = ''
   taskForm.content = ''
-  taskForm.assignee = ''
+  taskForm.assigneeId = ''
   taskForm.priority = 2
   taskForm.status = 0
   taskForm.startTime = ''
@@ -403,7 +439,6 @@ const handleSubmit = async () => {
         dialogVisible.value = false
         getTaskList()
       } catch (error) {
-        // 只在error.message不为空时显示详细错误信息
         if (error.message) {
           ElMessage.error((isEditMode.value ? t('taskManagement.editFailed') : t('taskManagement.addFailed')) + '：' + error.message)
         } else {
@@ -423,7 +458,6 @@ const handleUpdateTaskStatus = async (row, status) => {
     ElMessage.success(t('taskManagement.updateStatusSuccess'))
     getTaskList()
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
     if (error.message) {
       ElMessage.error(t('taskManagement.updateStatusFailed') + '：' + error.message)
     } else {
@@ -437,10 +471,3 @@ onMounted(() => {
   getTaskList()
 })
 </script>
-
-<style scoped>
-/* 任务管理页面特定样式 */
-.dialog-footer {
-  text-align: right;
-}
-</style>

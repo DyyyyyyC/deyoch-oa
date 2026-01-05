@@ -6,6 +6,7 @@ import com.deyoch.mapper.DeyochAnnouncementMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.AnnouncementService;
+import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.List;
 public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final DeyochAnnouncementMapper deyochAnnouncementMapper;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Result<List<DeyochAnnouncement>> getAnnouncementList() {
@@ -58,10 +60,10 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             announcement.setUpdatedAt(now);
             // 默认状态为未发布
             announcement.setStatus(0L);
-            // 设置创建人为当前登录用户
-            String currentUsername = UserContextUtil.getCurrentUsername();
-            if (currentUsername != null) {
-                announcement.setPublisher(currentUsername);
+            // 设置创建人为当前登录用户ID
+            Long currentUserId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (currentUserId != null) {
+                announcement.setUserId(currentUserId);
             }
             // 创建公告
             deyochAnnouncementMapper.insert(announcement);

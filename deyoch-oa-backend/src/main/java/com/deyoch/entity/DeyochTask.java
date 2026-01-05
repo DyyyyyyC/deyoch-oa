@@ -17,8 +17,8 @@ public class DeyochTask {
   private Long id;
   private String title;
   private String content;
-  private String assignee;
-  private String creator;
+  private Long assigneeId;
+  private Long creatorId;
   private Long priority;
   private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

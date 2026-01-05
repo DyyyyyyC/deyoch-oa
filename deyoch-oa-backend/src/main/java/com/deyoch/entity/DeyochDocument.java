@@ -15,13 +15,11 @@ public class DeyochDocument {
 
   @TableId(type = IdType.AUTO)
   private Long id;
-  private String title;
-  private String content;
-  private String filePath;
   private String fileName;
+  private String filePath;
   private Long fileSize;
   private String fileType;
-  private String uploader;
+  private Long userId;
   private Long deptId;
   private Long status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

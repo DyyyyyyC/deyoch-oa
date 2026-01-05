@@ -48,10 +48,10 @@ public interface TaskService {
     /**
      * 分配任务
      * @param id 任务ID
-     * @param assignee 被分配人
+     * @param assigneeId 被分配人ID
      * @return 分配结果
      */
-    Result<Void> assignTask(Long id, String assignee);
+    Result<Void> assignTask(Long id, Long assigneeId);
 
     /**
      * 更新任务状态

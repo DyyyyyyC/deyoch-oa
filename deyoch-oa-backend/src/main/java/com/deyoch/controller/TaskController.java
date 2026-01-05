@@ -88,14 +88,14 @@ public class TaskController {
     /**
      * 分配任务
      * @param id 任务ID
-     * @param assignee 被分配人
+     * @param assigneeId 被分配人ID
      * @return 分配结果
      */
     @PostMapping("/{id}/assign")
     @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "分配任务", description = "根据任务ID分配任务给指定人员")
-    public Result<Void> assignTask(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "被分配人") String assignee) {
-        return taskService.assignTask(id, assignee);
+    public Result<Void> assignTask(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "被分配人ID") Long assigneeId) {
+        return taskService.assignTask(id, assigneeId);
     }
 
     /**

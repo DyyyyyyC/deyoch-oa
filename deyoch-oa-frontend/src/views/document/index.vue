@@ -8,7 +8,7 @@
     <!-- 搜索表单 -->
     <el-card class="search-card">
       <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('documentManagement.documentTitle')">
+        <el-form-item :label="$t('documentManagement.fileName')">
           <el-input v-model="searchForm.title" :placeholder="$t('documentManagement.enterTitle')" clearable />
         </el-form-item>
         <el-form-item :label="$t('documentManagement.status')">
@@ -48,14 +48,13 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column prop="title" :label="$t('documentManagement.documentTitle')" min-width="200">
+        <el-table-column prop="fileName" :label="$t('documentManagement.fileName')" min-width="200">
           <template #default="scope">
             <el-link type="primary" @click="handleViewDocument(scope.row)">
-              {{ scope.row.title }}
+              {{ scope.row.fileName }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="uploader" :label="$t('documentManagement.uploader')" width="120" align="center" />
         <el-table-column prop="fileType" :label="$t('documentManagement.fileType')" width="100" align="center" />
         <el-table-column prop="fileSize" :label="$t('documentManagement.fileSize')" width="120" align="center">
           <template #default="scope">
@@ -70,6 +69,23 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" width="180" align="center" />
+        <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" width="180" align="center" />
+        <el-table-column :label="$t('documentManagement.operation')" width="150" align="center" fixed="right">
+          <template #default="scope">
+            <el-button type="primary" size="small" @click="handleViewDocument(scope.row)" :icon="View">
+              {{ $t('documentManagement.view') }}
+            </el-button>
+            <el-button type="success" size="small" @click="handleDownload(scope.row)" :icon="Download" style="margin-left: 5px;">
+              {{ $t('documentManagement.download') }}
+            </el-button>
+            <el-button type="warning" size="small" @click="handleEditDocument(scope.row)" :icon="Edit" style="margin-left: 5px;">
+              {{ $t('common.edit') }}
+            </el-button>
+            <el-button type="danger" size="small" @click="handleDeleteDocument(scope.row)" :icon="Delete" style="margin-left: 5px;">
+              {{ $t('common.delete') }}
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -95,17 +111,6 @@
       :close-on-press-escape="false"
     >
       <el-form ref="documentFormRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item :label="$t('documentManagement.documentTitle')" prop="title">
-          <el-input v-model="formData.title" :placeholder="$t('documentManagement.enterTitle')" />
-        </el-form-item>
-        <el-form-item :label="$t('documentManagement.content')" prop="content">
-          <el-input
-            v-model="formData.content"
-            type="textarea"
-            :rows="5"
-            :placeholder="$t('documentManagement.enterContent')"
-          />
-        </el-form-item>
         <el-form-item :label="$t('documentManagement.file')" prop="file">
           <el-upload
             v-model:file-list="fileList"
@@ -144,12 +149,35 @@
   </div>
 </template>
 
+<style scoped>
+/* 文档管理页面特定样式 */
+.content-preview {
+  cursor: help;
+  color: #606266;
+  font-size: 14px;
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 调整操作按钮间距 */
+:deep(.el-button--small) {
+  margin-right: 4px;
+}
+
+/* 调整表格内容居中 */
+:deep(.el-table__content) {
+  font-size: 14px;
+}
+</style>
+
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Plus, Search, Download, Edit, Delete
+  Plus, Search, Download, Edit, Delete, View
 } from '@element-plus/icons-vue'
 import {
   getDocumentList,
@@ -184,25 +212,19 @@ const documentFormRef = ref(null)
 // 表单数据
 const formData = reactive({
   id: null,
-  title: '',
-  content: '',
-  filePath: '',
   fileName: '',
+  filePath: '',
   fileSize: 0,
   fileType: '',
-  uploader: '',
-  deptId: 0,
+  userId: null,
+  deptId: null,
   status: 1
 })
 
 // 表单验证规则
 const rules = reactive({
-  title: [
-    { required: true, message: t('documentManagement.titleRequired'), trigger: 'blur' },
-    { min: 2, max: 100, message: t('documentManagement.titleLength'), trigger: 'blur' }
-  ],
-  content: [
-    { required: false, message: t('documentManagement.contentRequired'), trigger: 'blur' }
+  file: [
+    { required: true, message: t('documentManagement.titleRequired'), trigger: 'blur' }
   ]
 })
 
@@ -217,7 +239,11 @@ const formatFileSize = (size) => {
 
 // 处理文件变化
 const handleFileChange = (file) => {
-  // 这里可以处理文件选择逻辑
+  if (file && file.raw) {
+    formData.fileName = file.name
+    formData.fileSize = file.size
+    formData.fileType = file.type || file.name.substring(file.name.lastIndexOf('.') + 1)
+  }
 }
 
 // 加载文档列表
@@ -419,14 +445,12 @@ const resetForm = () => {
   }
   Object.assign(formData, {
     id: null,
-    title: '',
-    content: '',
-    filePath: '',
     fileName: '',
+    filePath: '',
     fileSize: 0,
     fileType: '',
-    uploader: '',
-    deptId: 0,
+    userId: null,
+    deptId: null,
     status: 1
   })
   fileList.value = []
@@ -438,10 +462,10 @@ const handleSubmit = () => {
     documentFormRef.value.validate((valid) => {
       if (valid) {
         loading.value = true
-        // 根据id判断是新增还是更新
-        const request = formData.id ? 
-          updateDocument(formData.id, formData) : 
-          createDocument(formData)
+        // 根据是否有文件判断是上传还是更新
+        const request = fileList.value.length > 0 ? 
+          uploadDocument(fileList.value[0].raw, formData) : 
+          updateDocument(formData.id, formData)
         
         request
           .then(res => {

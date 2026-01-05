@@ -17,7 +17,7 @@ public class DeyochProcessInstance {
   private Long id;
   private Long processId;
   private String instanceName;
-  private String initiator;
+  private Long userId;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime startTime;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

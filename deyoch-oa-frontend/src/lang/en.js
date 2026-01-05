@@ -317,11 +317,15 @@ export default {
     addDocument: 'Add Document',
     editDocument: 'Edit Document',
     documentTitle: 'Document Title',
+    content: 'Content',
     uploader: 'Uploader',
     fileType: 'File Type',
     fileSize: 'File Size',
     status: 'Status',
     uploadTime: 'Upload Time',
+    updateTime: 'Update Time',
+    fileName: 'File Name',
+    department: 'Department',
     searchPlaceholder: 'Please enter document title or uploader',
     enterTitle: 'Please enter document title',
     enterContent: 'Please enter document content',
@@ -339,6 +343,9 @@ export default {
     deleteSuccess: 'Delete document success',
     deleteFailed: 'Delete document failed',
     downloadSuccess: 'Download document success',
-    downloadFailed: 'Download document failed'
+    downloadFailed: 'Download document failed',
+    view: 'View',
+    download: 'Download',
+    operation: 'Operation'
   }
 }

@@ -18,7 +18,7 @@ public class DeyochDept {
   private String deptName;
   private Long parentId;
   private String deptCode;
-  private String leader;
+  private Long leaderId;
   private String phone;
   private String email;
   private Long sort;

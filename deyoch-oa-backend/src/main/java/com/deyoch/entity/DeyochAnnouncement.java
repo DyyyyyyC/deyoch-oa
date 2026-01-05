@@ -17,7 +17,7 @@ public class DeyochAnnouncement {
   private Long id;
   private String title;
   private String content;
-  private String publisher;
+  private Long userId;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime publishTime;
   private Long status;

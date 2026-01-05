@@ -6,6 +6,8 @@ import com.deyoch.mapper.DeyochProcessInstanceMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.ProcessInstanceService;
+import com.deyoch.utils.JwtUtil;
+import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -21,6 +23,7 @@ import java.util.List;
 public class ProcessInstanceServiceImpl implements ProcessInstanceService {
 
     private final DeyochProcessInstanceMapper deyochProcessInstanceMapper;
+    private final JwtUtil jwtUtil;
 
     @Override
     public Result<List<DeyochProcessInstance>> getProcessInstanceList() {
@@ -51,10 +54,18 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     @Override
     public Result<DeyochProcessInstance> createProcessInstance(DeyochProcessInstance instance) {
         try {
+            // 从JWT token中获取用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建流程实例");
+            }
+            
             // 设置创建时间和更新时间
             LocalDateTime now = LocalDateTime.now();
             instance.setCreatedAt(now);
             instance.setUpdatedAt(now);
+            // 设置发起人ID
+            instance.setUserId(userId);
             // 默认状态为待启动
             instance.setStatus(0L);
             // 创建流程实例

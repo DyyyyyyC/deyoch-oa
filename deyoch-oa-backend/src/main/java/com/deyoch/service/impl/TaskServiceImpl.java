@@ -54,9 +54,9 @@ public class TaskServiceImpl implements TaskService {
     @Override
     public Result<DeyochTask> createTask(DeyochTask task) {
         try {
-            // 从JWT token中直接获取用户名，无需查询数据库
-            String username = UserContextUtil.getUsernameFromToken(jwtUtil);
-            if (username == null) {
+            // 从JWT token中获取用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
                 return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建任务");
             }
             
@@ -64,8 +64,8 @@ public class TaskServiceImpl implements TaskService {
             LocalDateTime now = LocalDateTime.now();
             task.setCreatedAt(now);
             task.setUpdatedAt(now);
-            // 设置创建人
-            task.setCreator(username);
+            // 设置创建人ID
+            task.setCreatorId(userId);
             // 默认状态为待分配
             task.setStatus(0L);
             // 创建任务
@@ -111,15 +111,15 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Result<Void> assignTask(Long id, String assignee) {
+    public Result<Void> assignTask(Long id, Long assigneeId) {
         try {
             // 检查任务是否存在
             DeyochTask task = deyochTaskMapper.selectById(id);
             if (task == null) {
                 return Result.error(ResultCode.TASK_NOT_FOUND, "任务不存在");
             }
-            // 更新被分配人
-            task.setAssignee(assignee);
+            // 更新被分配人ID
+            task.setAssigneeId(assigneeId);
             // 更新状态为已分配
             task.setStatus(1L);
             // 设置更新时间

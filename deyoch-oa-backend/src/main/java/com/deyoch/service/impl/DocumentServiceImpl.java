@@ -6,6 +6,8 @@ import com.deyoch.mapper.DeyochDocumentMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.DocumentService;
+import com.deyoch.utils.JwtUtil;
+import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -26,6 +28,7 @@ import java.util.UUID;
 public class DocumentServiceImpl implements DocumentService {
 
     private final DeyochDocumentMapper deyochDocumentMapper;
+    private final JwtUtil jwtUtil;
 
     // 文档上传路径（从配置文件中获取）
     @Value("${file.upload.path}")
@@ -37,10 +40,9 @@ public class DocumentServiceImpl implements DocumentService {
             // 构建查询条件
             LambdaQueryWrapper<DeyochDocument> queryWrapper = new LambdaQueryWrapper<>();
             
-            // 添加关键词搜索条件
+            // 添加关键词搜索条件（搜索文件名）
             if (keyword != null && !keyword.isEmpty()) {
-                queryWrapper.like(DeyochDocument::getTitle, keyword)
-                    .or().like(DeyochDocument::getContent, keyword);
+                queryWrapper.like(DeyochDocument::getFileName, keyword);
             }
             
             // 按创建时间倒序排列
@@ -85,10 +87,18 @@ public class DocumentServiceImpl implements DocumentService {
     @Override
     public Result<DeyochDocument> createDocument(DeyochDocument document) {
         try {
+            // 从JWT token中获取用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法创建文档");
+            }
+            
             // 设置创建时间和更新时间
             LocalDateTime now = LocalDateTime.now();
             document.setCreatedAt(now);
             document.setUpdatedAt(now);
+            // 设置上传人ID
+            document.setUserId(userId);
             // 默认状态为启用
             document.setStatus(1L);
             // 创建文档
@@ -170,6 +180,12 @@ public class DocumentServiceImpl implements DocumentService {
                 return Result.error(ResultCode.PARAM_ERROR, "上传文件不能为空");
             }
             
+            // 从JWT token中获取用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌，无法上传文档");
+            }
+            
             // 创建上传目录
             File uploadDir = new File(uploadPath);
             if (!uploadDir.exists()) {
@@ -190,6 +206,7 @@ public class DocumentServiceImpl implements DocumentService {
             document.setFilePath(destFile.getAbsolutePath());
             document.setFileSize(file.getSize());
             document.setFileType(file.getContentType());
+            document.setUserId(userId);
             document.setCreatedAt(LocalDateTime.now());
             document.setUpdatedAt(LocalDateTime.now());
             document.setStatus(1L);
