@@ -48,13 +48,14 @@
         :data="roleList"
         border
         style="width: 100%"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="roleName" :label="$t('roleManagement.roleName')" width="120" />
-        <el-table-column prop="roleCode" :label="$t('roleManagement.roleCode')" width="120" />
-        <el-table-column prop="description" :label="$t('roleManagement.description')" width="200" />
-        <el-table-column prop="status" :label="$t('roleManagement.status')" width="120">
+        <el-table-column prop="roleName" :label="$t('roleManagement.roleName')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="roleCode" :label="$t('roleManagement.roleCode')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="description" :label="$t('roleManagement.description')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('roleManagement.status')" min-width="120">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"
@@ -64,8 +65,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->

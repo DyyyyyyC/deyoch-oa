@@ -73,7 +73,7 @@ public class UserServiceImpl implements UserService {
 
             // 默认状态为启用
             if (user.getStatus() == null) {
-                user.setStatus(1L);
+                user.setStatus(1);
             }
 
             // 创建用户
@@ -154,7 +154,7 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
-    public Result<Void> updateUserStatus(Long id, Long status) {
+    public Result<Void> updateUserStatus(Long id, Integer status) {
         try {
             // 检查用户是否存在
             DeyochUser existingUser = deyochUserMapper.selectById(id);

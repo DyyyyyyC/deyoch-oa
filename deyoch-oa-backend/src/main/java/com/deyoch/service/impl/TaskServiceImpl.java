@@ -8,6 +8,7 @@ import com.deyoch.mapper.DeyochUserMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.TaskService;
+import com.deyoch.service.UserInfoConverter;
 import com.deyoch.service.UserService;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
@@ -15,10 +16,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -33,6 +32,7 @@ public class TaskServiceImpl implements TaskService {
     private final DeyochUserMapper deyochUserMapper;
     private final JwtUtil jwtUtil;
     private final UserService userService;
+    private final UserInfoConverter userInfoConverter;
 
     @Override
     public Result<List<DeyochTask>> getTaskList() {
@@ -42,46 +42,32 @@ public class TaskServiceImpl implements TaskService {
             queryWrapper.orderByDesc(DeyochTask::getCreatedAt);
             List<DeyochTask> taskList = deyochTaskMapper.selectList(queryWrapper);
             
-            // 批量获取用户信息，减少数据库查询次数
-            if (!taskList.isEmpty()) {
-                // 收集所有唯一的用户ID
-                Set<Long> userIds = new HashSet<>();
-                for (DeyochTask task : taskList) {
+            // 使用UserInfoConverter填充用户名信息
+            userInfoConverter.<DeyochTask>populateUserNames(
+                taskList,
+                // 用户ID提取器：从任务中提取creatorId和assigneeId
+                task -> {
+                    Set<Long> userIds = new HashSet<>();
                     if (task.getCreatorId() != null) {
                         userIds.add(task.getCreatorId());
                     }
                     if (task.getAssigneeId() != null) {
                         userIds.add(task.getAssigneeId());
                     }
-                }
-                
-                // 批量获取用户信息
-                if (!userIds.isEmpty()) {
-                    // 构建用户ID到用户名的映射
-                    Map<Long, String> userIdToUsernameMap = new HashMap<>();
-                    
-                    // 查询所有相关用户
-                    List<DeyochUser> users = deyochUserMapper.selectBatchIds(userIds);
-                    for (DeyochUser user : users) {
-                        userIdToUsernameMap.put(user.getId(), user.getUsername());
+                    return userIds;
+                },
+                // 用户名设置器：将用户名设置到creatorName和assigneeName字段
+                (task, userIdToNameMap) -> {
+                    if (task.getCreatorId() != null) {
+                        String creatorName = userIdToNameMap.get(task.getCreatorId());
+                        task.setCreatorName(creatorName);
                     }
-                    
-                    // 为每个任务设置用户名
-                    for (DeyochTask task : taskList) {
-                        // 设置创建者用户名
-                        if (task.getCreatorId() != null) {
-                            String creatorName = userIdToUsernameMap.getOrDefault(task.getCreatorId(), "未知用户");
-                            task.setCreatorName(creatorName);
-                        }
-                        
-                        // 设置负责人用户名
-                        if (task.getAssigneeId() != null) {
-                            String assigneeName = userIdToUsernameMap.getOrDefault(task.getAssigneeId(), "未知用户");
-                            task.setAssigneeName(assigneeName);
-                        }
+                    if (task.getAssigneeId() != null) {
+                        String assigneeName = userIdToNameMap.get(task.getAssigneeId());
+                        task.setAssigneeName(assigneeName);
                     }
                 }
-            }
+            );
             
             return Result.success(taskList);
         } catch (Exception e) {
@@ -118,7 +104,7 @@ public class TaskServiceImpl implements TaskService {
             // 设置创建人ID
             task.setCreatorId(userId);
             // 默认状态为待分配
-            task.setStatus(0L);
+            task.setStatus(0);
             // 创建任务
             deyochTaskMapper.insert(task);
             return Result.success(task);
@@ -172,7 +158,7 @@ public class TaskServiceImpl implements TaskService {
             // 更新被分配人ID
             task.setAssigneeId(assigneeId);
             // 更新状态为已分配
-            task.setStatus(1L);
+            task.setStatus(1);
             // 设置更新时间
             task.setUpdatedAt(LocalDateTime.now());
             // 更新任务
@@ -184,7 +170,7 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Result<Void> updateTaskStatus(Long id, Long status) {
+    public Result<Void> updateTaskStatus(Long id, Integer status) {
         try {
             // 检查任务是否存在
             DeyochTask task = deyochTaskMapper.selectById(id);
@@ -208,13 +194,41 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Result<List<DeyochTask>> getTasksByStatus(Long status) {
+    public Result<List<DeyochTask>> getTasksByStatus(Integer status) {
         try {
             // 根据状态查询任务，按创建时间倒序排列
             LambdaQueryWrapper<DeyochTask> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochTask::getStatus, status);
             queryWrapper.orderByDesc(DeyochTask::getCreatedAt);
             List<DeyochTask> taskList = deyochTaskMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充用户名信息
+            userInfoConverter.<DeyochTask>populateUserNames(
+                taskList,
+                // 用户ID提取器：从任务中提取creatorId和assigneeId
+                task -> {
+                    Set<Long> userIds = new HashSet<>();
+                    if (task.getCreatorId() != null) {
+                        userIds.add(task.getCreatorId());
+                    }
+                    if (task.getAssigneeId() != null) {
+                        userIds.add(task.getAssigneeId());
+                    }
+                    return userIds;
+                },
+                // 用户名设置器：将用户名设置到creatorName和assigneeName字段
+                (task, userIdToNameMap) -> {
+                    if (task.getCreatorId() != null) {
+                        String creatorName = userIdToNameMap.get(task.getCreatorId());
+                        task.setCreatorName(creatorName);
+                    }
+                    if (task.getAssigneeId() != null) {
+                        String assigneeName = userIdToNameMap.get(task.getAssigneeId());
+                        task.setAssigneeName(assigneeName);
+                    }
+                }
+            );
+            
             return Result.success(taskList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取任务列表失败：" + e.getMessage());
@@ -222,13 +236,41 @@ public class TaskServiceImpl implements TaskService {
     }
 
     @Override
-    public Result<List<DeyochTask>> getTasksByPriority(Long priority) {
+    public Result<List<DeyochTask>> getTasksByPriority(Integer priority) {
         try {
             // 根据优先级查询任务，按创建时间倒序排列
             LambdaQueryWrapper<DeyochTask> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochTask::getPriority, priority);
             queryWrapper.orderByDesc(DeyochTask::getCreatedAt);
             List<DeyochTask> taskList = deyochTaskMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充用户名信息
+            userInfoConverter.<DeyochTask>populateUserNames(
+                taskList,
+                // 用户ID提取器：从任务中提取creatorId和assigneeId
+                task -> {
+                    Set<Long> userIds = new HashSet<>();
+                    if (task.getCreatorId() != null) {
+                        userIds.add(task.getCreatorId());
+                    }
+                    if (task.getAssigneeId() != null) {
+                        userIds.add(task.getAssigneeId());
+                    }
+                    return userIds;
+                },
+                // 用户名设置器：将用户名设置到creatorName和assigneeName字段
+                (task, userIdToNameMap) -> {
+                    if (task.getCreatorId() != null) {
+                        String creatorName = userIdToNameMap.get(task.getCreatorId());
+                        task.setCreatorName(creatorName);
+                    }
+                    if (task.getAssigneeId() != null) {
+                        String assigneeName = userIdToNameMap.get(task.getAssigneeId());
+                        task.setAssigneeName(assigneeName);
+                    }
+                }
+            );
+            
             return Result.success(taskList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取任务列表失败：" + e.getMessage());

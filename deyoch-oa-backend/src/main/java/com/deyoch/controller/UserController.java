@@ -94,7 +94,7 @@ public class UserController {
     @PutMapping("/{id}/status")
     @PreAuthorize("hasAuthority('sys:user:manage')")
     @Operation(summary = "更新用户状态", description = "根据用户ID更新用户状态")
-    public Result<Void> updateUserStatus(@PathVariable @Parameter(description = "用户ID") Long id, @RequestParam @Parameter(description = "用户状态（1-启用，0-禁用）") Long status) {
+    public Result<Void> updateUserStatus(@PathVariable @Parameter(description = "用户ID") Long id, @RequestParam @Parameter(description = "用户状态（1-启用，0-禁用）") Integer status) {
         return userService.updateUserStatus(id, status);
     }
 

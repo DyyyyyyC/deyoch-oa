@@ -6,6 +6,7 @@ import com.deyoch.mapper.DeyochAnnouncementMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.AnnouncementService;
+import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,9 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.Collections;
 
 /**
  * 公告管理服务实现类
@@ -24,6 +28,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
 
     private final DeyochAnnouncementMapper deyochAnnouncementMapper;
     private final JwtUtil jwtUtil;
+    private final UserInfoConverter userInfoConverter;
 
     @Override
     public Result<List<DeyochAnnouncement>> getAnnouncementList() {
@@ -32,6 +37,22 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             LambdaQueryWrapper<DeyochAnnouncement> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochAnnouncement::getPublishTime);
             List<DeyochAnnouncement> announcementList = deyochAnnouncementMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充发布者用户名
+            userInfoConverter.<DeyochAnnouncement>populateUserNames(
+                announcementList,
+                // 用户ID提取器：从公告中提取userId
+                announcement -> announcement.getUserId() != null ? 
+                    Collections.singleton(announcement.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到publisherName字段
+                (announcement, userIdToNameMap) -> {
+                    if (announcement.getUserId() != null) {
+                        String publisherName = userIdToNameMap.get(announcement.getUserId());
+                        announcement.setPublisherName(publisherName);
+                    }
+                }
+            );
+            
             return Result.success(announcementList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取公告列表失败：" + e.getMessage());
@@ -45,6 +66,22 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             if (announcement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
+            
+            // 使用UserInfoConverter填充发布者用户名
+            userInfoConverter.<DeyochAnnouncement>populateUserNames(
+                announcement,
+                // 用户ID提取器：从公告中提取userId
+                ann -> ann.getUserId() != null ? 
+                    Collections.singleton(ann.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到publisherName字段
+                (ann, userIdToNameMap) -> {
+                    if (ann.getUserId() != null) {
+                        String publisherName = userIdToNameMap.get(ann.getUserId());
+                        ann.setPublisherName(publisherName);
+                    }
+                }
+            );
+            
             return Result.success(announcement);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取公告详情失败：" + e.getMessage());
@@ -59,7 +96,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             announcement.setCreatedAt(now);
             announcement.setUpdatedAt(now);
             // 默认状态为未发布
-            announcement.setStatus(0L);
+            announcement.setStatus(0);
             // 设置创建人为当前登录用户ID
             Long currentUserId = UserContextUtil.getUserIdFromToken(jwtUtil);
             if (currentUserId != null) {
@@ -116,7 +153,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 设置状态为已发布
-            announcement.setStatus(1L);
+            announcement.setStatus(1);
             // 设置发布时间
             announcement.setPublishTime(LocalDateTime.now());
             // 设置更新时间
@@ -138,7 +175,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 设置状态为已撤销
-            announcement.setStatus(2L);
+            announcement.setStatus(2);
             // 设置更新时间
             announcement.setUpdatedAt(LocalDateTime.now());
             // 更新公告

@@ -107,7 +107,7 @@ public class TaskController {
     @PostMapping("/{id}/status")
     @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "更新任务状态", description = "根据任务ID更新任务状态")
-    public Result<Void> updateTaskStatus(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "任务状态") Long status) {
+    public Result<Void> updateTaskStatus(@PathVariable @Parameter(description = "任务ID") Long id, @RequestParam @Parameter(description = "任务状态") Integer status) {
         return taskService.updateTaskStatus(id, status);
     }
 
@@ -119,7 +119,7 @@ public class TaskController {
     @GetMapping("/status/{status}")
     @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "根据状态获取任务列表", description = "根据任务状态获取任务列表")
-    public Result<List<DeyochTask>> getTasksByStatus(@PathVariable @Parameter(description = "任务状态") Long status) {
+    public Result<List<DeyochTask>> getTasksByStatus(@PathVariable @Parameter(description = "任务状态") Integer status) {
         return taskService.getTasksByStatus(status);
     }
 
@@ -131,7 +131,7 @@ public class TaskController {
     @GetMapping("/priority/{priority}")
     @PreAuthorize("hasAuthority('oa:task:manage')")
     @Operation(summary = "根据优先级获取任务列表", description = "根据任务优先级获取任务列表")
-    public Result<List<DeyochTask>> getTasksByPriority(@PathVariable @Parameter(description = "任务优先级") Long priority) {
+    public Result<List<DeyochTask>> getTasksByPriority(@PathVariable @Parameter(description = "任务优先级") Integer priority) {
         return taskService.getTasksByPriority(priority);
     }
 }

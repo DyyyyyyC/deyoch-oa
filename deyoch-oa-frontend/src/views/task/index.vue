@@ -49,16 +49,8 @@
         <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('taskManagement.title')" width="180" />
         <el-table-column prop="content" :label="$t('taskManagement.description')" width="200" show-overflow-tooltip />
-        <el-table-column prop="assigneeId" :label="$t('taskManagement.assignee')" width="120">
-          <template #default="scope">
-            {{ getUserNameById(scope.row.assigneeId) }}
-          </template>
-        </el-table-column>
-        <el-table-column prop="creatorId" :label="$t('taskManagement.creator')" width="120">
-          <template #default="scope">
-            {{ getUserNameById(scope.row.creatorId) }}
-          </template>
-        </el-table-column>
+        <el-table-column prop="assigneeName" :label="$t('taskManagement.assignee')" width="120" />
+        <el-table-column prop="creatorName" :label="$t('taskManagement.creator')" width="120" />
         <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">

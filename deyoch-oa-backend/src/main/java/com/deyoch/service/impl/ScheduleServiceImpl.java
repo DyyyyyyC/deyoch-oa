@@ -6,6 +6,7 @@ import com.deyoch.mapper.DeyochScheduleMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.ScheduleService;
+import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
@@ -13,6 +14,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -26,6 +28,7 @@ public class ScheduleServiceImpl implements ScheduleService {
 
     private final DeyochScheduleMapper deyochScheduleMapper;
     private final JwtUtil jwtUtil;
+    private final UserInfoConverter userInfoConverter;
 
     @Override
     public Result<List<DeyochSchedule>> getScheduleList() {
@@ -34,6 +37,22 @@ public class ScheduleServiceImpl implements ScheduleService {
             LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
             List<DeyochSchedule> scheduleList = deyochScheduleMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充创建者用户名
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                scheduleList,
+                // 用户ID提取器：从日程中提取userId
+                schedule -> schedule.getUserId() != null ? 
+                    Collections.singleton(schedule.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到creatorName字段
+                (schedule, userIdToNameMap) -> {
+                    if (schedule.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(schedule.getUserId());
+                        schedule.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
             return Result.success(scheduleList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取日程列表失败：" + e.getMessage());
@@ -48,6 +67,22 @@ public class ScheduleServiceImpl implements ScheduleService {
             queryWrapper.eq(DeyochSchedule::getUserId, userId);
             queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
             List<DeyochSchedule> scheduleList = deyochScheduleMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充创建者用户名
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                scheduleList,
+                // 用户ID提取器：从日程中提取userId
+                schedule -> schedule.getUserId() != null ? 
+                    Collections.singleton(schedule.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到creatorName字段
+                (schedule, userIdToNameMap) -> {
+                    if (schedule.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(schedule.getUserId());
+                        schedule.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
             return Result.success(scheduleList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取用户日程列表失败：" + e.getMessage());
@@ -61,6 +96,22 @@ public class ScheduleServiceImpl implements ScheduleService {
             if (schedule == null) {
                 return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
             }
+            
+            // 使用UserInfoConverter填充创建者用户名
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                schedule,
+                // 用户ID提取器：从日程中提取userId
+                sch -> sch.getUserId() != null ? 
+                    Collections.singleton(sch.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到creatorName字段
+                (sch, userIdToNameMap) -> {
+                    if (sch.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(sch.getUserId());
+                        sch.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
             return Result.success(schedule);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取日程详情失败：" + e.getMessage());
@@ -90,7 +141,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 设置用户ID
             schedule.setUserId(userId);
             // 默认状态为待开始
-            schedule.setStatus(0L);
+            schedule.setStatus(0);
             // 创建日程
             deyochScheduleMapper.insert(schedule);
             return Result.success(schedule);
@@ -136,7 +187,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     }
 
     @Override
-    public Result<Void> updateScheduleStatus(Long id, Long status) {
+    public Result<Void> updateScheduleStatus(Long id, Integer status) {
         try {
             // 检查日程是否存在
             DeyochSchedule schedule = deyochScheduleMapper.selectById(id);

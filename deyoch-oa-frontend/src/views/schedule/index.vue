@@ -46,6 +46,7 @@
         <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" width="150"/>
         <el-table-column prop="content" :label="$t('scheduleManagement.content')" width="180" />
+        <el-table-column prop="creatorName" :label="$t('scheduleManagement.creator')" width="120" />
         <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="180" />
         <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="180" />
         <el-table-column prop="location" :label="$t('scheduleManagement.location')" width="150" />

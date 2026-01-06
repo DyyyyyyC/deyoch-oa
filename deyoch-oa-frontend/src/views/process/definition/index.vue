@@ -41,23 +41,22 @@
         :data="processList"
         border
         style="width: 100%"
-        fit
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="150" />
-        <el-table-column prop="processName" :label="$t('processManagement.processName')" width="150" />
-        <el-table-column prop="processKey" :label="$t('processManagement.processKey')" width="120" />
-        <el-table-column prop="description" :label="$t('processManagement.description')" width="180" />
-        <el-table-column prop="status" :label="$t('processManagement.status')" width="120">
+        <el-table-column prop="processName" :label="$t('processManagement.processName')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="processKey" :label="$t('processManagement.processKey')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="description" :label="$t('processManagement.description')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('processManagement.status')" min-width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'">
               {{ scope.row.status === 1 ? $t('processManagement.statusEnabled') : $t('processManagement.statusDisabled') }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->

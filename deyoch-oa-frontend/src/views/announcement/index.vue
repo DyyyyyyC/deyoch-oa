@@ -45,11 +45,7 @@
       >
         <el-table-column type="selection" width="55" />
         <el-table-column prop="title" :label="$t('announcementManagement.title')" width="180" />
-        <el-table-column prop="userId" :label="$t('announcementManagement.publisher')" width="120">
-          <template #default="scope">
-            {{ getUserNameById(scope.row.userId) }}
-          </template>
-        </el-table-column>
+        <el-table-column prop="publisherName" :label="$t('announcementManagement.publisher')" width="120" />
         <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="180" />
         <el-table-column prop="status" :label="$t('announcementManagement.status')" width="120">
           <template #default="scope">

@@ -74,7 +74,7 @@ public class DeptServiceImpl implements DeptService {
             dept.setCreatedAt(now);
             dept.setUpdatedAt(now);
             // 默认状态为启用
-            dept.setStatus(1L);
+            dept.setStatus(1);
             // 创建部门
             deyochDeptMapper.insert(dept);
             return Result.success(dept);
@@ -124,7 +124,7 @@ public class DeptServiceImpl implements DeptService {
     }
 
     @Override
-    public Result<Void> updateDeptStatus(Long id, Long status) {
+    public Result<Void> updateDeptStatus(Long id, Integer status) {
         try {
             // 检查部门是否存在
             DeyochDept dept = deyochDeptMapper.selectById(id);

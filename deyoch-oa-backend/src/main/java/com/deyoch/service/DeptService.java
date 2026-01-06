@@ -57,5 +57,5 @@ public interface DeptService {
      * @param status 部门状态
      * @return 更新结果
      */
-    Result<Void> updateDeptStatus(Long id, Long status);
+    Result<Void> updateDeptStatus(Long id, Integer status);
 }

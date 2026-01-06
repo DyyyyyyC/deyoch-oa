@@ -41,23 +41,23 @@
         :data="processInstanceList"
         border
         style="width: 100%"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" />
-        <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" width="180" />
-        <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" width="150" />
-        <el-table-column prop="userId" :label="$t('processInstanceManagement.initiator')" width="120" />
-        <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" width="180" />
-        <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" width="180" />
-        <el-table-column prop="status" :label="$t('processInstanceManagement.status')" width="120">
+        <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="creatorName" :label="$t('processInstanceManagement.initiator')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('processInstanceManagement.status')" min-width="120">
           <template #default="scope">
             <el-tag :type="getStatusTagType(scope.row.status)">
               {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" min-width="180" show-overflow-tooltip />
         <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
       </el-table>
 

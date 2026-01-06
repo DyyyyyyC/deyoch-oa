@@ -96,10 +96,10 @@ public class PermissionServiceImpl implements PermissionService {
                 permission.setParentId(0L);
             }
             if (permission.getSort() == null) {
-                permission.setSort(0L);
+                permission.setSort(0);
             }
             if (permission.getStatus() == null) {
-                permission.setStatus(1L);
+                permission.setStatus(1);
             }
             // 确保权限类型不为空
             if (permission.getPermType() == null || permission.getPermType().isEmpty()) {

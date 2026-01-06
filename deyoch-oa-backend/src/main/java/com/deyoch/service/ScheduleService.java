@@ -58,5 +58,5 @@ public interface ScheduleService {
      * @param status 日程状态
      * @return 更新结果
      */
-    Result<Void> updateScheduleStatus(Long id, Long status);
+    Result<Void> updateScheduleStatus(Long id, Integer status);
 }

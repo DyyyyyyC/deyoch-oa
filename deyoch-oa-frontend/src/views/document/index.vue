@@ -44,24 +44,25 @@
         :data="documentList"
         border
         style="width: 100%"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="id" label="ID" width="80" align="center" />
-        <el-table-column prop="fileName" :label="$t('documentManagement.fileName')" min-width="200">
+        <el-table-column prop="fileName" :label="$t('documentManagement.fileName')" min-width="200" show-overflow-tooltip>
           <template #default="scope">
             <el-link type="primary" @click="handleViewDocument(scope.row)">
               {{ scope.row.fileName }}
             </el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="fileType" :label="$t('documentManagement.fileType')" width="100" align="center" />
-        <el-table-column prop="fileSize" :label="$t('documentManagement.fileSize')" width="120" align="center">
+        <el-table-column prop="uploaderName" :label="$t('documentManagement.uploader')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="fileType" :label="$t('documentManagement.fileType')" min-width="100" show-overflow-tooltip />
+        <el-table-column prop="fileSize" :label="$t('documentManagement.fileSize')" min-width="120">
           <template #default="scope">
             {{ formatFileSize(scope.row.fileSize) }}
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="$t('documentManagement.status')" width="100" align="center">
+        <el-table-column prop="status" :label="$t('documentManagement.status')" min-width="100">
           <template #default="scope">
             <el-tag :type="scope.row.status === 1 ? 'success' : 'danger'" size="small">
               {{ scope.row.status === 1 ? $t('common.enabled') : $t('common.disabled') }}

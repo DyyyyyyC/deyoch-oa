@@ -7,6 +7,7 @@ import java.time.LocalDateTime;
 import com.fasterxml.jackson.annotation.JsonFormat;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
 
 @Data
 @NoArgsConstructor
@@ -19,8 +20,8 @@ public class DeyochTask {
   private String content;
   private Long assigneeId;
   private Long creatorId;
-  private Long priority;
-  private Long status;
+  private Integer priority;
+  private Integer status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime startTime;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
@@ -31,7 +32,9 @@ public class DeyochTask {
   private LocalDateTime updatedAt;
   
   // 非数据库字段，用于前端显示
+  @TableField(exist = false)
   private String creatorName;
+  @TableField(exist = false)
   private String assigneeName;
 
 }

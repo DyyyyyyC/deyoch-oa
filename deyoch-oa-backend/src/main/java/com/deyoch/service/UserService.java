@@ -51,7 +51,7 @@ public interface UserService {
      * @param status 用户状态（1-启用，0-禁用）
      * @return 更新结果
      */
-    Result<Void> updateUserStatus(Long id, Long status);
+    Result<Void> updateUserStatus(Long id, Integer status);
 
     /**
      * 获取当前登录用户信息

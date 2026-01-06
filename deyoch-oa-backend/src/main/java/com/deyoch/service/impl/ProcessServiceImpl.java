@@ -47,7 +47,7 @@ public class ProcessServiceImpl implements ProcessService {
         process.setCreatedAt(now);
         process.setUpdatedAt(now);
         // 默认状态为启用
-        process.setStatus(1L);
+        process.setStatus(1);
         // 创建流程
         deyochProcessMapper.insert(process);
         return Result.success(process);

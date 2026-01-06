@@ -44,25 +44,25 @@
         :data="permissionList"
         border
         style="width: 100%"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="permName" :label="$t('permissionManagement.permName')" width="150" />
-        <el-table-column prop="permCode" :label="$t('permissionManagement.permCode')" width="150" />
-        <el-table-column prop="permType" :label="$t('permissionManagement.permType')" width="120">
+        <el-table-column prop="permName" :label="$t('permissionManagement.permName')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="permCode" :label="$t('permissionManagement.permCode')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="permType" :label="$t('permissionManagement.permType')" min-width="120">
           <template #default="scope">
             <el-tag :type="scope.row.permType === 'menu' ? 'success' : 'warning'">
               {{ scope.row.permType === 'menu' ? '菜单' : '按钮' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="parentId" :label="$t('permissionManagement.parentId')" width="120" />
-        <el-table-column prop="parentName" :label="$t('permissionManagement.parentName')" width="120" />
-        <el-table-column prop="path" :label="$t('permissionManagement.path')" width="180" />
-        <el-table-column prop="component" :label="$t('permissionManagement.component')" width="200" />
-        <el-table-column prop="icon" :label="$t('permissionManagement.icon')" width="120" />
-        <el-table-column prop="sort" :label="$t('permissionManagement.sort')" width="100" />
-        <el-table-column prop="status" :label="$t('permissionManagement.status')" width="120">
+        <el-table-column prop="parentName" :label="$t('permissionManagement.parentName')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="path" :label="$t('permissionManagement.path')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="component" :label="$t('permissionManagement.component')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="icon" :label="$t('permissionManagement.icon')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="sort" :label="$t('permissionManagement.sort')" min-width="100" />
+        <el-table-column prop="status" :label="$t('permissionManagement.status')" min-width="120">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"

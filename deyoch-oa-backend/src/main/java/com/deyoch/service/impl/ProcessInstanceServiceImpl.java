@@ -6,12 +6,14 @@ import com.deyoch.mapper.DeyochProcessInstanceMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.ProcessInstanceService;
+import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,6 +26,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
 
     private final DeyochProcessInstanceMapper deyochProcessInstanceMapper;
     private final JwtUtil jwtUtil;
+    private final UserInfoConverter userInfoConverter;
 
     @Override
     public Result<List<DeyochProcessInstance>> getProcessInstanceList() {
@@ -32,6 +35,22 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             LambdaQueryWrapper<DeyochProcessInstance> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochProcessInstance::getCreatedAt);
             List<DeyochProcessInstance> instanceList = deyochProcessInstanceMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充创建者用户名
+            userInfoConverter.<DeyochProcessInstance>populateUserNames(
+                instanceList,
+                // 用户ID提取器：从流程实例中提取userId
+                instance -> instance.getUserId() != null ? 
+                    Collections.singleton(instance.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到creatorName字段
+                (instance, userIdToNameMap) -> {
+                    if (instance.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(instance.getUserId());
+                        instance.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
             return Result.success(instanceList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取流程实例列表失败：" + e.getMessage());
@@ -45,6 +64,22 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             if (instance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
+            
+            // 使用UserInfoConverter填充创建者用户名
+            userInfoConverter.<DeyochProcessInstance>populateUserNames(
+                instance,
+                // 用户ID提取器：从流程实例中提取userId
+                inst -> inst.getUserId() != null ? 
+                    Collections.singleton(inst.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到creatorName字段
+                (inst, userIdToNameMap) -> {
+                    if (inst.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(inst.getUserId());
+                        inst.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
             return Result.success(instance);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取流程实例详情失败：" + e.getMessage());
@@ -67,7 +102,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             // 设置发起人ID
             instance.setUserId(userId);
             // 默认状态为待启动
-            instance.setStatus(0L);
+            instance.setStatus(0);
             // 创建流程实例
             deyochProcessInstanceMapper.insert(instance);
             return Result.success(instance);
@@ -119,7 +154,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
             // 设置状态为运行中
-            instance.setStatus(1L);
+            instance.setStatus(1);
             // 设置启动时间
             instance.setStartTime(LocalDateTime.now());
             // 设置更新时间
@@ -141,7 +176,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
             // 设置状态为已完成
-            instance.setStatus(2L);
+            instance.setStatus(2);
             // 设置结束时间
             instance.setEndTime(LocalDateTime.now());
             // 设置更新时间

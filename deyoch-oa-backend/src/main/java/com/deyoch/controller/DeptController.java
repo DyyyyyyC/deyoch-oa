@@ -105,7 +105,7 @@ public class DeptController {
     @PostMapping("/{id}/status")
     @PreAuthorize("hasAuthority('sys:dept:manage')")
     @Operation(summary = "更新部门状态", description = "根据部门ID更新部门状态")
-    public Result<Void> updateDeptStatus(@PathVariable @Parameter(description = "部门ID") Long id, @RequestParam @Parameter(description = "部门状态") Long status) {
+    public Result<Void> updateDeptStatus(@PathVariable @Parameter(description = "部门ID") Long id, @RequestParam @Parameter(description = "部门状态") Integer status) {
         return deptService.updateDeptStatus(id, status);
     }
 }

@@ -113,7 +113,7 @@ public class DocumentController {
     @PostMapping("/{id}/status")
     @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "更新文档状态", description = "根据文档ID更新文档状态")
-    public Result<Void> updateDocumentStatus(@PathVariable @Parameter(description = "文档ID") Long id, @RequestParam @Parameter(description = "文档状态") Long status) {
+    public Result<Void> updateDocumentStatus(@PathVariable @Parameter(description = "文档ID") Long id, @RequestParam @Parameter(description = "文档状态") Integer status) {
         return documentService.updateDocumentStatus(id, status);
     }
 

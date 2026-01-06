@@ -62,7 +62,7 @@ public interface DocumentService {
      * @param status 文档状态
      * @return 更新结果
      */
-    Result<Void> updateDocumentStatus(Long id, Long status);
+    Result<Void> updateDocumentStatus(Long id, Integer status);
 
     /**
      * 上传文档

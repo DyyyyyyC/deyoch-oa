@@ -106,7 +106,7 @@ public class ScheduleController {
     @PostMapping("/{id}/status")
     @PreAuthorize("hasAuthority('oa:schedule:manage')")
     @Operation(summary = "更新日程状态", description = "根据日程ID更新日程状态")
-    public Result<Void> updateScheduleStatus(@PathVariable @Parameter(description = "日程ID") Long id, @RequestParam @Parameter(description = "日程状态") Long status) {
+    public Result<Void> updateScheduleStatus(@PathVariable @Parameter(description = "日程ID") Long id, @RequestParam @Parameter(description = "日程状态") Integer status) {
         return scheduleService.updateScheduleStatus(id, status);
     }
 }

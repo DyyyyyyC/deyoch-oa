@@ -6,6 +6,7 @@ import com.deyoch.mapper.DeyochDocumentMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.DocumentService;
+import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import java.io.File;
 import java.io.IOException;
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,6 +31,7 @@ public class DocumentServiceImpl implements DocumentService {
 
     private final DeyochDocumentMapper deyochDocumentMapper;
     private final JwtUtil jwtUtil;
+    private final UserInfoConverter userInfoConverter;
 
     // 文档上传路径（从配置文件中获取）
     @Value("${file.upload.path}")
@@ -51,6 +54,21 @@ public class DocumentServiceImpl implements DocumentService {
             // 查询所有文档
             List<DeyochDocument> documentList = deyochDocumentMapper.selectList(queryWrapper);
             
+            // 使用UserInfoConverter填充上传者用户名
+            userInfoConverter.<DeyochDocument>populateUserNames(
+                documentList,
+                // 用户ID提取器：从文档中提取userId
+                document -> document.getUserId() != null ? 
+                    Collections.singleton(document.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到uploaderName字段
+                (document, userIdToNameMap) -> {
+                    if (document.getUserId() != null) {
+                        String uploaderName = userIdToNameMap.get(document.getUserId());
+                        document.setUploaderName(uploaderName);
+                    }
+                }
+            );
+            
             return Result.success(documentList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取文档列表失败：" + e.getMessage());
@@ -64,6 +82,22 @@ public class DocumentServiceImpl implements DocumentService {
             if (document == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
+            
+            // 使用UserInfoConverter填充上传者用户名
+            userInfoConverter.<DeyochDocument>populateUserNames(
+                document,
+                // 用户ID提取器：从文档中提取userId
+                doc -> doc.getUserId() != null ? 
+                    Collections.singleton(doc.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到uploaderName字段
+                (doc, userIdToNameMap) -> {
+                    if (doc.getUserId() != null) {
+                        String uploaderName = userIdToNameMap.get(doc.getUserId());
+                        doc.setUploaderName(uploaderName);
+                    }
+                }
+            );
+            
             return Result.success(document);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取文档详情失败：" + e.getMessage());
@@ -78,6 +112,22 @@ public class DocumentServiceImpl implements DocumentService {
             queryWrapper.eq(DeyochDocument::getDeptId, deptId);
             queryWrapper.orderByDesc(DeyochDocument::getCreatedAt);
             List<DeyochDocument> documentList = deyochDocumentMapper.selectList(queryWrapper);
+            
+            // 使用UserInfoConverter填充上传者用户名
+            userInfoConverter.<DeyochDocument>populateUserNames(
+                documentList,
+                // 用户ID提取器：从文档中提取userId
+                document -> document.getUserId() != null ? 
+                    Collections.singleton(document.getUserId()) : Collections.emptySet(),
+                // 用户名设置器：将用户名设置到uploaderName字段
+                (document, userIdToNameMap) -> {
+                    if (document.getUserId() != null) {
+                        String uploaderName = userIdToNameMap.get(document.getUserId());
+                        document.setUploaderName(uploaderName);
+                    }
+                }
+            );
+            
             return Result.success(documentList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取部门文档列表失败：" + e.getMessage());
@@ -100,7 +150,7 @@ public class DocumentServiceImpl implements DocumentService {
             // 设置上传人ID
             document.setUserId(userId);
             // 默认状态为启用
-            document.setStatus(1L);
+            document.setStatus(1);
             // 创建文档
             deyochDocumentMapper.insert(document);
             return Result.success(document);
@@ -149,7 +199,7 @@ public class DocumentServiceImpl implements DocumentService {
     }
 
     @Override
-    public Result<Void> updateDocumentStatus(Long id, Long status) {
+    public Result<Void> updateDocumentStatus(Long id, Integer status) {
         try {
             // 检查文档是否存在
             DeyochDocument document = deyochDocumentMapper.selectById(id);
@@ -209,7 +259,7 @@ public class DocumentServiceImpl implements DocumentService {
             document.setUserId(userId);
             document.setCreatedAt(LocalDateTime.now());
             document.setUpdatedAt(LocalDateTime.now());
-            document.setStatus(1L);
+            document.setStatus(1);
             
             // 保存文档记录
             deyochDocumentMapper.insert(document);

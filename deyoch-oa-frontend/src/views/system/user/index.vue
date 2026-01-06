@@ -47,15 +47,16 @@
         :data="userList"
         border
         style="width: 100%"
+        row-key="id"
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="username" :label="$t('userManagement.username')" width="120" />
-        <el-table-column prop="nickname" :label="$t('userManagement.nickname')" width="120" />
-        <el-table-column prop="email" :label="$t('userManagement.email')" width="180" />
-        <el-table-column prop="phone" :label="$t('userManagement.phone')" width="150" />
-        <el-table-column prop="roleName" :label="$t('userManagement.role')" width="120" />
-        <el-table-column prop="status" :label="$t('userManagement.status')" width="120">
+        <el-table-column prop="username" :label="$t('userManagement.username')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="nickname" :label="$t('userManagement.nickname')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="email" :label="$t('userManagement.email')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="phone" :label="$t('userManagement.phone')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="roleName" :label="$t('userManagement.role')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('userManagement.status')" min-width="120">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"
@@ -65,8 +66,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('userManagement.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('userManagement.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->

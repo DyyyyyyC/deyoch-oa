@@ -59,19 +59,19 @@ public interface TaskService {
      * @param status 任务状态
      * @return 更新结果
      */
-    Result<Void> updateTaskStatus(Long id, Long status);
+    Result<Void> updateTaskStatus(Long id, Integer status);
 
     /**
      * 根据任务状态获取任务列表
      * @param status 任务状态
      * @return 任务列表
      */
-    Result<List<DeyochTask>> getTasksByStatus(Long status);
+    Result<List<DeyochTask>> getTasksByStatus(Integer status);
 
     /**
      * 根据任务优先级获取任务列表
      * @param priority 任务优先级
      * @return 任务列表
      */
-    Result<List<DeyochTask>> getTasksByPriority(Long priority);
+    Result<List<DeyochTask>> getTasksByPriority(Integer priority);
 }

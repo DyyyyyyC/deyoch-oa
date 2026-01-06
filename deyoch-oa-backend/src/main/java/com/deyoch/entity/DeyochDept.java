@@ -21,8 +21,8 @@ public class DeyochDept {
   private Long leaderId;
   private String phone;
   private String email;
-  private Long sort;
-  private Long status;
+  private Integer sort;
+  private Integer status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")

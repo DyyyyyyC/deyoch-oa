@@ -19,7 +19,7 @@ public class DeyochProcess {
   private String processKey;
   private String description;
   private Long creatorId;
-  private Long status;
+  private Integer status;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
