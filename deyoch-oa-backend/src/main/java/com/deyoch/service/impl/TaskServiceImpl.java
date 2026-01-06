@@ -2,7 +2,9 @@ package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.deyoch.entity.DeyochTask;
+import com.deyoch.entity.DeyochUser;
 import com.deyoch.mapper.DeyochTaskMapper;
+import com.deyoch.mapper.DeyochUserMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.TaskService;
@@ -13,7 +15,11 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * 任务管理服务实现类
@@ -24,6 +30,7 @@ import java.util.List;
 public class TaskServiceImpl implements TaskService {
 
     private final DeyochTaskMapper deyochTaskMapper;
+    private final DeyochUserMapper deyochUserMapper;
     private final JwtUtil jwtUtil;
     private final UserService userService;
 
@@ -35,18 +42,44 @@ public class TaskServiceImpl implements TaskService {
             queryWrapper.orderByDesc(DeyochTask::getCreatedAt);
             List<DeyochTask> taskList = deyochTaskMapper.selectList(queryWrapper);
             
-            // 为每个任务添加创建者和负责人的用户名
-            for (DeyochTask task : taskList) {
-                // 获取创建者用户名
-                if (task.getCreatorId() != null) {
-                    String creatorName = userService.getUsernameById(task.getCreatorId());
-                    task.setCreatorName(creatorName);
+            // 批量获取用户信息，减少数据库查询次数
+            if (!taskList.isEmpty()) {
+                // 收集所有唯一的用户ID
+                Set<Long> userIds = new HashSet<>();
+                for (DeyochTask task : taskList) {
+                    if (task.getCreatorId() != null) {
+                        userIds.add(task.getCreatorId());
+                    }
+                    if (task.getAssigneeId() != null) {
+                        userIds.add(task.getAssigneeId());
+                    }
                 }
                 
-                // 获取负责人用户名
-                if (task.getAssigneeId() != null) {
-                    String assigneeName = userService.getUsernameById(task.getAssigneeId());
-                    task.setAssigneeName(assigneeName);
+                // 批量获取用户信息
+                if (!userIds.isEmpty()) {
+                    // 构建用户ID到用户名的映射
+                    Map<Long, String> userIdToUsernameMap = new HashMap<>();
+                    
+                    // 查询所有相关用户
+                    List<DeyochUser> users = deyochUserMapper.selectBatchIds(userIds);
+                    for (DeyochUser user : users) {
+                        userIdToUsernameMap.put(user.getId(), user.getUsername());
+                    }
+                    
+                    // 为每个任务设置用户名
+                    for (DeyochTask task : taskList) {
+                        // 设置创建者用户名
+                        if (task.getCreatorId() != null) {
+                            String creatorName = userIdToUsernameMap.getOrDefault(task.getCreatorId(), "未知用户");
+                            task.setCreatorName(creatorName);
+                        }
+                        
+                        // 设置负责人用户名
+                        if (task.getAssigneeId() != null) {
+                            String assigneeName = userIdToUsernameMap.getOrDefault(task.getAssigneeId(), "未知用户");
+                            task.setAssigneeName(assigneeName);
+                        }
+                    }
                 }
             }
             
