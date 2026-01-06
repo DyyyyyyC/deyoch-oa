@@ -128,15 +128,12 @@ CREATE TABLE `deyoch_permission`  (
   `component` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '组件路径',
   `icon` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '图标',
   `sort` int NULL DEFAULT 0 COMMENT '排序',
-  `creator_id` bigint NULL DEFAULT NULL COMMENT '创建人ID',
   `status` tinyint NULL DEFAULT 1 COMMENT '状态：0-禁用，1-启用',
   `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
   UNIQUE INDEX `uk_perm_code`(`perm_code`) USING BTREE,
-  INDEX `idx_parent_id`(`parent_id`) USING BTREE,
-  INDEX `idx_creator_id`(`creator_id`) USING BTREE,
-  CONSTRAINT `fk_permission_creator` FOREIGN KEY (`creator_id`) REFERENCES `deyoch_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  INDEX `idx_parent_id`(`parent_id`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '权限表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
@@ -177,11 +174,11 @@ CREATE TABLE `deyoch_process`  (
 -- ----------------------------
 -- Records of deyoch_process
 -- ----------------------------
-INSERT INTO `deyoch_process` VALUES (1, '请假流程', 'leave', '员工请假审批流程', 1, 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
-INSERT INTO `deyoch_process` VALUES (2, '报销流程', 'reimbursement', '费用报销审批流程', 1, 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
-INSERT INTO `deyoch_process` VALUES (3, '出差流程', 'business_trip', '员工出差审批流程', 1, 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
-INSERT INTO `deyoch_process` VALUES (4, '采购流程', 'purchase', '物资采购审批流程', 1, 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
-INSERT INTO `deyoch_process` VALUES (5, '加班流程', 'overtime', '员工加班审批流程', 1, 1, '2025-12-31 10:02:42', '2025-12-31 10:18:10');
+INSERT INTO `deyoch_process` VALUES (1, '请假流程', 'leave', '员工请假审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
+INSERT INTO `deyoch_process` VALUES (2, '报销流程', 'reimbursement', '费用报销审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
+INSERT INTO `deyoch_process` VALUES (3, '出差流程', 'business_trip', '员工出差审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
+INSERT INTO `deyoch_process` VALUES (4, '采购流程', 'purchase', '物资采购审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
+INSERT INTO `deyoch_process` VALUES (5, '加班流程', 'overtime', '员工加班审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:18:10');
 
 -- ----------------------------
 -- Table structure for deyoch_process_instance
@@ -223,13 +220,10 @@ CREATE TABLE `deyoch_role`  (
   `role_name` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '角色名称',
   `role_code` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '角色编码',
   `description` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NULL DEFAULT NULL COMMENT '角色描述',
-  `creator_id` bigint NULL DEFAULT NULL COMMENT '创建人ID',
   `created_at` datetime NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
   `updated_at` datetime NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
   PRIMARY KEY (`id`) USING BTREE,
-  UNIQUE INDEX `uk_role_code`(`role_code`) USING BTREE,
-  INDEX `idx_creator_id`(`creator_id`) USING BTREE,
-  CONSTRAINT `fk_role_creator` FOREIGN KEY (`creator_id`) REFERENCES `deyoch_user` (`id`) ON DELETE SET NULL ON UPDATE CASCADE
+  UNIQUE INDEX `uk_role_code`(`role_code`) USING BTREE
 ) ENGINE = InnoDB CHARACTER SET = utf8mb4 COLLATE = utf8mb4_unicode_ci COMMENT = '角色表' ROW_FORMAT = Dynamic;
 
 -- ----------------------------
