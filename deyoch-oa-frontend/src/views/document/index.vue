@@ -70,22 +70,6 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" width="180" align="center" />
         <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" width="180" align="center" />
-        <el-table-column :label="$t('documentManagement.operation')" width="150" align="center" fixed="right">
-          <template #default="scope">
-            <el-button type="primary" size="small" @click="handleViewDocument(scope.row)" :icon="View">
-              {{ $t('documentManagement.view') }}
-            </el-button>
-            <el-button type="success" size="small" @click="handleDownload(scope.row)" :icon="Download" style="margin-left: 5px;">
-              {{ $t('documentManagement.download') }}
-            </el-button>
-            <el-button type="warning" size="small" @click="handleEditDocument(scope.row)" :icon="Edit" style="margin-left: 5px;">
-              {{ $t('common.edit') }}
-            </el-button>
-            <el-button type="danger" size="small" @click="handleDeleteDocument(scope.row)" :icon="Delete" style="margin-left: 5px;">
-              {{ $t('common.delete') }}
-            </el-button>
-          </template>
-        </el-table-column>
       </el-table>
 
       <!-- 分页 -->

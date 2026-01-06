@@ -185,6 +185,7 @@ const processForm = reactive({
   processName: '',
   processKey: '',
   description: '',
+  creatorId: null,
   status: 1
 })
 
@@ -276,6 +277,7 @@ const handleBatchEdit = () => {
   processForm.processName = row.processName
   processForm.processKey = row.processKey
   processForm.description = row.description
+  processForm.creatorId = row.creatorId
   processForm.status = row.status
   dialogVisible.value = true
 }
@@ -289,6 +291,7 @@ const resetForm = () => {
   processForm.processName = ''
   processForm.processKey = ''
   processForm.description = ''
+  processForm.creatorId = null
   processForm.status = 1
 }
 

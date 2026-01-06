@@ -6,6 +6,7 @@ import com.deyoch.mapper.DeyochTaskMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.TaskService;
+import com.deyoch.service.UserService;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
@@ -24,6 +25,7 @@ public class TaskServiceImpl implements TaskService {
 
     private final DeyochTaskMapper deyochTaskMapper;
     private final JwtUtil jwtUtil;
+    private final UserService userService;
 
     @Override
     public Result<List<DeyochTask>> getTaskList() {
@@ -32,6 +34,22 @@ public class TaskServiceImpl implements TaskService {
             LambdaQueryWrapper<DeyochTask> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochTask::getCreatedAt);
             List<DeyochTask> taskList = deyochTaskMapper.selectList(queryWrapper);
+            
+            // 为每个任务添加创建者和负责人的用户名
+            for (DeyochTask task : taskList) {
+                // 获取创建者用户名
+                if (task.getCreatorId() != null) {
+                    String creatorName = userService.getUsernameById(task.getCreatorId());
+                    task.setCreatorName(creatorName);
+                }
+                
+                // 获取负责人用户名
+                if (task.getAssigneeId() != null) {
+                    String assigneeName = userService.getUsernameById(task.getAssigneeId());
+                    task.setAssigneeName(assigneeName);
+                }
+            }
+            
             return Result.success(taskList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取任务列表失败：" + e.getMessage());

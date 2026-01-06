@@ -47,7 +47,7 @@
         <el-table-column prop="id" label="ID" width="80" />
         <el-table-column prop="instanceName" :label="$t('processInstanceManagement.instanceName')" width="180" />
         <el-table-column prop="processName" :label="$t('processInstanceManagement.processName')" width="150" />
-        <el-table-column prop="initiator" :label="$t('processInstanceManagement.initiator')" width="120" />
+        <el-table-column prop="userId" :label="$t('processInstanceManagement.initiator')" width="120" />
         <el-table-column prop="startTime" :label="$t('processInstanceManagement.startTime')" width="180" />
         <el-table-column prop="endTime" :label="$t('processInstanceManagement.endTime')" width="180" />
         <el-table-column prop="status" :label="$t('processInstanceManagement.status')" width="120">
@@ -110,9 +110,9 @@
             />
           </el-select>
         </el-form-item>
-        <el-form-item :label="$t('processInstanceManagement.initiator')" prop="initiator">
+        <el-form-item :label="$t('processInstanceManagement.initiator')" prop="userId">
           <el-input
-            v-model="processInstanceForm.initiator"
+            v-model="processInstanceForm.userId"
             :placeholder="$t('processInstanceManagement.enterInitiator')"
             maxlength="50"
             show-word-limit
@@ -186,7 +186,7 @@ const processInstanceForm = reactive({
   id: null,
   processId: undefined, // 初始值改为undefined，确保下拉框显示占位符
   instanceName: '',
-  initiator: '',
+  userId: '',
   status: 0
 })
 
@@ -200,7 +200,7 @@ const formRules = {
     { required: true, message: t('processInstanceManagement.enterProcessId'), trigger: 'blur' },
     { type: 'number', message: t('common.fieldMustBeNumber', { field: t('processInstanceManagement.processName') }), trigger: 'blur' }
   ],
-  initiator: [
+  userId: [
     { required: true, message: t('processInstanceManagement.enterInitiator'), trigger: 'blur' },
     { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('processInstanceManagement.initiator') }), trigger: 'blur' }
   ]
@@ -285,7 +285,7 @@ const handleEditProcessInstance = (row) => {
   processInstanceForm.id = row.id
   processInstanceForm.processId = row.processId
   processInstanceForm.instanceName = row.instanceName
-  processInstanceForm.initiator = row.initiator
+  processInstanceForm.userId = row.userId
   processInstanceForm.status = row.status
   dialogVisible.value = true
 }
@@ -302,7 +302,7 @@ const handleBatchEdit = () => {
   processInstanceForm.id = row.id
   processInstanceForm.processId = row.processId
   processInstanceForm.instanceName = row.instanceName
-  processInstanceForm.initiator = row.initiator
+  processInstanceForm.userId = row.userId
   processInstanceForm.status = row.status
   dialogVisible.value = true
 }
@@ -315,7 +315,7 @@ const resetForm = () => {
   processInstanceForm.id = null
   processInstanceForm.processId = undefined // 重置为undefined，确保下拉框显示占位符
   processInstanceForm.instanceName = ''
-  processInstanceForm.initiator = ''
+  processInstanceForm.userId = ''
   processInstanceForm.status = 0
 }
 

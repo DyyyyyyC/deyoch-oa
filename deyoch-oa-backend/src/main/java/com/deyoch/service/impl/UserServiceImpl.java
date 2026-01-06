@@ -210,4 +210,17 @@ public class UserServiceImpl implements UserService {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取当前用户失败：" + e.getMessage());
         }
     }
+
+    @Override
+    public String getUsernameById(Long userId) {
+        try {
+            DeyochUser user = deyochUserMapper.selectById(userId);
+            if (user != null) {
+                return user.getUsername();
+            }
+            return "未知用户";
+        } catch (Exception e) {
+            return "未知用户";
+        }
+    }
 }

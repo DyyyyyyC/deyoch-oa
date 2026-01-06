@@ -347,8 +347,8 @@ const fetchTaskData = async () => {
       // 添加更多默认值
       title: task.title || '无标题',
       description: task.description || '无描述',
-      creator: task.creator || task.createUser || '未知创建者',
-      assignee: task.assignee || task.assignUser || '未分配'
+      creator: task.creatorName || task.createUser || '未知创建者',
+      assignee: task.assigneeName || task.assignUser || '未分配'
     }))
     
     // 更新任务列表
@@ -415,8 +415,8 @@ const fetchRecentFiles = async () => {
     }).slice(0, 4)
     // 转换文件数据格式，适配前端显示
     files.value = sortedFiles.map(file => ({
-      // 使用后端返回的title字段作为文件名
-      name: file.title || '未知文件名',
+      // 使用后端返回的fileName字段作为文件名，同时支持多种命名方式
+      name: file.fileName || file.file_name || file.name || '未知文件名',
       // 从filePath中提取文件大小信息，或者模拟文件大小
       size: `${(Math.random() * 5 + 1).toFixed(1)} MB`, // 模拟文件大小
       // 检查多种可能的日期字段

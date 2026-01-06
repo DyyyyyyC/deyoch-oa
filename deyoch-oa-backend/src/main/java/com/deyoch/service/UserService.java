@@ -58,4 +58,11 @@ public interface UserService {
      * @return 当前用户信息
      */
     Result<DeyochUser> getCurrentUser();
+    
+    /**
+     * 根据用户ID获取用户名
+     * @param userId 用户ID
+     * @return 用户名
+     */
+    String getUsernameById(Long userId);
 }

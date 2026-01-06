@@ -29,5 +29,9 @@ public class DeyochTask {
   private LocalDateTime createdAt;
   @JsonFormat(pattern = "yyyy-MM-dd HH:mm:ss")
   private LocalDateTime updatedAt;
+  
+  // 非数据库字段，用于前端显示
+  private String creatorName;
+  private String assigneeName;
 
 }

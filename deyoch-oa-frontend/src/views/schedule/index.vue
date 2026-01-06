@@ -49,7 +49,6 @@
         <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="180" />
         <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="180" />
         <el-table-column prop="location" :label="$t('scheduleManagement.location')" width="150" />
-        <el-table-column prop="reminderTime" :label="$t('scheduleManagement.reminderTime')" width="180" />
         <el-table-column prop="status" :label="$t('scheduleManagement.status')" width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 0 ? 'warning' : scope.row.status === 1 ? 'success' : 'danger'">
@@ -212,7 +211,6 @@ const scheduleForm = reactive({
   startTime: '',
   endTime: '',
   location: '',
-  reminderTime: '',
   status: 0 // 默认未开始
 })
 
@@ -315,7 +313,6 @@ const handleBatchEdit = () => {
   scheduleForm.startTime = row.startTime
   scheduleForm.endTime = row.endTime
   scheduleForm.location = row.location
-  scheduleForm.reminderTime = row.reminderTime
   scheduleForm.status = row.status
   dialogVisible.value = true
 }
@@ -369,7 +366,6 @@ const resetForm = () => {
   scheduleForm.startTime = ''
   scheduleForm.endTime = ''
   scheduleForm.location = ''
-  scheduleForm.reminderTime = ''
   scheduleForm.status = 0
 }
 
