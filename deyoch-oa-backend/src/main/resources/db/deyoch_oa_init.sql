@@ -1,17 +1,17 @@
 /*
- Navicat Premium Data Transfer
+  Navicat Premium Data Transfer
 
- Source Server         : localhost
- Source Server Type    : MySQL
- Source Server Version : 80043
- Source Host           : 192.168.28.197:3306
- Source Schema         : deyoch_oa
+  Source Server         : localhost
+  Source Server Type    : MySQL
+  Source Server Version : 80043
+  Source Host           : 192.168.28.197:3306
+  Source Schema         : deyoch_oa
 
- Target Server Type    : MySQL
- Target Server Version : 80043
- File Encoding         : 65001
+  Target Server Type    : MySQL
+  Target Server Version : 80043
+  File Encoding         : 65001
 
- Date: 04/01/2026 16:36:07
+  Date: 04/01/2026 16:36:07
 */
 
 -- 创建数据库（如果不存在）
@@ -149,8 +149,6 @@ INSERT INTO `deyoch_permission` VALUES (8, '流程管理', 'oa:process:manage', 
 INSERT INTO `deyoch_permission` VALUES (9, '任务管理', 'oa:task:manage', 'menu', 0, '/task', 'task/index', 'List', 4, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (10, '日程管理', 'oa:schedule:manage', 'menu', 0, '/schedule', 'schedule/index', 'Calendar', 5, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
 INSERT INTO `deyoch_permission` VALUES (11, '文档管理', 'oa:document:manage', 'menu', 0, '/document', 'document/index', 'Document', 6, 1, '2025-12-25 15:00:51', '2026-01-04 16:34:39');
-INSERT INTO `deyoch_permission` VALUES (12, '流程定义', 'oa:process:definition', 'menu', 8, '/process/definition', 'process/definition/index', 'FileText', 1, 1, 1, '2026-01-04 16:34:39', '2026-01-04 16:34:39');
-INSERT INTO `deyoch_permission` VALUES (13, '流程实例', 'oa:process:instance', 'menu', 8, '/process/instance', 'process/instance/index', 'PlayCircle', 2, 1, 1, '2026-01-04 16:34:39', '2026-01-04 16:34:39');
 
 -- ----------------------------
 -- Table structure for deyoch_process
@@ -179,6 +177,7 @@ INSERT INTO `deyoch_process` VALUES (2, '报销流程', 'reimbursement', '费用
 INSERT INTO `deyoch_process` VALUES (3, '出差流程', 'business_trip', '员工出差审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
 INSERT INTO `deyoch_process` VALUES (4, '采购流程', 'purchase', '物资采购审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:02:42');
 INSERT INTO `deyoch_process` VALUES (5, '加班流程', 'overtime', '员工加班审批流程', 1, '2025-12-31 10:02:42', '2025-12-31 10:18:10');
+
 
 -- ----------------------------
 -- Table structure for deyoch_process_instance
@@ -229,9 +228,9 @@ CREATE TABLE `deyoch_role`  (
 -- ----------------------------
 -- Records of deyoch_role
 -- ----------------------------
-INSERT INTO `deyoch_role` VALUES (1, '管理员', 'admin', '系统管理员', 1, '2025-12-25 15:00:51', '2026-01-04 15:36:56');
-INSERT INTO `deyoch_role` VALUES (2, '普通用户', 'user', '普通用户', 1, '2025-12-25 15:00:51', '2026-01-04 15:36:56');
-INSERT INTO `deyoch_role` VALUES (3, '部门经理', 'manager', '部门经理', 1, '2025-12-25 15:00:51', '2026-01-04 15:36:56');
+INSERT INTO `deyoch_role` VALUES (1, '管理员', 'admin', '系统管理员', '2025-12-25 15:00:51', '2026-01-04 15:36:56');
+INSERT INTO `deyoch_role` VALUES (2, '普通用户', 'user', '普通用户', '2025-12-25 15:00:51', '2026-01-04 15:36:56');
+INSERT INTO `deyoch_role` VALUES (3, '部门经理', 'manager', '部门经理', '2025-12-25 15:00:51', '2026-01-04 15:36:56');
 
 -- ----------------------------
 -- Table structure for deyoch_role_permission
@@ -262,8 +261,6 @@ INSERT INTO `deyoch_role_permission` VALUES (17, 1, 8);
 INSERT INTO `deyoch_role_permission` VALUES (18, 1, 9);
 INSERT INTO `deyoch_role_permission` VALUES (19, 1, 10);
 INSERT INTO `deyoch_role_permission` VALUES (26, 1, 11);
-INSERT INTO `deyoch_role_permission` VALUES (24, 1, 12);
-INSERT INTO `deyoch_role_permission` VALUES (25, 1, 13);
 
 -- ----------------------------
 -- Table structure for deyoch_schedule
