@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochPermission;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 权限管理服务接口
  * 定义权限相关的业务逻辑方法
  */
-public interface PermissionService {
+public interface PermissionService extends IService<DeyochPermission> {
 
     /**
      * 获取权限列表（树形结构）

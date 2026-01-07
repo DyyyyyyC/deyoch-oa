@@ -48,7 +48,7 @@ jwt:
 # 文件上传配置
 file:
   upload:
-    path: ${oa.file.upload.path}  # 文件上传路径
+    path: ${oa.file.upload.path:./uploads}  # 文件上传路径，默认为./uploads
 
 # 日志配置
 logging:

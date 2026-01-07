@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochDocument;
 import com.deyoch.result.Result;
 import org.springframework.web.multipart.MultipartFile;
@@ -10,7 +11,7 @@ import java.util.List;
  * 文档管理服务接口
  * 定义文档管理相关的业务逻辑方法
  */
-public interface DocumentService {
+public interface DocumentService extends IService<DeyochDocument> {
 
     /**
      * 获取文档列表

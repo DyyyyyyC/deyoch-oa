@@ -1,5 +1,6 @@
 package com.deyoch.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.deyoch.entity.DeyochAnnouncement;
 import com.deyoch.mapper.DeyochAnnouncementMapper;
@@ -20,13 +21,12 @@ import java.util.Collections;
 
 /**
  * 公告管理服务实现类
- * 实现公告管理相关的业务逻辑
+ * 继承ServiceImpl获得MyBatis Plus的基础CRUD能力
  */
 @Service
 @RequiredArgsConstructor
-public class AnnouncementServiceImpl implements AnnouncementService {
+public class AnnouncementServiceImpl extends ServiceImpl<DeyochAnnouncementMapper, DeyochAnnouncement> implements AnnouncementService {
 
-    private final DeyochAnnouncementMapper deyochAnnouncementMapper;
     private final JwtUtil jwtUtil;
     private final UserInfoConverter userInfoConverter;
 
@@ -36,7 +36,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             // 查询所有公告，按发布时间倒序排列
             LambdaQueryWrapper<DeyochAnnouncement> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochAnnouncement::getPublishTime);
-            List<DeyochAnnouncement> announcementList = deyochAnnouncementMapper.selectList(queryWrapper);
+            List<DeyochAnnouncement> announcementList = list(queryWrapper);
             
             // 使用UserInfoConverter填充发布者用户名
             userInfoConverter.<DeyochAnnouncement>populateUserNames(
@@ -62,7 +62,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     @Override
     public Result<DeyochAnnouncement> getAnnouncementById(Long id) {
         try {
-            DeyochAnnouncement announcement = deyochAnnouncementMapper.selectById(id);
+            DeyochAnnouncement announcement = getById(id);
             if (announcement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
@@ -103,7 +103,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
                 announcement.setUserId(currentUserId);
             }
             // 创建公告
-            deyochAnnouncementMapper.insert(announcement);
+            save(announcement);
             return Result.success(announcement);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "创建公告失败：" + e.getMessage());
@@ -114,14 +114,14 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     public Result<DeyochAnnouncement> updateAnnouncement(DeyochAnnouncement announcement) {
         try {
             // 检查公告是否存在
-            DeyochAnnouncement existingAnnouncement = deyochAnnouncementMapper.selectById(announcement.getId());
+            DeyochAnnouncement existingAnnouncement = getById(announcement.getId());
             if (existingAnnouncement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 设置更新时间
             announcement.setUpdatedAt(LocalDateTime.now());
             // 更新公告
-            deyochAnnouncementMapper.updateById(announcement);
+            updateById(announcement);
             return Result.success(announcement);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新公告失败：" + e.getMessage());
@@ -132,12 +132,12 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     public Result<Void> deleteAnnouncement(Long id) {
         try {
             // 检查公告是否存在
-            DeyochAnnouncement announcement = deyochAnnouncementMapper.selectById(id);
+            DeyochAnnouncement announcement = getById(id);
             if (announcement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
             // 删除公告
-            deyochAnnouncementMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除公告失败：" + e.getMessage());
@@ -148,7 +148,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     public Result<Void> publishAnnouncement(Long id) {
         try {
             // 检查公告是否存在
-            DeyochAnnouncement announcement = deyochAnnouncementMapper.selectById(id);
+            DeyochAnnouncement announcement = getById(id);
             if (announcement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
@@ -159,7 +159,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             // 设置更新时间
             announcement.setUpdatedAt(LocalDateTime.now());
             // 更新公告
-            deyochAnnouncementMapper.updateById(announcement);
+            updateById(announcement);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "发布公告失败：" + e.getMessage());
@@ -170,7 +170,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
     public Result<Void> revokeAnnouncement(Long id) {
         try {
             // 检查公告是否存在
-            DeyochAnnouncement announcement = deyochAnnouncementMapper.selectById(id);
+            DeyochAnnouncement announcement = getById(id);
             if (announcement == null) {
                 return Result.error(ResultCode.ANNOUNCEMENT_NOT_FOUND, "公告不存在");
             }
@@ -179,7 +179,7 @@ public class AnnouncementServiceImpl implements AnnouncementService {
             // 设置更新时间
             announcement.setUpdatedAt(LocalDateTime.now());
             // 更新公告
-            deyochAnnouncementMapper.updateById(announcement);
+            updateById(announcement);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "撤销公告失败：" + e.getMessage());

@@ -5,41 +5,52 @@
       <h2>{{ $t('userManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('userManagement.username')">
-          <el-input v-model="searchForm.username" :placeholder="$t('userManagement.enterUsername')" clearable />
-        </el-form-item>
-        <el-form-item :label="$t('userManagement.status')">
-          <el-select v-model="searchForm.status" :placeholder="$t('userManagement.selectStatus')" clearable>
-            <el-option :label="$t('userManagement.enabled')" value="1" />
-            <el-option :label="$t('userManagement.disabled')" value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('userManagement.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('userManagement.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 用户列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddUser">
-          <el-icon><Plus /></el-icon>
-          {{ $t('userManagement.addUser') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedUsers.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('userManagement.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedUsers.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('userManagement.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddUser">
+            <el-icon><Plus /></el-icon>
+            {{ $t('userManagement.addUser') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedUsers.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('userManagement.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedUsers.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('userManagement.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.username" 
+                :placeholder="$t('userManagement.enterUsername')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-select 
+                v-model="searchForm.status" 
+                :placeholder="$t('userManagement.selectStatus')" 
+                clearable
+              >
+                <el-option :label="$t('userManagement.enabled')" value="1" />
+                <el-option :label="$t('userManagement.disabled')" value="0" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('userManagement.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('userManagement.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -140,6 +151,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { get, post, put, del } from '@/utils/axios'
+import '@/style/management-layout.css'
 
 // 加载状态
 const loading = ref(false)
@@ -263,8 +275,39 @@ const handleSelectionChange = (selection) => {
 
 // 搜索用户
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索，暂时先调用getUserList()
-  getUserList()
+  // 实现真正的搜索逻辑
+  loading.value = true
+  
+  try {
+    // 获取完整用户列表
+    getUserList().then(() => {
+      // 在前端进行搜索过滤
+      let filteredUsers = [...userList.value]
+      
+      // 按用户名搜索
+      if (searchForm.username && searchForm.username.trim()) {
+        filteredUsers = filteredUsers.filter(user => 
+          user.username.toLowerCase().includes(searchForm.username.toLowerCase()) ||
+          user.nickname.toLowerCase().includes(searchForm.username.toLowerCase())
+        )
+      }
+      
+      // 按状态搜索
+      if (searchForm.status !== '' && searchForm.status !== null && searchForm.status !== undefined) {
+        filteredUsers = filteredUsers.filter(user => 
+          user.status === Number(searchForm.status)
+        )
+      }
+      
+      // 更新显示的用户列表
+      userList.value = filteredUsers
+      pagination.total = filteredUsers.length
+    })
+  } catch (error) {
+    if (error.message) {
+      ElMessage.error('搜索失败：' + error.message)
+    }
+  }
 }
 
 // 重置搜索表单

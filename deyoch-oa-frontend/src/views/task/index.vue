@@ -5,38 +5,49 @@
       <h2>{{ $t('taskManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('taskManagement.title')">
-          <el-input v-model="searchForm.title" :placeholder="$t('taskManagement.enterTitle')" clearable />
-        </el-form-item>
-        <el-form-item :label="$t('taskManagement.assignee')">
-          <el-input v-model="searchForm.assigneeId" :placeholder="$t('taskManagement.enterAssignee')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 任务列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddTask">
-          <el-icon><Plus /></el-icon>
-          {{ $t('taskManagement.addTask') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedTasks.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedTasks.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddTask">
+            <el-icon><Plus /></el-icon>
+            {{ $t('taskManagement.addTask') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedTasks.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedTasks.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.title" 
+                :placeholder="$t('taskManagement.enterTitle')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.assigneeId" 
+                :placeholder="$t('taskManagement.enterAssignee')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -47,28 +58,28 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('taskManagement.title')" width="180" />
-        <el-table-column prop="content" :label="$t('taskManagement.description')" width="200" show-overflow-tooltip />
-        <el-table-column prop="assigneeName" :label="$t('taskManagement.assignee')" width="120" />
-        <el-table-column prop="creatorName" :label="$t('taskManagement.creator')" width="120" />
-        <el-table-column prop="priority" :label="$t('taskManagement.priority')" width="120">
+        <el-table-column prop="title" :label="$t('taskManagement.title')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="content" :label="$t('taskManagement.description')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="assigneeName" :label="$t('taskManagement.assignee')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="creatorName" :label="$t('taskManagement.creator')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="priority" :label="$t('taskManagement.priority')" min-width="120">
           <template #default="scope">
-            <el-tag :type="scope.row.priority === 1 ? 'info' : scope.row.priority === 2 ? 'success' : 'danger'">
-              {{ scope.row.priority === 1 ? $t('common.low') : scope.row.priority === 2 ? $t('common.medium') : $t('common.high') }}
+            <el-tag :type="getPriorityTagType(scope.row.priority)">
+              {{ getPriorityText(scope.row.priority) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="status" :label="$t('taskManagement.status')" width="120">
+        <el-table-column prop="status" :label="$t('taskManagement.status')" min-width="120">
           <template #default="scope">
-            <el-tag :type="scope.row.status === 0 ? 'warning' : scope.row.status === 1 ? 'info' : scope.row.status === 2 ? 'success' : 'danger'">
-              {{ scope.row.status === 0 ? $t('common.notStarted') : scope.row.status === 1 ? $t('common.inProgress') : scope.row.status === 2 ? $t('common.completed') : $t('common.cancelled') }}
+            <el-tag :type="getStatusTagType(scope.row.status)">
+              {{ getStatusText(scope.row.status) }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="startTime" :label="$t('taskManagement.startTime')" width="180" />
-        <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" width="180" />
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
+        <el-table-column prop="startTime" :label="$t('taskManagement.startTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="endTime" :label="$t('taskManagement.endTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -117,12 +128,30 @@
           />
         </el-form-item>
         <el-form-item :label="$t('taskManagement.assignee')" prop="assigneeId">
-          <el-input
+          <el-select
             v-model="taskForm.assigneeId"
-            :placeholder="$t('taskManagement.enterAssignee')"
-            maxlength="50"
-            show-word-limit
-          />
+            :placeholder="$t('taskManagement.selectAssignee')"
+            filterable
+            remote
+            clearable
+            :remote-method="searchUsers"
+            :loading="userSearchLoading"
+            style="width: 100%"
+            @focus="handleUserSelectFocus"
+            reserve-keyword
+          >
+            <el-option
+              v-for="user in filteredUserList"
+              :key="user.id"
+              :label="`${user.username} (${user.nickname || user.email})`"
+              :value="user.id"
+            >
+              <div style="display: flex; justify-content: space-between;">
+                <span>{{ user.username }}</span>
+                <span style="color: #8492a6; font-size: 13px;">{{ user.nickname || user.email }}</span>
+              </div>
+            </el-option>
+          </el-select>
         </el-form-item>
         <el-form-item :label="$t('taskManagement.priority')" prop="priority">
           <el-radio-group v-model="taskForm.priority">
@@ -150,11 +179,11 @@
           />
         </el-form-item>
         <el-form-item :label="$t('taskManagement.status')" prop="status" v-if="isEditMode">
-          <el-select v-model="taskForm.status" :placeholder="$t('common.selectStatus')">
-            <el-option :label="$t('common.notStarted')" value="0"></el-option>
-            <el-option :label="$t('common.inProgress')" value="1"></el-option>
-            <el-option :label="$t('common.completed')" value="2"></el-option>
-            <el-option :label="$t('common.cancelled')" value="3"></el-option>
+          <el-select v-model="taskForm.status" :placeholder="$t('common.selectStatus')" style="width: 100%">
+            <el-option :label="$t('common.notStarted')" :value="0"></el-option>
+            <el-option :label="$t('common.inProgress')" :value="1"></el-option>
+            <el-option :label="$t('common.completed')" :value="2"></el-option>
+            <el-option :label="$t('common.cancelled')" :value="3"></el-option>
           </el-select>
         </el-form-item>
       </el-form>
@@ -181,6 +210,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, CircleCheck, VideoPlay } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
+import { get } from '@/utils/axios'
 import {
   getTaskList as getTaskListApi,
   createTask,
@@ -188,6 +218,7 @@ import {
   deleteTask,
   updateTaskStatus
 } from '@/api/task'
+import '@/style/management-layout.css'
 
 // 获取i18n的t函数
 const { t } = useI18n()
@@ -206,6 +237,11 @@ const searchForm = reactive({
 
 // 任务列表
 const taskList = ref([])
+
+// 用户列表（用于负责人下拉选择）
+const userList = ref([])
+const filteredUserList = ref([])
+const userSearchLoading = ref(false)
 
 // 选中的任务
 const selectedTasks = ref([])
@@ -246,8 +282,7 @@ const formRules = {
     { min: 2, max: 100, message: t('common.fieldLength', { min: 2, max: 100, field: t('taskManagement.title') }), trigger: 'blur' }
   ],
   assigneeId: [
-    { required: true, message: t('taskManagement.enterAssignee'), trigger: 'blur' },
-    { min: 1, max: 50, message: t('common.fieldLength', { min: 1, max: 50, field: t('taskManagement.assignee') }), trigger: 'blur' }
+    { required: true, message: t('taskManagement.selectAssignee'), trigger: 'change' }
   ],
   priority: [
     { required: true, message: t('common.pleaseSelect', { name: t('taskManagement.priority') }), trigger: 'change' }
@@ -270,13 +305,108 @@ const formRules = {
   ]
 }
 
-// 用户ID到用户名的映射（实际应用中应该从后端获取用户列表）
-const userNameMap = reactive({})
+// 获取用户列表
+const getUserList = async () => {
+  try {
+    const data = await get('/user/list')
+    userList.value = data || []
+    // 初始显示前10个用户
+    filteredUserList.value = userList.value.slice(0, 10)
+  } catch (error) {
+    console.error('获取用户列表失败:', error)
+    userList.value = []
+    filteredUserList.value = []
+  }
+}
+
+// 用户搜索防抖定时器
+let searchTimer = null
+
+// 搜索用户（远程搜索）
+const searchUsers = (query) => {
+  userSearchLoading.value = true
+  
+  // 清除之前的定时器
+  if (searchTimer) {
+    clearTimeout(searchTimer)
+  }
+  
+  // 防抖处理
+  searchTimer = setTimeout(() => {
+    if (query && query.trim()) {
+      // 根据用户名、昵称或邮箱搜索
+      filteredUserList.value = userList.value.filter(user => 
+        user.username.toLowerCase().includes(query.toLowerCase()) ||
+        (user.nickname && user.nickname.toLowerCase().includes(query.toLowerCase())) ||
+        (user.email && user.email.toLowerCase().includes(query.toLowerCase()))
+      ).slice(0, 20) // 限制搜索结果数量
+    } else {
+      // 无搜索条件时显示前10个活跃用户
+      filteredUserList.value = userList.value
+        .filter(user => user.status === 1) // 只显示启用的用户
+        .slice(0, 10)
+    }
+    userSearchLoading.value = false
+  }, 300) // 300ms防抖延迟
+}
+
+// 处理用户选择框获得焦点
+const handleUserSelectFocus = () => {
+  if (filteredUserList.value.length === 0) {
+    // 初始显示前10个启用的用户
+    filteredUserList.value = userList.value
+      .filter(user => user.status === 1)
+      .slice(0, 10)
+  }
+}
+
+// 获取状态文本
+const getStatusText = (status) => {
+  const statusMap = {
+    0: t('common.notStarted'),
+    1: t('common.inProgress'),
+    2: t('common.completed'),
+    3: t('common.cancelled')
+  }
+  return statusMap[status] || t('common.unknown')
+}
+
+// 获取状态标签类型
+const getStatusTagType = (status) => {
+  const typeMap = {
+    0: 'warning',  // 未开始
+    1: 'info',     // 进行中
+    2: 'success',  // 已完成
+    3: 'danger'    // 已取消
+  }
+  return typeMap[status] || 'info'
+}
+
+// 获取优先级文本
+const getPriorityText = (priority) => {
+  const priorityMap = {
+    1: t('common.low'),
+    2: t('common.medium'),
+    3: t('common.high')
+  }
+  return priorityMap[priority] || t('common.medium')
+}
+
+// 获取优先级标签类型
+const getPriorityTagType = (priority) => {
+  const typeMap = {
+    1: 'info',     // 低优先级
+    2: 'success',  // 中优先级
+    3: 'danger'    // 高优先级
+  }
+  return typeMap[priority] || 'success'
+}
 
 // 根据用户ID获取用户名
 const getUserNameById = (userId) => {
   if (!userId) return '-'
-  return userNameMap[userId] || userStore.userInfo?.username || '-'
+  const user = userList.value.find(u => u.id === userId)
+  return user ? user.username : '-'
 }
 
 // 获取任务列表
@@ -284,16 +414,8 @@ const getTaskList = async () => {
   loading.value = true
   try {
     const data = await getTaskListApi()
-    taskList.value = data
-    pagination.total = data.length
-    
-    // 构建用户ID到用户名的映射
-    const userIds = [...new Set(data.map(item => [item.assigneeId, item.creatorId]).flat())]
-    userIds.forEach(id => {
-      if (!userNameMap[id]) {
-        userNameMap[id] = userStore.userInfo?.username || '用户' + id
-      }
-    })
+    taskList.value = data || []
+    pagination.total = data ? data.length : 0
   } catch (error) {
     taskList.value = []
     pagination.total = 0
@@ -307,8 +429,39 @@ const getTaskList = async () => {
 
 // 搜索任务
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索，目前先调用getTaskList
-  getTaskList()
+  // 实现真正的搜索逻辑
+  loading.value = true
+  
+  try {
+    // 获取完整任务列表
+    getTaskList().then(() => {
+      // 在前端进行搜索过滤
+      let filteredTasks = [...taskList.value]
+      
+      // 按标题搜索
+      if (searchForm.title && searchForm.title.trim()) {
+        filteredTasks = filteredTasks.filter(task => 
+          task.title.toLowerCase().includes(searchForm.title.toLowerCase()) ||
+          (task.content && task.content.toLowerCase().includes(searchForm.title.toLowerCase()))
+        )
+      }
+      
+      // 按负责人搜索
+      if (searchForm.assigneeId && searchForm.assigneeId.trim()) {
+        filteredTasks = filteredTasks.filter(task => 
+          task.assigneeName && task.assigneeName.toLowerCase().includes(searchForm.assigneeId.toLowerCase())
+        )
+      }
+      
+      // 更新显示的任务列表
+      taskList.value = filteredTasks
+      pagination.total = filteredTasks.length
+    })
+  } catch (error) {
+    if (error.message) {
+      ElMessage.error('搜索失败：' + error.message)
+    }
+  }
 }
 
 // 重置搜索表单
@@ -460,6 +613,7 @@ const handleUpdateTaskStatus = async (row, status) => {
 
 // 组件挂载时获取数据
 onMounted(() => {
+  getUserList()
   getTaskList()
 })
 </script>

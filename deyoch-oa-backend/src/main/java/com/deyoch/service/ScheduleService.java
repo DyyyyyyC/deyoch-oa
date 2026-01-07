@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochSchedule;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 日程管理服务接口
  * 定义日程管理相关的业务逻辑方法
  */
-public interface ScheduleService {
+public interface ScheduleService extends IService<DeyochSchedule> {
 
     /**
      * 获取日程列表

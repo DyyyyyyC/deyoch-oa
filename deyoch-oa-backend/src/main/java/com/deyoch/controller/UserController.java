@@ -107,4 +107,50 @@ public class UserController {
     public Result<DeyochUser> getCurrentUser() {
         return userService.getCurrentUser();
     }
+
+    /**
+     * 更新当前用户信息
+     * @param user 用户信息
+     * @return 更新结果
+     */
+    @PutMapping("/profile")
+    @Operation(summary = "更新当前用户信息", description = "更新当前登录用户的个人信息")
+    public Result<DeyochUser> updateCurrentUser(@RequestBody DeyochUser user) {
+        return userService.updateCurrentUser(user);
+    }
+
+    /**
+     * 修改当前用户密码
+     * @param passwordRequest 密码修改请求
+     * @return 修改结果
+     */
+    @PutMapping("/change-password")
+    @Operation(summary = "修改当前用户密码", description = "修改当前登录用户的密码")
+    public Result<Void> changePassword(@RequestBody ChangePasswordRequest passwordRequest) {
+        return userService.changePassword(passwordRequest.getCurrentPassword(), passwordRequest.getNewPassword());
+    }
+
+    /**
+     * 密码修改请求类
+     */
+    public static class ChangePasswordRequest {
+        private String currentPassword;
+        private String newPassword;
+
+        public String getCurrentPassword() {
+            return currentPassword;
+        }
+
+        public void setCurrentPassword(String currentPassword) {
+            this.currentPassword = currentPassword;
+        }
+
+        public String getNewPassword() {
+            return newPassword;
+        }
+
+        public void setNewPassword(String newPassword) {
+            this.newPassword = newPassword;
+        }
+    }
 }

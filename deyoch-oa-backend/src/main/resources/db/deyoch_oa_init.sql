@@ -91,7 +91,7 @@ CREATE TABLE `deyoch_document`  (
   `file_name` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件名',
   `file_path` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件保存路径',
   `file_size` bigint NOT NULL COMMENT '文件大小（字节）',
-  `file_type` varchar(50) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件类型',
+  `file_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci NOT NULL COMMENT '文件类型',
   `user_id` bigint NOT NULL COMMENT '上传人ID',
   `dept_id` bigint DEFAULT NULL COMMENT '所属部门ID',
   `status` tinyint DEFAULT '1' COMMENT '状态：0-禁用，1-启用',

@@ -45,6 +45,26 @@ const constantRoutes = [
         }
       }
     ]
+  },
+  // 个人资料页面路由
+  {
+    path: '/profile',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '个人资料',
+      requiresAuth: true
+    },
+    children: [
+      {
+        path: '',
+        name: 'Profile',
+        component: () => import('@/views/profile/index.vue'),
+        meta: {
+          title: '个人资料',
+          requiresAuth: true
+        }
+      }
+    ]
   }
 ]
 

@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochDept;
 import com.deyoch.mapper.DeyochDeptMapper;
 import com.deyoch.result.Result;
@@ -21,9 +22,7 @@ import java.util.stream.Collectors;
  */
 @Service
 @RequiredArgsConstructor
-public class DeptServiceImpl implements DeptService {
-
-    private final DeyochDeptMapper deyochDeptMapper;
+public class DeptServiceImpl extends ServiceImpl<DeyochDeptMapper, DeyochDept> implements DeptService {
 
     @Override
     public Result<List<DeyochDept>> getDeptList() {
@@ -31,7 +30,7 @@ public class DeptServiceImpl implements DeptService {
             // 查询所有部门，按排序字段升序排列
             LambdaQueryWrapper<DeyochDept> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByAsc(DeyochDept::getSort);
-            List<DeyochDept> deptList = deyochDeptMapper.selectList(queryWrapper);
+            List<DeyochDept> deptList = list(queryWrapper);
             return Result.success(deptList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取部门列表失败：" + e.getMessage());
@@ -42,7 +41,7 @@ public class DeptServiceImpl implements DeptService {
     public Result<List<DeyochDept>> getDeptTree() {
         try {
             // 查询所有部门
-            List<DeyochDept> deptList = deyochDeptMapper.selectList(null);
+            List<DeyochDept> deptList = list();
             
             // 构建部门树
             List<DeyochDept> deptTree = buildDeptTree(deptList);
@@ -56,7 +55,7 @@ public class DeptServiceImpl implements DeptService {
     @Override
     public Result<DeyochDept> getDeptById(Long id) {
         try {
-            DeyochDept dept = deyochDeptMapper.selectById(id);
+            DeyochDept dept = getById(id);
             if (dept == null) {
                 return Result.error(ResultCode.DEPT_NOT_FOUND, "部门不存在");
             }
@@ -76,7 +75,7 @@ public class DeptServiceImpl implements DeptService {
             // 默认状态为启用
             dept.setStatus(1);
             // 创建部门
-            deyochDeptMapper.insert(dept);
+            save(dept);
             return Result.success(dept);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "创建部门失败：" + e.getMessage());
@@ -87,14 +86,14 @@ public class DeptServiceImpl implements DeptService {
     public Result<DeyochDept> updateDept(DeyochDept dept) {
         try {
             // 检查部门是否存在
-            DeyochDept existingDept = deyochDeptMapper.selectById(dept.getId());
+            DeyochDept existingDept = getById(dept.getId());
             if (existingDept == null) {
                 return Result.error(ResultCode.DEPT_NOT_FOUND, "部门不存在");
             }
             // 设置更新时间
             dept.setUpdatedAt(LocalDateTime.now());
             // 更新部门
-            deyochDeptMapper.updateById(dept);
+            updateById(dept);
             return Result.success(dept);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新部门失败：" + e.getMessage());
@@ -105,18 +104,18 @@ public class DeptServiceImpl implements DeptService {
     public Result<Void> deleteDept(Long id) {
         try {
             // 检查部门是否存在
-            DeyochDept dept = deyochDeptMapper.selectById(id);
+            DeyochDept dept = getById(id);
             if (dept == null) {
                 return Result.error(ResultCode.DEPT_NOT_FOUND, "部门不存在");
             }
             // 检查是否有子部门
             LambdaQueryWrapper<DeyochDept> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochDept::getParentId, id);
-            if (deyochDeptMapper.selectCount(queryWrapper) > 0) {
+            if (count(queryWrapper) > 0) {
                 return Result.error(ResultCode.DEPT_HAS_CHILDREN, "该部门存在子部门，无法删除");
             }
             // 删除部门
-            deyochDeptMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除部门失败：" + e.getMessage());
@@ -127,7 +126,7 @@ public class DeptServiceImpl implements DeptService {
     public Result<Void> updateDeptStatus(Long id, Integer status) {
         try {
             // 检查部门是否存在
-            DeyochDept dept = deyochDeptMapper.selectById(id);
+            DeyochDept dept = getById(id);
             if (dept == null) {
                 return Result.error(ResultCode.DEPT_NOT_FOUND, "部门不存在");
             }
@@ -140,7 +139,7 @@ public class DeptServiceImpl implements DeptService {
             // 设置更新时间
             dept.setUpdatedAt(LocalDateTime.now());
             // 更新部门
-            deyochDeptMapper.updateById(dept);
+            updateById(dept);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新部门状态失败：" + e.getMessage());

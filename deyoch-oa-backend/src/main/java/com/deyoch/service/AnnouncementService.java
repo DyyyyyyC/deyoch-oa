@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochAnnouncement;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 公告管理服务接口
  * 定义公告管理相关的业务逻辑方法
  */
-public interface AnnouncementService {
+public interface AnnouncementService extends IService<DeyochAnnouncement> {
 
     /**
      * 获取公告列表

@@ -5,35 +5,42 @@
       <h2>{{ $t('processInstanceManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('processInstanceManagement.instanceName')">
-          <el-input v-model="searchForm.instanceName" :placeholder="$t('processInstanceManagement.enterInstanceName')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 流程实例列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddProcessInstance">
-          <el-icon><Plus /></el-icon>
-          {{ $t('processInstanceManagement.addProcessInstance') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcessInstances.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcessInstances.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddProcessInstance">
+            <el-icon><Plus /></el-icon>
+            {{ $t('processInstanceManagement.addProcessInstance') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcessInstances.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcessInstances.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.instanceName" 
+                :placeholder="$t('processInstanceManagement.enterInstanceName')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -58,7 +65,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('common.createdAt')" min-width="180" show-overflow-tooltip />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -143,6 +150,7 @@ import {
   completeProcessInstance,
   getProcessList
 } from '@/api/process'
+import '@/style/management-layout.css'
 
 // 获取i18n的t函数
 const { t } = useI18n()
@@ -225,14 +233,26 @@ const getProcessInstanceList = async () => {
   try {
     const data = await getProcessInstanceListApi()
     // 将流程名称与流程实例关联
-    processInstanceList.value = data.map(instance => {
+    const processedData = data.map(instance => {
       const process = processList.value.find(p => p.id === instance.processId)
       return {
         ...instance,
         processName: process ? process.processName : '未知流程'
       }
     })
-    pagination.total = data.length
+    
+    // 实现前端搜索过滤
+    let filteredInstances = processedData
+    
+    // 按实例名称过滤
+    if (searchForm.instanceName && searchForm.instanceName.trim()) {
+      filteredInstances = filteredInstances.filter(instance => 
+        instance.instanceName && instance.instanceName.toLowerCase().includes(searchForm.instanceName.toLowerCase())
+      )
+    }
+    
+    processInstanceList.value = filteredInstances
+    pagination.total = filteredInstances.length
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -251,6 +271,8 @@ const handleSelectionChange = (selection) => {
 
 // 搜索流程实例
 const handleSearch = () => {
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getProcessInstanceList()
 }
 

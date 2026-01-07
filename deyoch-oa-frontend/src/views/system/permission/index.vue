@@ -5,38 +5,49 @@
       <h2>{{ $t('permissionManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('permissionManagement.permName')">
-          <el-input v-model="searchForm.permName" :placeholder="$t('permissionManagement.enterPermName')" clearable />
-        </el-form-item>
-        <el-form-item :label="$t('permissionManagement.permCode')">
-          <el-input v-model="searchForm.permCode" :placeholder="$t('permissionManagement.enterPermCode')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('permissionManagement.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('permissionManagement.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 权限列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddPermission">
-          <el-icon><Plus /></el-icon>
-          {{ $t('permissionManagement.addPermission') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedPermissions.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('permissionManagement.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedPermissions.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('permissionManagement.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddPermission">
+            <el-icon><Plus /></el-icon>
+            {{ $t('permissionManagement.addPermission') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedPermissions.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('permissionManagement.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedPermissions.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('permissionManagement.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.permName" 
+                :placeholder="$t('permissionManagement.enterPermName')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.permCode" 
+                :placeholder="$t('permissionManagement.enterPermCode')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('permissionManagement.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('permissionManagement.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -72,8 +83,8 @@
             />
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('permissionManagement.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('permissionManagement.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -181,6 +192,7 @@ import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
 import { get, post, put, del } from '@/utils/axios'
+import '@/style/management-layout.css'
 
 // 加载状态
 const loading = ref(false)
@@ -270,8 +282,25 @@ const getPermissionList = async () => {
       return { ...perm, parentName }
     })
     
-    permissionList.value = processedData
-    pagination.total = processedData.length
+    // 实现前端搜索过滤
+    let filteredPermissions = processedData
+    
+    // 按权限名称过滤
+    if (searchForm.permName && searchForm.permName.trim()) {
+      filteredPermissions = filteredPermissions.filter(perm => 
+        perm.permName && perm.permName.toLowerCase().includes(searchForm.permName.toLowerCase())
+      )
+    }
+    
+    // 按权限代码过滤
+    if (searchForm.permCode && searchForm.permCode.trim()) {
+      filteredPermissions = filteredPermissions.filter(perm => 
+        perm.permCode && perm.permCode.toLowerCase().includes(searchForm.permCode.toLowerCase())
+      )
+    }
+    
+    permissionList.value = filteredPermissions
+    pagination.total = filteredPermissions.length
     
     // 过滤出父权限列表（用于添加/编辑时选择父权限）
     parentPermissionList.value = processedData.filter(perm => perm.parentId === 0)
@@ -310,7 +339,8 @@ const getPermissionTree = async () => {
 
 // 搜索权限
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索，暂时先调用getPermissionList()
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getPermissionList()
 }
 

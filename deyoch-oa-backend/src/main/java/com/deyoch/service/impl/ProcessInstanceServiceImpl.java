@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochProcessInstance;
 import com.deyoch.mapper.DeyochProcessInstanceMapper;
 import com.deyoch.result.Result;
@@ -22,9 +23,8 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class ProcessInstanceServiceImpl implements ProcessInstanceService {
+public class ProcessInstanceServiceImpl extends ServiceImpl<DeyochProcessInstanceMapper, DeyochProcessInstance> implements ProcessInstanceService {
 
-    private final DeyochProcessInstanceMapper deyochProcessInstanceMapper;
     private final JwtUtil jwtUtil;
     private final UserInfoConverter userInfoConverter;
 
@@ -34,7 +34,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             // 查询所有流程实例，按创建时间倒序排列
             LambdaQueryWrapper<DeyochProcessInstance> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochProcessInstance::getCreatedAt);
-            List<DeyochProcessInstance> instanceList = deyochProcessInstanceMapper.selectList(queryWrapper);
+            List<DeyochProcessInstance> instanceList = list(queryWrapper);
             
             // 使用UserInfoConverter填充创建者用户名
             userInfoConverter.<DeyochProcessInstance>populateUserNames(
@@ -60,7 +60,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     @Override
     public Result<DeyochProcessInstance> getProcessInstanceById(Long id) {
         try {
-            DeyochProcessInstance instance = deyochProcessInstanceMapper.selectById(id);
+            DeyochProcessInstance instance = getById(id);
             if (instance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
@@ -104,7 +104,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             // 默认状态为待启动
             instance.setStatus(0);
             // 创建流程实例
-            deyochProcessInstanceMapper.insert(instance);
+            save(instance);
             return Result.success(instance);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "创建流程实例失败：" + e.getMessage());
@@ -115,14 +115,14 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     public Result<DeyochProcessInstance> updateProcessInstance(DeyochProcessInstance instance) {
         try {
             // 检查流程实例是否存在
-            DeyochProcessInstance existingInstance = deyochProcessInstanceMapper.selectById(instance.getId());
+            DeyochProcessInstance existingInstance = getById(instance.getId());
             if (existingInstance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
             // 设置更新时间
             instance.setUpdatedAt(LocalDateTime.now());
             // 更新流程实例
-            deyochProcessInstanceMapper.updateById(instance);
+            updateById(instance);
             return Result.success(instance);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新流程实例失败：" + e.getMessage());
@@ -133,12 +133,12 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     public Result<Void> deleteProcessInstance(Long id) {
         try {
             // 检查流程实例是否存在
-            DeyochProcessInstance instance = deyochProcessInstanceMapper.selectById(id);
+            DeyochProcessInstance instance = getById(id);
             if (instance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
             // 删除流程实例
-            deyochProcessInstanceMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除流程实例失败：" + e.getMessage());
@@ -149,7 +149,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     public Result<Void> startProcessInstance(Long id) {
         try {
             // 检查流程实例是否存在
-            DeyochProcessInstance instance = deyochProcessInstanceMapper.selectById(id);
+            DeyochProcessInstance instance = getById(id);
             if (instance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
@@ -160,7 +160,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             // 设置更新时间
             instance.setUpdatedAt(LocalDateTime.now());
             // 更新流程实例
-            deyochProcessInstanceMapper.updateById(instance);
+            updateById(instance);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "启动流程实例失败：" + e.getMessage());
@@ -171,7 +171,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
     public Result<Void> completeProcessInstance(Long id) {
         try {
             // 检查流程实例是否存在
-            DeyochProcessInstance instance = deyochProcessInstanceMapper.selectById(id);
+            DeyochProcessInstance instance = getById(id);
             if (instance == null) {
                 return Result.error(ResultCode.PROCESS_INSTANCE_NOT_FOUND, "流程实例不存在");
             }
@@ -182,7 +182,7 @@ public class ProcessInstanceServiceImpl implements ProcessInstanceService {
             // 设置更新时间
             instance.setUpdatedAt(LocalDateTime.now());
             // 更新流程实例
-            deyochProcessInstanceMapper.updateById(instance);
+            updateById(instance);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "完成流程实例失败：" + e.getMessage());

@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochPermission;
 import com.deyoch.entity.DeyochRolePermission;
 import com.deyoch.entity.DeyochUser;
@@ -27,9 +28,8 @@ import java.util.stream.Collectors;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PermissionServiceImpl implements PermissionService {
+public class PermissionServiceImpl extends ServiceImpl<DeyochPermissionMapper, DeyochPermission> implements PermissionService {
 
-    private final DeyochPermissionMapper deyochPermissionMapper;
     private final DeyochRolePermissionMapper deyochRolePermissionMapper;
     private final DeyochUserMapper deyochUserMapper;
 
@@ -37,7 +37,7 @@ public class PermissionServiceImpl implements PermissionService {
     public Result<List<DeyochPermission>> getPermissionTree() {
         try {
             // 获取所有权限列表
-            List<DeyochPermission> permList = deyochPermissionMapper.selectList(null);
+            List<DeyochPermission> permList = list();
             
             // 构建权限树
             List<DeyochPermission> permTree = buildPermissionTree(permList);
@@ -54,7 +54,7 @@ public class PermissionServiceImpl implements PermissionService {
             // 查询所有权限，按创建时间倒序排列
             LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochPermission::getCreatedAt);
-            List<DeyochPermission> permList = deyochPermissionMapper.selectList(queryWrapper);
+            List<DeyochPermission> permList = list(queryWrapper);
             return Result.success(permList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取权限列表失败：" + e.getMessage());
@@ -64,7 +64,7 @@ public class PermissionServiceImpl implements PermissionService {
     @Override
     public Result<DeyochPermission> getPermissionById(Long id) {
         try {
-            DeyochPermission permission = deyochPermissionMapper.selectById(id);
+            DeyochPermission permission = getById(id);
             if (permission == null) {
                 return Result.error(ResultCode.PERMISSION_NOT_FOUND, "权限不存在");
             }
@@ -80,14 +80,14 @@ public class PermissionServiceImpl implements PermissionService {
             // 检查权限名称是否已存在
             LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochPermission::getPermName, permission.getPermName());
-            if (deyochPermissionMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.PARAM_ERROR, "权限名称已存在");
             }
 
             // 检查权限编码是否已存在
             queryWrapper.clear();
             queryWrapper.eq(DeyochPermission::getPermCode, permission.getPermCode());
-            if (deyochPermissionMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.PARAM_ERROR, "权限编码已存在");
             }
 
@@ -112,7 +112,7 @@ public class PermissionServiceImpl implements PermissionService {
             permission.setUpdatedAt(now);
 
             // 创建权限
-            deyochPermissionMapper.insert(permission);
+            save(permission);
             return Result.success(permission);
         } catch (Exception e) {
             // 记录详细日志
@@ -126,7 +126,7 @@ public class PermissionServiceImpl implements PermissionService {
     public Result<DeyochPermission> updatePermission(DeyochPermission permission) {
         try {
             // 检查权限是否存在
-            DeyochPermission existingPerm = deyochPermissionMapper.selectById(permission.getId());
+            DeyochPermission existingPerm = getById(permission.getId());
             if (existingPerm == null) {
                 return Result.error(ResultCode.PERMISSION_NOT_FOUND, "权限不存在");
             }
@@ -135,7 +135,7 @@ public class PermissionServiceImpl implements PermissionService {
             LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochPermission::getPermName, permission.getPermName());
             queryWrapper.ne(DeyochPermission::getId, permission.getId());
-            if (deyochPermissionMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.PARAM_ERROR, "权限名称已存在");
             }
 
@@ -143,7 +143,7 @@ public class PermissionServiceImpl implements PermissionService {
             queryWrapper.clear();
             queryWrapper.eq(DeyochPermission::getPermCode, permission.getPermCode());
             queryWrapper.ne(DeyochPermission::getId, permission.getId());
-            if (deyochPermissionMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.PARAM_ERROR, "权限编码已存在");
             }
 
@@ -156,7 +156,7 @@ public class PermissionServiceImpl implements PermissionService {
             permission.setUpdatedAt(LocalDateTime.now());
 
             // 更新权限
-            deyochPermissionMapper.updateById(permission);
+            updateById(permission);
             return Result.success(permission);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新权限失败：" + e.getMessage());
@@ -167,7 +167,7 @@ public class PermissionServiceImpl implements PermissionService {
     public Result<Void> deletePermission(Long id) {
         try {
             // 检查权限是否存在
-            DeyochPermission permission = deyochPermissionMapper.selectById(id);
+            DeyochPermission permission = getById(id);
             if (permission == null) {
                 return Result.error(ResultCode.PERMISSION_NOT_FOUND, "权限不存在");
             }
@@ -175,7 +175,7 @@ public class PermissionServiceImpl implements PermissionService {
             // 检查是否有子权限
             LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochPermission::getParentId, id);
-            if (deyochPermissionMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.OPERATION_NOT_ALLOWED, "请先删除子权限");
             }
 
@@ -185,7 +185,7 @@ public class PermissionServiceImpl implements PermissionService {
             deyochRolePermissionMapper.delete(rolePermWrapper);
 
             // 删除权限
-            deyochPermissionMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除权限失败：" + e.getMessage());
@@ -216,7 +216,7 @@ public class PermissionServiceImpl implements PermissionService {
                     .collect(Collectors.toList());
             
             // 4. 根据权限ID列表获取权限详情
-            List<DeyochPermission> permList = deyochPermissionMapper.selectBatchIds(permIds);
+            List<DeyochPermission> permList = listByIds(permIds);
             
             // 5. 构建权限树
             List<DeyochPermission> permTree = buildPermissionTree(permList);
@@ -257,7 +257,7 @@ public class PermissionServiceImpl implements PermissionService {
             System.out.println("权限ID列表：" + permIds);
             
             // 4. 根据权限ID列表获取权限详情
-            List<DeyochPermission> permList = deyochPermissionMapper.selectBatchIds(permIds);
+            List<DeyochPermission> permList = listByIds(permIds);
             
             System.out.println("权限详情列表：" + permList);
             

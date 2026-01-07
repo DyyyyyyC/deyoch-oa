@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochSchedule;
 import com.deyoch.mapper.DeyochScheduleMapper;
 import com.deyoch.result.Result;
@@ -19,14 +20,13 @@ import java.util.List;
 
 /**
  * 日程管理服务实现类
- * 实现日程管理相关的业务逻辑
+ * 继承ServiceImpl获得MyBatis Plus的基础CRUD能力
  */
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class ScheduleServiceImpl implements ScheduleService {
+public class ScheduleServiceImpl extends ServiceImpl<DeyochScheduleMapper, DeyochSchedule> implements ScheduleService {
 
-    private final DeyochScheduleMapper deyochScheduleMapper;
     private final JwtUtil jwtUtil;
     private final UserInfoConverter userInfoConverter;
 
@@ -36,7 +36,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 查询所有日程，按开始时间升序排列
             LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
-            List<DeyochSchedule> scheduleList = deyochScheduleMapper.selectList(queryWrapper);
+            List<DeyochSchedule> scheduleList = list(queryWrapper);
             
             // 使用UserInfoConverter填充创建者用户名
             userInfoConverter.<DeyochSchedule>populateUserNames(
@@ -66,7 +66,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochSchedule::getUserId, userId);
             queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
-            List<DeyochSchedule> scheduleList = deyochScheduleMapper.selectList(queryWrapper);
+            List<DeyochSchedule> scheduleList = list(queryWrapper);
             
             // 使用UserInfoConverter填充创建者用户名
             userInfoConverter.<DeyochSchedule>populateUserNames(
@@ -92,7 +92,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     @Override
     public Result<DeyochSchedule> getScheduleById(Long id) {
         try {
-            DeyochSchedule schedule = deyochScheduleMapper.selectById(id);
+            DeyochSchedule schedule = getById(id);
             if (schedule == null) {
                 return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
             }
@@ -143,7 +143,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 默认状态为待开始
             schedule.setStatus(0);
             // 创建日程
-            deyochScheduleMapper.insert(schedule);
+            save(schedule);
             return Result.success(schedule);
         } catch (Exception e) {
             log.error("创建日程失败：", e);
@@ -156,14 +156,14 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Result<DeyochSchedule> updateSchedule(DeyochSchedule schedule) {
         try {
             // 检查日程是否存在
-            DeyochSchedule existingSchedule = deyochScheduleMapper.selectById(schedule.getId());
+            DeyochSchedule existingSchedule = getById(schedule.getId());
             if (existingSchedule == null) {
                 return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
             }
             // 设置更新时间
             schedule.setUpdatedAt(LocalDateTime.now());
             // 更新日程
-            deyochScheduleMapper.updateById(schedule);
+            updateById(schedule);
             return Result.success(schedule);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新日程失败：" + e.getMessage());
@@ -174,12 +174,12 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Result<Void> deleteSchedule(Long id) {
         try {
             // 检查日程是否存在
-            DeyochSchedule schedule = deyochScheduleMapper.selectById(id);
+            DeyochSchedule schedule = getById(id);
             if (schedule == null) {
                 return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
             }
             // 删除日程
-            deyochScheduleMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除日程失败：" + e.getMessage());
@@ -190,7 +190,7 @@ public class ScheduleServiceImpl implements ScheduleService {
     public Result<Void> updateScheduleStatus(Long id, Integer status) {
         try {
             // 检查日程是否存在
-            DeyochSchedule schedule = deyochScheduleMapper.selectById(id);
+            DeyochSchedule schedule = getById(id);
             if (schedule == null) {
                 return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
             }
@@ -203,7 +203,7 @@ public class ScheduleServiceImpl implements ScheduleService {
             // 设置更新时间
             schedule.setUpdatedAt(LocalDateTime.now());
             // 更新日程
-            deyochScheduleMapper.updateById(schedule);
+            updateById(schedule);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新日程状态失败：" + e.getMessage());

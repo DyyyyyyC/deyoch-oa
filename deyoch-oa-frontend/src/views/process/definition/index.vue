@@ -5,35 +5,42 @@
       <h2>{{ $t('processManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('processManagement.processName')">
-          <el-input v-model="searchForm.processName" :placeholder="$t('processManagement.enterProcessName')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 流程列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddProcess">
-          <el-icon><Plus /></el-icon>
-          {{ $t('processManagement.addProcess') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcesses.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcesses.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddProcess">
+            <el-icon><Plus /></el-icon>
+            {{ $t('processManagement.addProcess') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedProcesses.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedProcesses.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.processName" 
+                :placeholder="$t('processManagement.enterProcessName')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -143,6 +150,7 @@ import {
   updateProcess, 
   deleteProcess 
 } from '@/api/process'
+import '@/style/management-layout.css'
 
 // 获取i18n的t函数
 const { t } = useI18n()
@@ -210,8 +218,19 @@ const getProcessList = async () => {
   loading.value = true
   try {
     const data = await getProcessListApi()
-    processList.value = data
-    pagination.total = data.length
+    
+    // 实现前端搜索过滤
+    let filteredProcesses = data
+    
+    // 按流程名称过滤
+    if (searchForm.processName && searchForm.processName.trim()) {
+      filteredProcesses = filteredProcesses.filter(process => 
+        process.processName && process.processName.toLowerCase().includes(searchForm.processName.toLowerCase())
+      )
+    }
+    
+    processList.value = filteredProcesses
+    pagination.total = filteredProcesses.length
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -224,6 +243,8 @@ const getProcessList = async () => {
 
 // 搜索流程
 const handleSearch = () => {
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getProcessList()
 }
 

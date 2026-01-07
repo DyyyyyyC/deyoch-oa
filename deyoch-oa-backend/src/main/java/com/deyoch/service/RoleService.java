@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochRole;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 角色管理服务接口
  * 定义角色相关的业务逻辑方法
  */
-public interface RoleService {
+public interface RoleService extends IService<DeyochRole> {
 
     /**
      * 获取角色列表

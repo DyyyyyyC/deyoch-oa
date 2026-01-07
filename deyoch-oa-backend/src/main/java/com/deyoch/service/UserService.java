@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochUser;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 用户服务接口
  * 定义用户管理相关的业务逻辑方法
  */
-public interface UserService {
+public interface UserService extends IService<DeyochUser> {
 
     /**
      * 获取用户列表
@@ -58,6 +59,21 @@ public interface UserService {
      * @return 当前用户信息
      */
     Result<DeyochUser> getCurrentUser();
+    
+    /**
+     * 更新当前用户信息
+     * @param user 用户信息
+     * @return 更新结果
+     */
+    Result<DeyochUser> updateCurrentUser(DeyochUser user);
+    
+    /**
+     * 修改当前用户密码
+     * @param currentPassword 当前密码
+     * @param newPassword 新密码
+     * @return 修改结果
+     */
+    Result<Void> changePassword(String currentPassword, String newPassword);
     
     /**
      * 根据用户ID获取用户名

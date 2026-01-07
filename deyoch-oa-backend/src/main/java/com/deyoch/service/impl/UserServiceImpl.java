@@ -1,8 +1,11 @@
 package com.deyoch.service.impl;
 
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.deyoch.entity.DeyochUser;
+import com.deyoch.entity.DeyochRole;
 import com.deyoch.mapper.DeyochUserMapper;
+import com.deyoch.mapper.DeyochRoleMapper;
 import com.deyoch.result.Result;
 import com.deyoch.result.ResultCode;
 import com.deyoch.service.UserService;
@@ -16,14 +19,32 @@ import java.util.List;
 
 /**
  * 用户服务实现类
- * 实现用户管理相关的业务逻辑
+ * 继承ServiceImpl获得MyBatis Plus的基础CRUD能力
  */
 @Service
 @RequiredArgsConstructor
-public class UserServiceImpl implements UserService {
+public class UserServiceImpl extends ServiceImpl<DeyochUserMapper, DeyochUser> implements UserService {
 
-    private final DeyochUserMapper deyochUserMapper;
     private final PasswordEncoder passwordEncoder;
+    private final DeyochRoleMapper deyochRoleMapper;
+
+    /**
+     * 为用户填充角色名称
+     * @param user 用户对象
+     */
+    private void populateRoleName(DeyochUser user) {
+        if (user != null && user.getRoleId() != null) {
+            try {
+                DeyochRole role = deyochRoleMapper.selectById(user.getRoleId());
+                if (role != null) {
+                    user.setRoleName(role.getRoleName());
+                }
+            } catch (Exception e) {
+                // 如果查询角色失败，不影响主要功能
+                user.setRoleName("未知角色");
+            }
+        }
+    }
 
     @Override
     public Result<List<DeyochUser>> getUserList() {
@@ -31,7 +52,15 @@ public class UserServiceImpl implements UserService {
             // 查询所有用户，按创建时间倒序排列
             LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.orderByDesc(DeyochUser::getCreatedAt);
-            List<DeyochUser> userList = deyochUserMapper.selectList(queryWrapper);
+            List<DeyochUser> userList = list(queryWrapper);
+            
+            // 为每个用户填充角色名称
+            for (DeyochUser user : userList) {
+                populateRoleName(user);
+                // 隐藏密码
+                user.setPassword(null);
+            }
+            
             return Result.success(userList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取用户列表失败：" + e.getMessage());
@@ -41,10 +70,14 @@ public class UserServiceImpl implements UserService {
     @Override
     public Result<DeyochUser> getUserById(Long id) {
         try {
-            DeyochUser user = deyochUserMapper.selectById(id);
+            DeyochUser user = getById(id);
             if (user == null) {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
+            
+            // 填充角色名称
+            populateRoleName(user);
+            
             // 隐藏密码
             user.setPassword(null);
             return Result.success(user);
@@ -59,7 +92,7 @@ public class UserServiceImpl implements UserService {
             // 检查用户名是否已存在
             LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochUser::getUsername, user.getUsername());
-            DeyochUser existingUser = deyochUserMapper.selectOne(queryWrapper);
+            DeyochUser existingUser = getOne(queryWrapper);
             if (existingUser != null) {
                 return Result.error(ResultCode.USERNAME_EXIST, "用户名已存在");
             }
@@ -77,7 +110,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 创建用户
-            deyochUserMapper.insert(user);
+            save(user);
             
             // 隐藏密码
             user.setPassword(null);
@@ -92,7 +125,7 @@ public class UserServiceImpl implements UserService {
     public Result<DeyochUser> updateUser(DeyochUser user) {
         try {
             // 检查用户是否存在
-            DeyochUser existingUser = deyochUserMapper.selectById(user.getId());
+            DeyochUser existingUser = getById(user.getId());
             if (existingUser == null) {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
@@ -102,7 +135,7 @@ public class UserServiceImpl implements UserService {
                 LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
                 queryWrapper.eq(DeyochUser::getUsername, user.getUsername());
                 queryWrapper.ne(DeyochUser::getId, user.getId());
-                if (deyochUserMapper.selectOne(queryWrapper) != null) {
+                if (getOne(queryWrapper) != null) {
                     return Result.error(ResultCode.USERNAME_EXIST, "用户名已存在");
                 }
             }
@@ -119,7 +152,7 @@ public class UserServiceImpl implements UserService {
             user.setUpdatedAt(LocalDateTime.now());
 
             // 更新用户
-            deyochUserMapper.updateById(user);
+            updateById(user);
             
             // 隐藏密码
             user.setPassword(null);
@@ -134,7 +167,7 @@ public class UserServiceImpl implements UserService {
     public Result<Void> deleteUser(Long id) {
         try {
             // 检查用户是否存在
-            DeyochUser existingUser = deyochUserMapper.selectById(id);
+            DeyochUser existingUser = getById(id);
             if (existingUser == null) {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
@@ -146,7 +179,7 @@ public class UserServiceImpl implements UserService {
             }
 
             // 删除用户
-            deyochUserMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除用户失败：" + e.getMessage());
@@ -157,7 +190,7 @@ public class UserServiceImpl implements UserService {
     public Result<Void> updateUserStatus(Long id, Integer status) {
         try {
             // 检查用户是否存在
-            DeyochUser existingUser = deyochUserMapper.selectById(id);
+            DeyochUser existingUser = getById(id);
             if (existingUser == null) {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
@@ -178,7 +211,7 @@ public class UserServiceImpl implements UserService {
             user.setId(id);
             user.setStatus(status);
             user.setUpdatedAt(LocalDateTime.now());
-            deyochUserMapper.updateById(user);
+            updateById(user);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新用户状态失败：" + e.getMessage());
@@ -197,11 +230,14 @@ public class UserServiceImpl implements UserService {
             // 查询用户信息
             LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochUser::getUsername, username);
-            DeyochUser user = deyochUserMapper.selectOne(queryWrapper);
+            DeyochUser user = getOne(queryWrapper);
 
             if (user == null) {
                 return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
             }
+
+            // 填充角色名称
+            populateRoleName(user);
 
             // 隐藏密码
             user.setPassword(null);
@@ -212,9 +248,82 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public Result<DeyochUser> updateCurrentUser(DeyochUser user) {
+        try {
+            // 获取当前用户名
+            String username = UserContextUtil.getCurrentUsername();
+            if (username == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录");
+            }
+
+            // 查询当前用户信息
+            LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeyochUser::getUsername, username);
+            DeyochUser currentUser = getOne(queryWrapper);
+
+            if (currentUser == null) {
+                return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
+            }
+
+            // 只允许更新部分字段
+            currentUser.setNickname(user.getNickname());
+            currentUser.setEmail(user.getEmail());
+            currentUser.setPhone(user.getPhone());
+            currentUser.setUpdatedAt(LocalDateTime.now());
+
+            // 更新用户信息
+            updateById(currentUser);
+            
+            // 填充角色名称
+            populateRoleName(currentUser);
+            
+            // 隐藏密码
+            currentUser.setPassword(null);
+            
+            return Result.success(currentUser);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "更新用户信息失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<Void> changePassword(String currentPassword, String newPassword) {
+        try {
+            // 获取当前用户名
+            String username = UserContextUtil.getCurrentUsername();
+            if (username == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录");
+            }
+
+            // 查询当前用户信息
+            LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeyochUser::getUsername, username);
+            DeyochUser currentUser = getOne(queryWrapper);
+
+            if (currentUser == null) {
+                return Result.error(ResultCode.USER_NOT_FOUND, "用户不存在");
+            }
+
+            // 验证当前密码
+            if (!passwordEncoder.matches(currentPassword, currentUser.getPassword())) {
+                return Result.error(ResultCode.PARAM_ERROR, "当前密码错误");
+            }
+
+            // 更新密码
+            currentUser.setPassword(passwordEncoder.encode(newPassword));
+            currentUser.setUpdatedAt(LocalDateTime.now());
+            updateById(currentUser);
+
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "修改密码失败：" + e.getMessage());
+        }
+    }
+
+    @Override
     public String getUsernameById(Long userId) {
         try {
-            DeyochUser user = deyochUserMapper.selectById(userId);
+            DeyochUser user = getById(userId);
             if (user != null) {
                 return user.getUsername();
             }

@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochProcess;
 import com.deyoch.mapper.DeyochProcessMapper;
 import com.deyoch.result.Result;
@@ -18,22 +19,20 @@ import java.util.List;
  */
 @Service
 @RequiredArgsConstructor
-public class ProcessServiceImpl implements ProcessService {
-
-    private final DeyochProcessMapper deyochProcessMapper;
+public class ProcessServiceImpl extends ServiceImpl<DeyochProcessMapper, DeyochProcess> implements ProcessService {
 
     @Override
     public Result<List<DeyochProcess>> getProcessList() {
         // 查询所有流程，按创建时间倒序排列
         LambdaQueryWrapper<DeyochProcess> queryWrapper = new LambdaQueryWrapper<>();
         queryWrapper.orderByDesc(DeyochProcess::getCreatedAt);
-        List<DeyochProcess> processList = deyochProcessMapper.selectList(queryWrapper);
+        List<DeyochProcess> processList = list(queryWrapper);
         return Result.success(processList);
     }
 
     @Override
     public Result<DeyochProcess> getProcessById(Long id) {
-        DeyochProcess process = deyochProcessMapper.selectById(id);
+        DeyochProcess process = getById(id);
         if (process == null) {
             return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
@@ -49,33 +48,33 @@ public class ProcessServiceImpl implements ProcessService {
         // 默认状态为启用
         process.setStatus(1);
         // 创建流程
-        deyochProcessMapper.insert(process);
+        save(process);
         return Result.success(process);
     }
 
     @Override
     public Result<DeyochProcess> updateProcess(DeyochProcess process) {
         // 检查流程是否存在
-        DeyochProcess existingProcess = deyochProcessMapper.selectById(process.getId());
+        DeyochProcess existingProcess = getById(process.getId());
         if (existingProcess == null) {
             return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
         // 设置更新时间
         process.setUpdatedAt(LocalDateTime.now());
         // 更新流程
-        deyochProcessMapper.updateById(process);
+        updateById(process);
         return Result.success(process);
     }
 
     @Override
     public Result<Void> deleteProcess(Long id) {
         // 检查流程是否存在
-        DeyochProcess process = deyochProcessMapper.selectById(id);
+        DeyochProcess process = getById(id);
         if (process == null) {
             return Result.error(ResultCode.PROCESS_NOT_FOUND, "流程不存在");
         }
         // 删除流程
-        deyochProcessMapper.deleteById(id);
+        removeById(id);
         return Result.success();
     }
 }

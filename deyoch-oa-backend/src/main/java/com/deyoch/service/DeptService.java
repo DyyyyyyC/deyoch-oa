@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochDept;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 部门管理服务接口
  * 定义部门管理相关的业务逻辑方法
  */
-public interface DeptService {
+public interface DeptService extends IService<DeyochDept> {
 
     /**
      * 获取部门列表

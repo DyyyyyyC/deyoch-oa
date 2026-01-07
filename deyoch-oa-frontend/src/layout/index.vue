@@ -2,6 +2,15 @@
   <div class="layout-container">
     <header class="layout-header">
       <div class="header-left">
+        <!-- 移动端菜单切换按钮 -->
+        <el-button 
+          v-if="isMobile" 
+          class="mobile-menu-toggle"
+          type="text"
+          @click="toggleMobileMenu"
+        >
+          <el-icon :size="20"><Menu /></el-icon>
+        </el-button>
         <div class="logo-container">
           <el-icon class="logo-icon" :size="32"><Platform /></el-icon>
           <h1 class="logo-text">Deyoch OA</h1>
@@ -9,13 +18,15 @@
       </div>
       <div class="header-right">
         <div class="header-actions">
-          <el-tooltip :content="$t('common.search')" placement="bottom">
-            <el-icon class="action-icon"><Search /></el-icon>
-          </el-tooltip>
           <el-tooltip :content="$t('announcementManagement.title')" placement="bottom">
-            <el-badge :value="5" class="notice-badge">
-              <el-icon class="action-icon"><Bell /></el-icon>
-            </el-badge>
+            <div class="notification-container" @click="handleNotificationClick">
+              <el-icon class="action-icon notification-icon"><Bell /></el-icon>
+              <el-badge 
+                v-if="notificationCount > 0" 
+                :value="notificationCount" 
+                class="notification-badge"
+              />
+            </div>
           </el-tooltip>
           <language-switch class="lang-switch" />
         </div>
@@ -42,7 +53,7 @@
     </header>
     <div class="layout-body">
       <!-- 左侧菜单 -->
-      <aside class="layout-sidebar">
+      <aside class="layout-sidebar" :class="{ 'mobile-open': isMobileMenuOpen }">
         <el-menu
           :default-active="activeMenu"
           class="sidebar-menu-vertical"
@@ -134,12 +145,13 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
+import { get } from '@/utils/axios'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitch from '@/components/LanguageSwitch.vue'
 import {
   ArrowDown, House, Setting, Bell, List, Expand, Fold,
-  Platform, Search, User, SwitchButton, CaretBottom, DocumentCopy, Calendar, Document
+  Platform, User, SwitchButton, CaretBottom, DocumentCopy, Calendar, Document, Menu
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
@@ -149,8 +161,34 @@ const { t } = useI18n()
 
 const userInfo = ref(null)
 
+// 通知数量
+const notificationCount = ref(0)
+
 // 菜单折叠状态
 const isCollapsed = ref(false)
+
+// 移动端相关状态
+const isMobile = ref(false)
+const isMobileMenuOpen = ref(false)
+
+// 检测屏幕尺寸
+const checkScreenSize = () => {
+  isMobile.value = window.innerWidth <= 992
+  if (!isMobile.value) {
+    isMobileMenuOpen.value = false
+  }
+}
+
+// 切换移动端菜单
+const toggleMobileMenu = () => {
+  isMobileMenuOpen.value = !isMobileMenuOpen.value
+}
+
+// 监听窗口大小变化
+onMounted(() => {
+  checkScreenSize()
+  window.addEventListener('resize', checkScreenSize)
+})
 
 // 活动菜单，根据当前路由自动设置
 const activeMenu = computed(() => {
@@ -159,6 +197,29 @@ const activeMenu = computed(() => {
 
 // 默认展开的菜单
 const defaultOpenedMenus = ref(['system'])
+
+// 获取通知数量
+const getNotificationCount = async () => {
+  try {
+    // 使用公告列表接口，过滤出已发布的公告作为通知
+    const data = await get('/announcement/list')
+    if (Array.isArray(data)) {
+      // 计算已发布状态的公告数量
+      const publishedCount = data.filter(item => item.status === 1).length
+      notificationCount.value = Math.min(publishedCount, 99) // 最多显示99
+    } else {
+      notificationCount.value = 0
+    }
+  } catch (error) {
+    // 静默处理错误，不在控制台显示错误信息
+    notificationCount.value = 0
+  }
+}
+
+// 处理通知点击
+const handleNotificationClick = () => {
+  router.push('/announcement/list')
+}
 
 // 切换菜单折叠状态
 const toggleCollapse = () => {
@@ -182,12 +243,13 @@ watch(
 
 onMounted(() => {
   userInfo.value = userStore.userInfo
+  getNotificationCount()
 })
 
 const handleCommand = async (command) => {
   switch (command) {
     case 'profile':
-      ElMessage.info(t('common.comingSoon'))
+      router.push('/profile')
       break
     case 'logout':
       try {
@@ -231,7 +293,23 @@ const handleCommand = async (command) => {
 .header-left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 16px;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  padding: 8px;
+  border: none;
+  background: none;
+  color: #595959;
+  cursor: pointer;
+  border-radius: 4px;
+  transition: all 0.3s;
+}
+
+.mobile-menu-toggle:hover {
+  background-color: #f5f5f5;
+  color: #1890ff;
 }
 
 .logo-container {
@@ -264,16 +342,63 @@ const handleCommand = async (command) => {
   align-items: center;
   gap: 20px;
   color: #595959;
+  height: 100%;
 }
 
 .action-icon {
   font-size: 18px;
   cursor: pointer;
   transition: color 0.3s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .action-icon:hover {
   color: #1890ff;
+}
+
+.notification-container {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  padding: 4px;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.notification-container:hover {
+  background-color: #f5f5f5;
+}
+
+.notification-icon {
+  font-size: 18px;
+  color: #595959;
+  transition: color 0.3s;
+}
+
+.notification-container:hover .notification-icon {
+  color: #1890ff;
+}
+
+.notification-badge {
+  position: absolute;
+  top: -2px;
+  right: -2px;
+  pointer-events: none;
+}
+
+.notification-badge :deep(.el-badge__content) {
+  position: static;
+  transform: none;
+  border: 1px solid #fff;
+}
+
+.lang-switch {
+  display: flex;
+  align-items: center;
 }
 
 .user-profile {
@@ -284,19 +409,37 @@ const handleCommand = async (command) => {
   padding: 4px 8px;
   border-radius: 4px;
   transition: background 0.3s;
+  height: 40px; /* 固定高度确保垂直居中 */
 }
 
 .user-profile:hover {
   background: #f5f5f5;
 }
 
+.user-avatar {
+  flex-shrink: 0; /* 防止头像被压缩 */
+}
+
 .user-name {
   font-size: 14px;
   color: #262626;
   font-weight: 500;
+  white-space: nowrap; /* 防止用户名换行 */
 }
 
-/* 主体布局 */
+/* Element Plus Dropdown 样式优化 */
+:deep(.el-dropdown) {
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+/* 确保所有图标都垂直居中 */
+:deep(.el-icon) {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 .layout-body {
   display: flex;
   flex: 1;
@@ -370,12 +513,104 @@ const handleCommand = async (command) => {
 }
 
 /* 响应式 */
+@media (max-width: 1200px) {
+  .layout-header {
+    padding: 0 16px;
+  }
+  
+  .header-right {
+    gap: 16px;
+  }
+  
+  .header-actions {
+    gap: 12px;
+  }
+}
+
+@media (max-width: 992px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+  
+  .layout-sidebar {
+    position: fixed;
+    left: -240px;
+    top: 64px;
+    height: calc(100vh - 64px);
+    z-index: 1000;
+    transition: left 0.3s ease;
+  }
+  
+  .layout-sidebar.mobile-open {
+    left: 0;
+  }
+  
+  .layout-main {
+    margin-left: 0;
+    width: 100%;
+  }
+  
+  .sidebar-menu-vertical:not(.el-menu--collapse) {
+    width: 240px;
+  }
+}
+
 @media (max-width: 768px) {
+  .layout-header {
+    padding: 0 12px;
+  }
+  
   .logo-text {
     display: none;
   }
+  
   .user-name {
     display: none;
+  }
+  
+  .header-right {
+    gap: 12px;
+  }
+  
+  .header-actions {
+    gap: 8px;
+  }
+}
+
+@media (max-width: 576px) {
+  .layout-header {
+    padding: 0 8px;
+    height: 56px;
+  }
+  
+  .logo-container {
+    gap: 8px;
+  }
+  
+  .logo-icon {
+    font-size: 24px;
+  }
+  
+  .header-right {
+    gap: 8px;
+  }
+  
+  .user-profile {
+    padding: 2px 4px;
+  }
+  
+  .user-avatar {
+    width: 28px;
+    height: 28px;
+  }
+  
+  .layout-sidebar {
+    top: 56px;
+    height: calc(100vh - 56px);
+  }
+  
+  .layout-main {
+    padding-top: 0;
   }
 }
 </style>

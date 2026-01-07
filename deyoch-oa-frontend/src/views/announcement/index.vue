@@ -5,35 +5,42 @@
       <h2>{{ $t('announcementManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('announcementManagement.title')">
-          <el-input v-model="searchForm.title" :placeholder="$t('announcementManagement.enterTitle')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 公告列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddAnnouncement">
-          <el-icon><Plus /></el-icon>
-          {{ $t('announcementManagement.addAnnouncement') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedAnnouncements.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedAnnouncements.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddAnnouncement">
+            <el-icon><Plus /></el-icon>
+            {{ $t('announcementManagement.addAnnouncement') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedAnnouncements.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedAnnouncements.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.title" 
+                :placeholder="$t('announcementManagement.enterTitle')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -44,10 +51,10 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('announcementManagement.title')" width="180" />
-        <el-table-column prop="publisherName" :label="$t('announcementManagement.publisher')" width="120" />
-        <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" width="180" />
-        <el-table-column prop="status" :label="$t('announcementManagement.status')" width="120">
+        <el-table-column prop="title" :label="$t('announcementManagement.title')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="publisherName" :label="$t('announcementManagement.publisher')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="publishTime" :label="$t('announcementManagement.publishTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('announcementManagement.status')" min-width="120">
           <template #default="scope">
             <el-switch
               v-model="scope.row.status"
@@ -147,6 +154,7 @@ import {
   publishAnnouncement, 
   revokeAnnouncement 
 } from '@/api/announcement'
+import '@/style/management-layout.css'
 
 // 获取i18n的t函数
 const { t } = useI18n()
@@ -222,11 +230,22 @@ const getAnnouncementList = async () => {
   loading.value = true
   try {
     const data = await getAnnouncementListApi()
-    announcementList.value = data
-    pagination.total = data.length
+    
+    // 实现前端搜索过滤
+    let filteredAnnouncements = data
+    
+    // 按标题过滤
+    if (searchForm.title && searchForm.title.trim()) {
+      filteredAnnouncements = filteredAnnouncements.filter(announcement => 
+        announcement.title && announcement.title.toLowerCase().includes(searchForm.title.toLowerCase())
+      )
+    }
+    
+    announcementList.value = filteredAnnouncements
+    pagination.total = filteredAnnouncements.length
     
     // 构建用户ID到用户名的映射
-    const userIds = [...new Set(data.map(item => item.userId))]
+    const userIds = [...new Set(filteredAnnouncements.map(item => item.userId))]
     userIds.forEach(id => {
       if (!userNameMap[id]) {
         userNameMap[id] = userStore.userInfo?.username || '用户' + id
@@ -243,6 +262,8 @@ const getAnnouncementList = async () => {
 
 // 搜索公告
 const handleSearch = () => {
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getAnnouncementList()
 }
 

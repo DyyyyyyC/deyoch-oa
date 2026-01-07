@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochTask;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 任务管理服务接口
  * 定义任务管理相关的业务逻辑方法
  */
-public interface TaskService {
+public interface TaskService extends IService<DeyochTask> {
 
     /**
      * 获取任务列表

@@ -5,42 +5,53 @@
       <h2>{{ $t('roleManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('roleManagement.roleName')">
-          <el-input v-model="searchForm.roleName" :placeholder="$t('roleManagement.enterRoleName')" clearable />
-        </el-form-item>
-        <el-form-item :label="$t('roleManagement.roleCode')">
-          <el-input v-model="searchForm.roleCode" :placeholder="$t('roleManagement.enterRoleCode')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('roleManagement.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('roleManagement.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 角色列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddRole">
-          <el-icon><Plus /></el-icon>
-          {{ $t('roleManagement.addRole') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedRoles.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('roleManagement.edit') }}
-        </el-button>
-        <el-button type="success" @click="handleBatchAssignPermission" :disabled="selectedRoles.length !== 1">
-          <el-icon><Setting /></el-icon>
-          {{ $t('roleManagement.assignPermission') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedRoles.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('roleManagement.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddRole">
+            <el-icon><Plus /></el-icon>
+            {{ $t('roleManagement.addRole') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedRoles.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('roleManagement.edit') }}
+          </el-button>
+          <el-button type="success" @click="handleBatchAssignPermission" :disabled="selectedRoles.length !== 1">
+            <el-icon><Setting /></el-icon>
+            {{ $t('roleManagement.assignPermission') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedRoles.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('roleManagement.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.roleName" 
+                :placeholder="$t('roleManagement.enterRoleName')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.roleCode" 
+                :placeholder="$t('roleManagement.enterRoleCode')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('roleManagement.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('roleManagement.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -149,6 +160,7 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Setting } from '@element-plus/icons-vue'
 import { get, post, put, del } from '@/utils/axios'
 import { useI18n } from 'vue-i18n'
+import '@/style/management-layout.css'
 
 // 获取i18n的t函数
 const { t } = useI18n()
@@ -224,8 +236,26 @@ const getRoleList = async () => {
   try {
     // axios拦截器已经处理了code检查，直接返回data字段
     const roleData = await get('/role/list')
-    roleList.value = roleData
-    pagination.total = roleData.length
+    
+    // 实现前端搜索过滤
+    let filteredRoles = roleData
+    
+    // 按角色名称过滤
+    if (searchForm.roleName && searchForm.roleName.trim()) {
+      filteredRoles = filteredRoles.filter(role => 
+        role.roleName && role.roleName.toLowerCase().includes(searchForm.roleName.toLowerCase())
+      )
+    }
+    
+    // 按角色代码过滤
+    if (searchForm.roleCode && searchForm.roleCode.trim()) {
+      filteredRoles = filteredRoles.filter(role => 
+        role.roleCode && role.roleCode.toLowerCase().includes(searchForm.roleCode.toLowerCase())
+      )
+    }
+    
+    roleList.value = filteredRoles
+    pagination.total = filteredRoles.length
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -261,7 +291,8 @@ const getPermissionTree = async () => {
 
 // 搜索角色
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索，暂时先调用getRoleList()
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getRoleList()
 }
 

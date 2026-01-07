@@ -5,35 +5,42 @@
       <h2>{{ $t('scheduleManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('scheduleManagement.scheduleTitle')">
-          <el-input v-model="searchForm.title" :placeholder="$t('scheduleManagement.enterTitle')" clearable />
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 日程列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddSchedule">
-          <el-icon><Plus /></el-icon>
-          {{ $t('scheduleManagement.addSchedule') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedSchedules.length !== 1">
-          <el-icon><Edit /></el-icon>
-          {{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedSchedules.length === 0">
-          <el-icon><Delete /></el-icon>
-          {{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddSchedule">
+            <el-icon><Plus /></el-icon>
+            {{ $t('scheduleManagement.addSchedule') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedSchedules.length !== 1">
+            <el-icon><Edit /></el-icon>
+            {{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedSchedules.length === 0">
+            <el-icon><Delete /></el-icon>
+            {{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.title" 
+                :placeholder="$t('scheduleManagement.enterTitle')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -44,21 +51,21 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" width="150"/>
-        <el-table-column prop="content" :label="$t('scheduleManagement.content')" width="180" />
-        <el-table-column prop="creatorName" :label="$t('scheduleManagement.creator')" width="120" />
-        <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" width="180" />
-        <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" width="180" />
-        <el-table-column prop="location" :label="$t('scheduleManagement.location')" width="150" />
-        <el-table-column prop="status" :label="$t('scheduleManagement.status')" width="120">
+        <el-table-column prop="title" :label="$t('scheduleManagement.scheduleTitle')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="content" :label="$t('scheduleManagement.content')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="creatorName" :label="$t('scheduleManagement.creator')" min-width="120" show-overflow-tooltip />
+        <el-table-column prop="startTime" :label="$t('scheduleManagement.startTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="endTime" :label="$t('scheduleManagement.endTime')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="location" :label="$t('scheduleManagement.location')" min-width="150" show-overflow-tooltip />
+        <el-table-column prop="status" :label="$t('scheduleManagement.status')" min-width="120">
           <template #default="scope">
             <el-tag :type="scope.row.status === 0 ? 'warning' : scope.row.status === 1 ? 'success' : 'danger'">
               {{ scope.row.status === 0 ? '未开始' : scope.row.status === 1 ? '进行中' : '已结束' }}
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('common.createdAt')" width="180" />
-        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" width="180" />
+        <el-table-column prop="createdAt" :label="$t('common.createdAt')" min-width="180" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('common.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -172,6 +179,7 @@ import {
   deleteSchedule,
   updateScheduleStatus
 } from '@/api/schedule'
+import '@/style/management-layout.css'
 
 // 加载状态
 const loading = ref(false)
@@ -248,8 +256,19 @@ const getScheduleList = async () => {
   loading.value = true
   try {
     const data = await getScheduleListApi()
-    scheduleList.value = data
-    pagination.total = data.length
+    
+    // 实现前端搜索过滤
+    let filteredSchedules = data
+    
+    // 按标题过滤
+    if (searchForm.title && searchForm.title.trim()) {
+      filteredSchedules = filteredSchedules.filter(schedule => 
+        schedule.title && schedule.title.toLowerCase().includes(searchForm.title.toLowerCase())
+      )
+    }
+    
+    scheduleList.value = filteredSchedules
+    pagination.total = filteredSchedules.length
   } catch (error) {
     scheduleList.value = []
     pagination.total = 0
@@ -264,7 +283,8 @@ const getScheduleList = async () => {
 
 // 搜索日程
 const handleSearch = () => {
-  // 这里可以实现带条件的搜索，目前先调用getScheduleList
+  // 实现真正的搜索逻辑
+  pagination.currentPage = 1
   getScheduleList()
 }
 

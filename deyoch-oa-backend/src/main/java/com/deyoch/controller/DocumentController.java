@@ -120,13 +120,18 @@ public class DocumentController {
     /**
      * 上传文档
      * @param file 上传的文件
-     * @param document 文档信息
+     * @param status 文档状态
      * @return 上传结果
      */
     @PostMapping("/upload")
     @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "上传文档", description = "上传文档文件和信息")
-    public Result<DeyochDocument> uploadDocument(@RequestParam("file") @Parameter(description = "上传的文件") MultipartFile file, @Parameter(description = "文档信息") DeyochDocument document) {
+    public Result<DeyochDocument> uploadDocument(
+            @RequestParam("file") @Parameter(description = "上传的文件") MultipartFile file,
+            @RequestParam(value = "status", defaultValue = "1") @Parameter(description = "文档状态") Integer status) {
+        // 创建文档对象
+        DeyochDocument document = new DeyochDocument();
+        document.setStatus(status);
         return documentService.uploadDocument(file, document);
     }
 

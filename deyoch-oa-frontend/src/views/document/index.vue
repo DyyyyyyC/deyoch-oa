@@ -5,38 +5,49 @@
       <h2>{{ $t('documentManagement.title') }}</h2>
     </div>
 
-    <!-- 搜索表单 -->
-    <el-card class="search-card">
-      <el-form :model="searchForm" inline>
-        <el-form-item :label="$t('documentManagement.fileName')">
-          <el-input v-model="searchForm.title" :placeholder="$t('documentManagement.enterTitle')" clearable />
-        </el-form-item>
-        <el-form-item :label="$t('documentManagement.status')">
-          <el-select v-model="searchForm.status" :placeholder="$t('userManagement.selectStatus')" clearable>
-            <el-option :label="$t('common.enabled')" value="1" />
-            <el-option :label="$t('common.disabled')" value="0" />
-          </el-select>
-        </el-form-item>
-        <el-form-item>
-          <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
-          <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
-        </el-form-item>
-      </el-form>
-    </el-card>
-
     <!-- 文档列表 -->
     <el-card class="table-card">
-      <!-- 操作区域 -->
-      <div class="action-area">
-        <el-button type="primary" @click="handleAddDocument">
-          <el-icon><Plus /></el-icon>{{ $t('documentManagement.addDocument') }}
-        </el-button>
-        <el-button type="primary" @click="handleBatchEdit" :disabled="selectedDocuments.length !== 1">
-          <el-icon><Edit /></el-icon>{{ $t('common.edit') }}
-        </el-button>
-        <el-button type="danger" @click="handleBatchDelete" :disabled="selectedDocuments.length === 0">
-          <el-icon><Delete /></el-icon>{{ $t('common.delete') }}
-        </el-button>
+      <!-- 操作和搜索区域 -->
+      <div class="action-search-area">
+        <!-- 左侧操作按钮 -->
+        <div class="action-buttons">
+          <el-button type="primary" @click="handleAddDocument">
+            <el-icon><Plus /></el-icon>{{ $t('documentManagement.addDocument') }}
+          </el-button>
+          <el-button type="primary" @click="handleBatchEdit" :disabled="selectedDocuments.length !== 1">
+            <el-icon><Edit /></el-icon>{{ $t('common.edit') }}
+          </el-button>
+          <el-button type="danger" @click="handleBatchDelete" :disabled="selectedDocuments.length === 0">
+            <el-icon><Delete /></el-icon>{{ $t('common.delete') }}
+          </el-button>
+        </div>
+        
+        <!-- 右侧搜索区域 -->
+        <div class="search-area">
+          <el-form :model="searchForm" inline>
+            <el-form-item>
+              <el-input 
+                v-model="searchForm.title" 
+                :placeholder="$t('documentManagement.enterTitle')" 
+                clearable
+              />
+            </el-form-item>
+            <el-form-item>
+              <el-select 
+                v-model="searchForm.status" 
+                :placeholder="$t('userManagement.selectStatus')" 
+                clearable
+              >
+                <el-option :label="$t('common.enabled')" value="1" />
+                <el-option :label="$t('common.disabled')" value="0" />
+              </el-select>
+            </el-form-item>
+            <el-form-item>
+              <el-button type="primary" @click="handleSearch">{{ $t('common.search') }}</el-button>
+              <el-button @click="handleReset">{{ $t('common.reset') }}</el-button>
+            </el-form-item>
+          </el-form>
+        </div>
       </div>
       
       <el-table
@@ -69,8 +80,8 @@
             </el-tag>
           </template>
         </el-table-column>
-        <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" width="180" align="center" />
-        <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" width="180" align="center" />
+        <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" min-width="180" align="center" show-overflow-tooltip />
+        <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" min-width="180" align="center" show-overflow-tooltip />
       </el-table>
 
       <!-- 分页 -->
@@ -209,7 +220,17 @@ const formData = reactive({
 // 表单验证规则
 const rules = reactive({
   file: [
-    { required: true, message: t('documentManagement.titleRequired'), trigger: 'blur' }
+    { 
+      required: true, 
+      validator: (rule, value, callback) => {
+        if (fileList.value.length === 0) {
+          callback(new Error(t('documentManagement.pleaseSelectFile')))
+        } else {
+          callback()
+        }
+      }, 
+      trigger: 'change' 
+    }
   ]
 })
 
@@ -228,6 +249,11 @@ const handleFileChange = (file) => {
     formData.fileName = file.name
     formData.fileSize = file.size
     formData.fileType = file.type || file.name.substring(file.name.lastIndexOf('.') + 1)
+    
+    // 触发表单验证
+    if (documentFormRef.value) {
+      documentFormRef.value.validateField('file')
+    }
   }
 }
 
@@ -274,7 +300,10 @@ const loadDocumentList = () => {
 
 // 搜索
 const handleSearch = () => {
+  // 实现真正的搜索逻辑
   pagination.currentPage = 1
+  
+  // 重新加载文档列表，loadDocumentList 方法已经包含了搜索参数的处理
   loadDocumentList()
 }
 
@@ -447,23 +476,45 @@ const handleSubmit = () => {
     documentFormRef.value.validate((valid) => {
       if (valid) {
         loading.value = true
-        // 根据是否有文件判断是上传还是更新
-        const request = fileList.value.length > 0 ? 
-          uploadDocument(fileList.value[0].raw, formData) : 
-          updateDocument(formData.id, formData)
         
-        request
-          .then(res => {
-            ElMessage.success(formData.id ? t('documentManagement.editSuccess') : t('documentManagement.addSuccess'))
-            dialogVisible.value = false
-            loadDocumentList()
-          })
-          .catch(error => {
-            ElMessage.error(formData.id ? t('documentManagement.editFailed') : t('documentManagement.addFailed'))
-          })
-          .finally(() => {
-            loading.value = false
-          })
+        if (fileList.value.length > 0) {
+          // 上传新文档
+          const uploadFormData = new FormData()
+          uploadFormData.append('file', fileList.value[0].raw)
+          uploadFormData.append('status', formData.status.toString())
+          
+          uploadDocument(uploadFormData)
+            .then(res => {
+              ElMessage.success(t('documentManagement.addSuccess'))
+              dialogVisible.value = false
+              loadDocumentList()
+            })
+            .catch(error => {
+              console.error('上传文档失败:', error)
+              ElMessage.error(t('documentManagement.addFailed'))
+            })
+            .finally(() => {
+              loading.value = false
+            })
+        } else if (formData.id) {
+          // 更新现有文档
+          updateDocument(formData.id, formData)
+            .then(res => {
+              ElMessage.success(t('documentManagement.editSuccess'))
+              dialogVisible.value = false
+              loadDocumentList()
+            })
+            .catch(error => {
+              console.error('更新文档失败:', error)
+              ElMessage.error(t('documentManagement.editFailed'))
+            })
+            .finally(() => {
+              loading.value = false
+            })
+        } else {
+          loading.value = false
+          ElMessage.error('请选择要上传的文件')
+        }
       }
     })
   }

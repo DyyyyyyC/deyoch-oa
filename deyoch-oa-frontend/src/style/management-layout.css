@@ -1,8 +1,10 @@
 /* 统一管理页面布局样式 */
 .management-page {
-  padding: 20px;
-  background-color: #f5f7fa;
+  padding: 24px;
+  background-color: #f0f2f5;
   min-height: calc(100vh - 64px); /* 减去头部高度 */
+  width: 100%;
+  box-sizing: border-box;
 }
 
 /* 页面标题 */
@@ -10,71 +12,475 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 20px;
-  padding-bottom: 12px;
-  border-bottom: 1px solid #e4e7ed;
+  margin-bottom: 24px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid #e8e8e8;
 }
 
 .page-header h2 {
-  font-size: 18px;
+  font-size: 20px;
   font-weight: 600;
-  color: #303133;
+  color: #262626;
   margin: 0;
 }
 
 /* 搜索卡片 */
 .search-card {
-  margin-bottom: 20px;
-  padding: 16px;
-  border-radius: 4px;
+  margin-bottom: 16px;
+  border-radius: 8px;
   background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
 }
 
 /* 数据表格卡片 */
 .table-card {
-  margin-bottom: 20px;
-  border-radius: 4px;
+  border-radius: 8px;
   background-color: #ffffff;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02), 0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  overflow: hidden;
 }
 
-/* 操作按钮区域 */
-.action-area {
+/* 操作和搜索区域 - 与表格对齐 */
+.action-search-area {
   display: flex;
-  gap: 12px;
-  margin-bottom: 16px;
-  padding: 16px 16px 0;
+  justify-content: space-between;
   align-items: center;
+  padding: 16px 24px;
+  border-bottom: 1px solid #f0f0f0;
+  gap: 16px;
+  flex-wrap: wrap;
+  background-color: #ffffff;
 }
 
-.action-area .el-button {
+/* 左侧操作按钮区域 */
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.action-buttons .el-button {
+  font-size: 14px;
+  height: 32px;
+  padding: 4px 15px;
+}
+
+/* 右侧搜索区域 */
+.search-area {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-shrink: 0;
+  flex-wrap: wrap;
+}
+
+.search-area .el-form {
+  margin: 0;
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.search-area .el-form-item {
+  margin-bottom: 0;
+  margin-right: 0;
+}
+
+/* 搜索输入框样式 */
+.search-area .el-input {
+  width: 200px;
+}
+
+.search-area .el-select {
+  width: 140px;
+}
+
+.search-area .el-button {
+  height: 32px;
+  padding: 4px 15px;
   font-size: 14px;
 }
 
-/* 表格样式 */
+/* 表格样式 - 与操作区域对齐 */
 .table-card .el-table {
-  margin: 0 16px;
+  border-radius: 0;
+  margin: 0;
 }
 
-.table-card .el-table__inner-wrapper {
-  border-radius: 4px;
+.table-card .el-card__body {
+  padding: 0;
 }
 
-/* 调整表格列宽，使其更紧凑 */
-.table-card .el-table th,
-.table-card .el-table td {
-  padding: 8px 12px; /* 减少单元格内边距 */
-  font-size: 14px; /* 保持字体大小适中 */
-}
-
-/* 分页容器 */
+/* 分页容器 - 与表格对齐 */
 .pagination-container {
   display: flex;
   justify-content: flex-end;
-  margin: 16px;
-  padding-top: 16px;
-  border-top: 1px solid #e4e7ed;
+  align-items: center;
+  margin: 0;
+  padding: 16px 24px;
+  border-top: 1px solid #f0f0f0;
+  background-color: #ffffff;
+}
+
+/* 响应式设计 - 全面优化 */
+
+/* 大屏幕 (1400px+) */
+@media (min-width: 1400px) {
+  .management-page {
+    padding: 24px 32px;
+  }
+  
+  .search-area .el-input {
+    width: 220px;
+  }
+  
+  .search-area .el-select {
+    width: 160px;
+  }
+}
+
+/* 中大屏幕 (1200px - 1399px) */
+@media (max-width: 1399px) and (min-width: 1200px) {
+  .management-page {
+    padding: 24px;
+  }
+  
+  .action-search-area {
+    gap: 12px;
+  }
+  
+  .search-area .el-input {
+    width: 180px;
+  }
+  
+  .search-area .el-select {
+    width: 140px;
+  }
+}
+
+/* 中屏幕 (992px - 1199px) */
+@media (max-width: 1199px) and (min-width: 992px) {
+  .management-page {
+    padding: 20px;
+  }
+  
+  .action-search-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 16px;
+    padding: 16px 20px;
+  }
+  
+  .action-buttons {
+    justify-content: flex-start;
+  }
+  
+  .search-area {
+    justify-content: flex-end;
+  }
+  
+  .search-area .el-form {
+    justify-content: flex-end;
+  }
+  
+  .search-area .el-input {
+    width: 160px;
+  }
+  
+  .search-area .el-select {
+    width: 120px;
+  }
+}
+
+/* 小屏幕 (768px - 991px) */
+@media (max-width: 991px) and (min-width: 768px) {
+  .management-page {
+    padding: 16px;
+  }
+  
+  .page-header h2 {
+    font-size: 18px;
+  }
+  
+  .action-search-area {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+  
+  .action-buttons {
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  
+  .action-buttons .el-button {
+    font-size: 13px;
+    height: 30px;
+    padding: 4px 12px;
+  }
+  
+  .search-area {
+    justify-content: flex-start;
+  }
+  
+  .search-area .el-form {
+    justify-content: flex-start;
+    width: 100%;
+  }
+  
+  .search-area .el-input,
+  .search-area .el-select {
+    flex: 1;
+    min-width: 120px;
+    max-width: 200px;
+  }
+  
+  .search-area .el-button {
+    height: 30px;
+    padding: 4px 12px;
+    font-size: 13px;
+  }
+  
+  .pagination-container {
+    padding: 12px 16px;
+    justify-content: center;
+  }
+  
+  /* 分页组件响应式优化 */
+  .pagination-container :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pager) {
+    flex-wrap: wrap;
+  }
+}
+
+/* 超小屏幕 (576px - 767px) */
+@media (max-width: 767px) and (min-width: 576px) {
+  .management-page {
+    padding: 12px;
+  }
+  
+  .page-header {
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+  }
+  
+  .page-header h2 {
+    font-size: 16px;
+  }
+  
+  .action-search-area {
+    padding: 12px;
+    gap: 12px;
+  }
+  
+  .action-buttons {
+    width: 100%;
+    justify-content: flex-start;
+    gap: 6px;
+  }
+  
+  .action-buttons .el-button {
+    font-size: 12px;
+    height: 28px;
+    padding: 4px 8px;
+    flex: 1;
+    min-width: 60px;
+  }
+  
+  .search-area {
+    width: 100%;
+  }
+  
+  .search-area .el-form {
+    width: 100%;
+    gap: 6px;
+  }
+  
+  .search-area .el-input,
+  .search-area .el-select {
+    flex: 1;
+    min-width: 100px;
+  }
+  
+  .search-area .el-button {
+    height: 28px;
+    padding: 4px 8px;
+    font-size: 12px;
+    flex: 0 0 auto;
+  }
+  
+  .pagination-container {
+    padding: 12px;
+    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  /* 小屏幕分页优化 */
+  .pagination-container :deep(.el-pagination) {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 4px;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pagination__total),
+  .pagination-container :deep(.el-pagination .el-pagination__sizes) {
+    order: 1;
+    margin: 0;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pager),
+  .pagination-container :deep(.el-pagination .btn-prev),
+  .pagination-container :deep(.el-pagination .btn-next) {
+    order: 2;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pagination__jump) {
+    order: 3;
+    margin: 0;
+  }
+  
+  /* 表格在小屏幕上的优化 */
+  .table-card .el-table {
+    font-size: 13px;
+  }
+  
+  .table-card .el-table th,
+  .table-card .el-table td {
+    padding: 6px 8px;
+  }
+}
+
+/* 极小屏幕 (575px以下) */
+@media (max-width: 575px) {
+  .management-page {
+    padding: 8px;
+  }
+  
+  .page-header {
+    margin-bottom: 12px;
+    padding-bottom: 8px;
+  }
+  
+  .page-header h2 {
+    font-size: 14px;
+  }
+  
+  .action-search-area {
+    padding: 8px;
+    gap: 8px;
+  }
+  
+  .action-buttons {
+    width: 100%;
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .action-buttons .el-button {
+    width: 100%;
+    font-size: 12px;
+    height: 32px;
+    justify-content: center;
+  }
+  
+  .search-area {
+    width: 100%;
+  }
+  
+  .search-area .el-form {
+    width: 100%;
+    flex-direction: column;
+    gap: 8px;
+  }
+  
+  .search-area .el-form-item {
+    width: 100%;
+  }
+  
+  .search-area .el-input,
+  .search-area .el-select {
+    width: 100%;
+  }
+  
+  .search-area .el-button {
+    width: 100%;
+    height: 32px;
+    font-size: 12px;
+  }
+  
+  .pagination-container {
+    padding: 8px;
+    justify-content: center;
+    flex-direction: column;
+    gap: 12px;
+  }
+  
+  /* 极小屏幕分页优化 */
+  .pagination-container :deep(.el-pagination) {
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pagination__total) {
+    order: 1;
+    font-size: 12px;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pagination__sizes) {
+    order: 2;
+  }
+  
+  .pagination-container :deep(.el-pagination .el-pagination__sizes .el-select) {
+    width: 80px;
+  }
+  
+  .pagination-container :deep(.el-pager),
+  .pagination-container :deep(.btn-prev),
+  .pagination-container :deep(.btn-next) {
+    order: 3;
+  }
+  
+  .pagination-container :deep(.el-pager li) {
+    min-width: 28px;
+    height: 28px;
+    line-height: 28px;
+    font-size: 12px;
+  }
+  
+  .pagination-container :deep(.btn-prev),
+  .pagination-container :deep(.btn-next) {
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
+  }
+  
+  .pagination-container :deep(.el-pagination__jump) {
+    order: 4;
+    font-size: 12px;
+  }
+  
+  .pagination-container :deep(.el-pagination__jump .el-input) {
+    width: 60px;
+  }
+  
+  /* 表格在极小屏幕上的优化 */
+  .table-card .el-table {
+    font-size: 12px;
+  }
+  
+  .table-card .el-table th,
+  .table-card .el-table td {
+    padding: 4px 6px;
+  }
 }
 
 /* 对话框样式统一 */
@@ -135,5 +541,43 @@
   
   .search-card .el-form-item {
     margin-bottom: 0;
+  }
+}
+/* 分页组件全局响应式优化 */
+@media (max-width: 480px) {
+  /* 超小屏幕隐藏部分分页功能 */
+  .pagination-container :deep(.el-pagination__total) {
+    display: none;
+  }
+  
+  .pagination-container :deep(.el-pagination__jump) {
+    display: none;
+  }
+  
+  .pagination-container :deep(.el-pagination) {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 360px) {
+  /* 极小屏幕进一步简化 */
+  .pagination-container :deep(.el-pagination__sizes) {
+    display: none;
+  }
+  
+  .pagination-container :deep(.el-pager) {
+    max-width: 200px;
+    overflow-x: auto;
+  }
+}
+
+/* 分页按钮触摸优化 */
+@media (max-width: 768px) {
+  .pagination-container :deep(.el-pager li),
+  .pagination-container :deep(.btn-prev),
+  .pagination-container :deep(.btn-next) {
+    min-height: 36px;
+    min-width: 36px;
+    line-height: 36px;
   }
 }

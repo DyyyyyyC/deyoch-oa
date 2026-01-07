@@ -48,3 +48,74 @@ body {
   width: 100%;
   height: 100vh;
 }
+
+/* 修复管理页面卡片滚动条问题 */
+.el-card {
+  overflow: visible !important;
+}
+
+.el-card__body {
+  overflow: visible !important;
+  padding: 20px !important;
+}
+
+/* 修复表格容器滚动条问题 */
+.el-table {
+  overflow: visible !important;
+}
+
+.el-table__inner-wrapper {
+  overflow-x: auto !important;
+  overflow-y: visible !important;
+}
+
+/* 确保表格在卡片中正确显示 */
+.table-card .el-table {
+  margin: 0 !important;
+}
+
+/* 管理页面通用样式 */
+.management-page {
+  padding: 20px;
+  background-color: #f5f7fa;
+  min-height: calc(100vh - 64px);
+}
+
+.page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 20px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e4e7ed;
+}
+
+.page-header h2 {
+  font-size: 18px;
+  font-weight: 600;
+  color: #303133;
+  margin: 0;
+}
+
+.search-card {
+  margin-bottom: 20px;
+}
+
+.table-card {
+  margin-bottom: 20px;
+}
+
+.action-area {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  align-items: center;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid #e4e7ed;
+}

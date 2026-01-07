@@ -8,6 +8,7 @@ import com.fasterxml.jackson.annotation.JsonFormat;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
+import com.baomidou.mybatisplus.annotation.TableField;
 
 @Data
 @NoArgsConstructor
@@ -34,6 +35,9 @@ public class DeyochUser {
   private Long deptId;
   @Schema(description = "角色ID")
   private Long roleId;
+  @Schema(description = "角色名称")
+  @TableField(exist = false)
+  private String roleName;
   @Schema(description = "状态：0-禁用，1-启用")
   private Integer status;
   @Schema(description = "创建时间")

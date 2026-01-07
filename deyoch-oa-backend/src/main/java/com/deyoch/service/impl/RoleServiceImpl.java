@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochRole;
 import com.deyoch.entity.DeyochRolePermission;
 import com.deyoch.mapper.DeyochRoleMapper;
@@ -18,19 +19,18 @@ import java.util.List;
 
 /**
  * 角色管理服务实现类
- * 实现角色相关的业务逻辑
+ * 继承ServiceImpl获得MyBatis Plus的基础CRUD能力
  */
 @Service
 @RequiredArgsConstructor
-public class RoleServiceImpl implements RoleService {
+public class RoleServiceImpl extends ServiceImpl<DeyochRoleMapper, DeyochRole> implements RoleService {
 
-    private final DeyochRoleMapper deyochRoleMapper;
     private final DeyochRolePermissionMapper deyochRolePermissionMapper;
 
     @Override
     public Result<List<DeyochRole>> getRoleList() {
         try {
-            List<DeyochRole> roleList = deyochRoleMapper.selectList(null);
+            List<DeyochRole> roleList = list();
             return Result.success(roleList);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取角色列表失败：" + e.getMessage());
@@ -40,7 +40,7 @@ public class RoleServiceImpl implements RoleService {
     @Override
     public Result<DeyochRole> getRoleById(Long id) {
         try {
-            DeyochRole role = deyochRoleMapper.selectById(id);
+            DeyochRole role = getById(id);
             if (role == null) {
                 return Result.error(ResultCode.ROLE_NOT_FOUND, "角色不存在");
             }
@@ -56,14 +56,14 @@ public class RoleServiceImpl implements RoleService {
             // 检查角色名称是否已存在
             LambdaQueryWrapper<DeyochRole> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochRole::getRoleName, role.getRoleName());
-            if (deyochRoleMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.ROLE_EXISTS, "角色名称已存在");
             }
 
             // 检查角色编码是否已存在
             queryWrapper.clear();
             queryWrapper.eq(DeyochRole::getRoleCode, role.getRoleCode());
-            if (deyochRoleMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.ROLE_EXISTS, "角色编码已存在");
             }
 
@@ -73,7 +73,7 @@ public class RoleServiceImpl implements RoleService {
             role.setUpdatedAt(now);
 
             // 创建角色
-            deyochRoleMapper.insert(role);
+            save(role);
             return Result.success(role);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "创建角色失败：" + e.getMessage());
@@ -84,7 +84,7 @@ public class RoleServiceImpl implements RoleService {
     public Result<DeyochRole> updateRole(DeyochRole role) {
         try {
             // 检查角色是否存在
-            DeyochRole existingRole = deyochRoleMapper.selectById(role.getId());
+            DeyochRole existingRole = getById(role.getId());
             if (existingRole == null) {
                 return Result.error(ResultCode.ROLE_NOT_FOUND, "角色不存在");
             }
@@ -93,7 +93,7 @@ public class RoleServiceImpl implements RoleService {
             LambdaQueryWrapper<DeyochRole> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochRole::getRoleName, role.getRoleName());
             queryWrapper.ne(DeyochRole::getId, role.getId());
-            if (deyochRoleMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.ROLE_EXISTS, "角色名称已存在");
             }
 
@@ -101,7 +101,7 @@ public class RoleServiceImpl implements RoleService {
             queryWrapper.clear();
             queryWrapper.eq(DeyochRole::getRoleCode, role.getRoleCode());
             queryWrapper.ne(DeyochRole::getId, role.getId());
-            if (deyochRoleMapper.selectOne(queryWrapper) != null) {
+            if (getOne(queryWrapper) != null) {
                 return Result.error(ResultCode.ROLE_EXISTS, "角色编码已存在");
             }
 
@@ -109,7 +109,7 @@ public class RoleServiceImpl implements RoleService {
             role.setUpdatedAt(LocalDateTime.now());
 
             // 更新角色
-            deyochRoleMapper.updateById(role);
+            updateById(role);
             return Result.success(role);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新角色失败：" + e.getMessage());
@@ -120,7 +120,7 @@ public class RoleServiceImpl implements RoleService {
     public Result<Void> deleteRole(Long id) {
         try {
             // 检查角色是否存在
-            DeyochRole role = deyochRoleMapper.selectById(id);
+            DeyochRole role = getById(id);
             if (role == null) {
                 return Result.error(ResultCode.ROLE_NOT_FOUND, "角色不存在");
             }
@@ -131,7 +131,7 @@ public class RoleServiceImpl implements RoleService {
             deyochRolePermissionMapper.delete(permWrapper);
 
             // 删除角色
-            deyochRoleMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "删除角色失败：" + e.getMessage());
@@ -143,7 +143,7 @@ public class RoleServiceImpl implements RoleService {
     public Result<Void> assignPermissions(Long roleId, List<Long> permIds) {
         try {
             // 检查角色是否存在
-            if (deyochRoleMapper.selectById(roleId) == null) {
+            if (getById(roleId) == null) {
                 return Result.error(ResultCode.ROLE_NOT_FOUND, "角色不存在");
             }
 
@@ -173,7 +173,7 @@ public class RoleServiceImpl implements RoleService {
     public Result<List<Long>> getRolePermIds(Long roleId) {
         try {
             // 检查角色是否存在
-            if (deyochRoleMapper.selectById(roleId) == null) {
+            if (getById(roleId) == null) {
                 return Result.error(ResultCode.ROLE_NOT_FOUND, "角色不存在");
             }
 

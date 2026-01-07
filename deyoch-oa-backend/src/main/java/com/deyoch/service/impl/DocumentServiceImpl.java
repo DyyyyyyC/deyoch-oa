@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochDocument;
 import com.deyoch.mapper.DeyochDocumentMapper;
 import com.deyoch.result.Result;
@@ -27,9 +28,8 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
-public class DocumentServiceImpl implements DocumentService {
+public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, DeyochDocument> implements DocumentService {
 
-    private final DeyochDocumentMapper deyochDocumentMapper;
     private final JwtUtil jwtUtil;
     private final UserInfoConverter userInfoConverter;
 
@@ -52,7 +52,7 @@ public class DocumentServiceImpl implements DocumentService {
             queryWrapper.orderByDesc(DeyochDocument::getCreatedAt);
             
             // 查询所有文档
-            List<DeyochDocument> documentList = deyochDocumentMapper.selectList(queryWrapper);
+            List<DeyochDocument> documentList = list(queryWrapper);
             
             // 使用UserInfoConverter填充上传者用户名
             userInfoConverter.<DeyochDocument>populateUserNames(
@@ -71,14 +71,14 @@ public class DocumentServiceImpl implements DocumentService {
             
             return Result.success(documentList);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取文档列表失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取文档列表失败，请稍后重试");
         }
     }
 
     @Override
     public Result<DeyochDocument> getDocumentById(Long id) {
         try {
-            DeyochDocument document = deyochDocumentMapper.selectById(id);
+            DeyochDocument document = getById(id);
             if (document == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
@@ -100,7 +100,7 @@ public class DocumentServiceImpl implements DocumentService {
             
             return Result.success(document);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取文档详情失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取文档详情失败，请稍后重试");
         }
     }
 
@@ -111,7 +111,7 @@ public class DocumentServiceImpl implements DocumentService {
             LambdaQueryWrapper<DeyochDocument> queryWrapper = new LambdaQueryWrapper<>();
             queryWrapper.eq(DeyochDocument::getDeptId, deptId);
             queryWrapper.orderByDesc(DeyochDocument::getCreatedAt);
-            List<DeyochDocument> documentList = deyochDocumentMapper.selectList(queryWrapper);
+            List<DeyochDocument> documentList = list(queryWrapper);
             
             // 使用UserInfoConverter填充上传者用户名
             userInfoConverter.<DeyochDocument>populateUserNames(
@@ -152,10 +152,10 @@ public class DocumentServiceImpl implements DocumentService {
             // 默认状态为启用
             document.setStatus(1);
             // 创建文档
-            deyochDocumentMapper.insert(document);
+            save(document);
             return Result.success(document);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "创建文档失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "创建文档失败，请稍后重试");
         }
     }
 
@@ -163,17 +163,17 @@ public class DocumentServiceImpl implements DocumentService {
     public Result<DeyochDocument> updateDocument(DeyochDocument document) {
         try {
             // 检查文档是否存在
-            DeyochDocument existingDocument = deyochDocumentMapper.selectById(document.getId());
+            DeyochDocument existingDocument = getById(document.getId());
             if (existingDocument == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
             // 设置更新时间
             document.setUpdatedAt(LocalDateTime.now());
             // 更新文档
-            deyochDocumentMapper.updateById(document);
+            updateById(document);
             return Result.success(document);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "更新文档失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "更新文档失败，请稍后重试");
         }
     }
 
@@ -181,7 +181,7 @@ public class DocumentServiceImpl implements DocumentService {
     public Result<Void> deleteDocument(Long id) {
         try {
             // 检查文档是否存在
-            DeyochDocument document = deyochDocumentMapper.selectById(id);
+            DeyochDocument document = getById(id);
             if (document == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
@@ -191,10 +191,10 @@ public class DocumentServiceImpl implements DocumentService {
                 file.delete();
             }
             // 删除文档记录
-            deyochDocumentMapper.deleteById(id);
+            removeById(id);
             return Result.success();
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "删除文档失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "删除文档失败，请稍后重试");
         }
     }
 
@@ -202,7 +202,7 @@ public class DocumentServiceImpl implements DocumentService {
     public Result<Void> updateDocumentStatus(Long id, Integer status) {
         try {
             // 检查文档是否存在
-            DeyochDocument document = deyochDocumentMapper.selectById(id);
+            DeyochDocument document = getById(id);
             if (document == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
@@ -215,10 +215,10 @@ public class DocumentServiceImpl implements DocumentService {
             // 设置更新时间
             document.setUpdatedAt(LocalDateTime.now());
             // 更新文档
-            deyochDocumentMapper.updateById(document);
+            updateById(document);
             return Result.success();
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "更新文档状态失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "更新文档状态失败，请稍后重试");
         }
     }
 
@@ -251,24 +251,71 @@ public class DocumentServiceImpl implements DocumentService {
             File destFile = new File(uploadPath + File.separator + fileName);
             file.transferTo(destFile);
             
+            // 处理文件类型，只存储文件扩展名而不是完整的MIME类型
+            String fileExt = originalFilename.substring(originalFilename.lastIndexOf(".") + 1);
+            String fileType = fileExt.toLowerCase(); // 存储小写的扩展名，如 "docx", "pdf" 等
+            
             // 设置文档信息
             document.setFileName(originalFilename);
             document.setFilePath(destFile.getAbsolutePath());
             document.setFileSize(file.getSize());
-            document.setFileType(file.getContentType());
+            document.setFileType(fileType);
             document.setUserId(userId);
             document.setCreatedAt(LocalDateTime.now());
             document.setUpdatedAt(LocalDateTime.now());
             document.setStatus(1);
             
             // 保存文档记录
-            deyochDocumentMapper.insert(document);
+            save(document);
             
             return Result.success(document);
         } catch (IOException e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "上传文档失败：" + e.getMessage());
+            // 文件操作异常，返回用户友好的错误信息
+            return Result.error(ResultCode.SYSTEM_ERROR, "文件上传失败，请检查文件是否损坏或重试");
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "上传文档失败：" + e.getMessage());
+            // 其他异常（如数据库异常），返回通用错误信息，不暴露具体错误
+            return Result.error(ResultCode.SYSTEM_ERROR, "上传文档失败，请稍后重试");
+        }
+    }
+    
+    /**
+     * 根据文件扩展名推断文件类型
+     */
+    private String getFileTypeByExtension(String fileExt) {
+        if (fileExt == null || fileExt.isEmpty()) {
+            return "application/octet-stream";
+        }
+        
+        switch (fileExt.toLowerCase()) {
+            case ".pdf":
+                return "application/pdf";
+            case ".doc":
+                return "application/msword";
+            case ".docx":
+                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+            case ".xls":
+                return "application/vnd.ms-excel";
+            case ".xlsx":
+                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
+            case ".ppt":
+                return "application/vnd.ms-powerpoint";
+            case ".pptx":
+                return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
+            case ".txt":
+                return "text/plain";
+            case ".jpg":
+            case ".jpeg":
+                return "image/jpeg";
+            case ".png":
+                return "image/png";
+            case ".gif":
+                return "image/gif";
+            case ".zip":
+                return "application/zip";
+            case ".rar":
+                return "application/x-rar-compressed";
+            default:
+                return "application/octet-stream";
         }
     }
 
@@ -276,7 +323,7 @@ public class DocumentServiceImpl implements DocumentService {
     public Result<String> downloadDocument(Long id) {
         try {
             // 检查文档是否存在
-            DeyochDocument document = deyochDocumentMapper.selectById(id);
+            DeyochDocument document = getById(id);
             if (document == null) {
                 return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
             }
@@ -290,7 +337,7 @@ public class DocumentServiceImpl implements DocumentService {
             // 返回文件路径，供前端下载
             return Result.success(document.getFilePath());
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "下载文档失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "下载文档失败，请稍后重试");
         }
     }
 }

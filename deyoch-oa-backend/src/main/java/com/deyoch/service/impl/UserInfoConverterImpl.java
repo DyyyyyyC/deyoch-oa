@@ -1,5 +1,6 @@
 package com.deyoch.service.impl;
 
+import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.deyoch.entity.DeyochUser;
 import com.deyoch.mapper.DeyochUserMapper;
 import com.deyoch.service.UserInfoConverter;
@@ -46,8 +47,11 @@ public class UserInfoConverterImpl implements UserInfoConverter {
 
             log.debug("开始转换用户ID到用户名，用户ID列表: {}", validUserIds);
 
-            // 批量查询用户信息
-            List<DeyochUser> users = deyochUserMapper.selectBatchIds(validUserIds);
+            // 批量查询用户信息 - 使用LambdaQueryWrapper替代过时的selectBatchIds
+            List<DeyochUser> users = deyochUserMapper.selectList(
+                new LambdaQueryWrapper<DeyochUser>()
+                    .in(DeyochUser::getId, validUserIds)
+            );
             
             log.debug("从数据库查询到{}个用户，原始用户ID数量: {}", users.size(), validUserIds.size());
             

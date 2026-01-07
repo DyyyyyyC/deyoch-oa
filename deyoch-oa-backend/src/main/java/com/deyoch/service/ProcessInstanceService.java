@@ -1,5 +1,6 @@
 package com.deyoch.service;
 
+import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochProcessInstance;
 import com.deyoch.result.Result;
 
@@ -9,7 +10,7 @@ import java.util.List;
  * 流程实例管理服务接口
  * 定义流程实例管理相关的业务逻辑方法
  */
-public interface ProcessInstanceService {
+public interface ProcessInstanceService extends IService<DeyochProcessInstance> {
 
     /**
      * 获取流程实例列表
