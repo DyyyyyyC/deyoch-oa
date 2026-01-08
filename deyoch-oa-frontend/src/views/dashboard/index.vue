@@ -178,9 +178,9 @@ import {
   Plus, ArrowLeft, ArrowRight, Files, Download,
   Calendar, Document, Location, User, UserFilled
 } from '@element-plus/icons-vue'
-import { getTaskList } from '@/api/task'
-import { getScheduleList } from '@/api/schedule'
-import { get } from '@/utils/axios'
+import { getDashboardTasks, getMyPendingTasks, getTaskStats } from '@/api/task'
+import { getScheduleList, getScheduleByDate } from '@/api/schedule'
+import { getRecentDocuments } from '@/api/document'
 
 const userStore = useUserStore()
 const { t } = useI18n()
@@ -319,7 +319,36 @@ const nextMonth = () => {
 const fetchTaskData = async () => {
   try {
     taskLoading.value = true
-    const taskData = await getTaskList()
+    const response = await getDashboardTasks()
+    
+    // 添加调试信息
+    console.log('任务API响应:', response)
+    console.log('响应类型:', typeof response)
+    console.log('是否为数组:', Array.isArray(response))
+    
+    // 处理响应数据
+    let taskData = []
+    if (response && typeof response === 'object') {
+      if (response.records && Array.isArray(response.records)) {
+        // PageResult格式：{ current, size, total, pages, records }
+        taskData = response.records
+        console.log('使用PageResult格式，任务数据:', taskData)
+      } else if (Array.isArray(response)) {
+        // 直接数组格式
+        taskData = response
+        console.log('使用数组格式，任务数据:', taskData)
+      } else {
+        // 其他格式，使用空数组
+        taskData = []
+        console.log('未知格式，使用空数组')
+      }
+    } else if (Array.isArray(response)) {
+      taskData = response
+      console.log('直接数组格式，任务数据:', taskData)
+    } else {
+      taskData = []
+      console.log('无效响应，使用空数组')
+    }
     
     // 状态映射：后端数字状态 -> 前端中文状态
     const statusMap = {
@@ -361,6 +390,13 @@ const fetchTaskData = async () => {
     taskStats.value[3].count = transformedTasks.filter(task => task.status === '已办' || task.status === '进行中').length
   } catch (error) {
     console.error('获取任务数据失败:', error)
+    console.error('错误详情:', {
+      message: error.message,
+      response: error.response,
+      stack: error.stack
+    })
+    // 如果API调用失败，使用空数组
+    tasks.value = []
   } finally {
     taskLoading.value = false
   }
@@ -385,7 +421,26 @@ const filterEventsByDate = (date) => {
 const fetchScheduleData = async () => {
   try {
     scheduleLoading.value = true
-    const scheduleData = await getScheduleList()
+    const response = await getScheduleList()
+    
+    // 处理分页响应数据
+    let scheduleData = []
+    if (response && typeof response === 'object') {
+      if (response.records && Array.isArray(response.records)) {
+        // PageResult格式：{ current, size, total, pages, records }
+        scheduleData = response.records
+      } else if (Array.isArray(response)) {
+        // 直接数组格式
+        scheduleData = response
+      } else {
+        // 其他格式，使用空数组
+        scheduleData = []
+      }
+    } else if (Array.isArray(response)) {
+      scheduleData = response
+    } else {
+      scheduleData = []
+    }
     
     // 保存完整日程数据
     scheduleList.value = scheduleData
@@ -405,54 +460,74 @@ const fetchScheduleData = async () => {
 // 获取最近文件
 const fetchRecentFiles = async () => {
   try {
-    // 调用文档列表API，后端没有专门的最近文件接口
-    const fileData = await get('/document/list')
-    // 按创建时间排序，取最近的4个文件
-    const sortedFiles = fileData.sort((a, b) => {
-      const dateA = a.createdAt || a.createTime || a.create_at || new Date().toISOString()
-      const dateB = b.createdAt || b.createTime || b.create_at || new Date().toISOString()
-      return new Date(dateB) - new Date(dateA)
-    }).slice(0, 4)
-    // 转换文件数据格式，适配前端显示
-    files.value = sortedFiles.map(file => ({
-      // 使用后端返回的fileName字段作为文件名，同时支持多种命名方式
-      name: file.fileName || file.file_name || file.name || '未知文件名',
-      // 从filePath中提取文件大小信息，或者模拟文件大小
-      size: `${(Math.random() * 5 + 1).toFixed(1)} MB`, // 模拟文件大小
-      // 检查多种可能的日期字段
-      date: file.createdAt || file.createTime || file.create_at || new Date().toISOString(),
-      icon: markRaw(Files)
-    }))
+    // 调用工作台专用的最近文件接口
+    const response = await getRecentDocuments()
+    
+    // 添加调试信息
+    console.log('文档API响应:', response)
+    console.log('响应类型:', typeof response)
+    console.log('是否为数组:', Array.isArray(response))
+    
+    // 处理响应数据
+    let fileData = []
+    if (response && typeof response === 'object') {
+      if (response.records && Array.isArray(response.records)) {
+        // PageResult格式：{ current, size, total, pages, records }
+        fileData = response.records
+        console.log('使用PageResult格式，文档数据:', fileData)
+      } else if (Array.isArray(response)) {
+        // 直接数组格式
+        fileData = response
+        console.log('使用数组格式，文档数据:', fileData)
+      } else {
+        // 其他格式，使用空数组
+        fileData = []
+        console.log('未知格式，使用空数组')
+      }
+    } else if (Array.isArray(response)) {
+      fileData = response
+      console.log('直接数组格式，文档数据:', fileData)
+    } else {
+      fileData = []
+      console.log('无效响应，使用空数组')
+    }
+    
+    // 确保fileData是数组后再进行处理
+    if (Array.isArray(fileData) && fileData.length > 0) {
+      // 转换文件数据格式，适配前端显示
+      files.value = fileData.map(file => ({
+        // 使用后端返回的fileName字段作为文件名，同时支持多种命名方式
+        name: file.fileName || file.file_name || file.name || '未知文件名',
+        // 格式化文件大小
+        size: formatFileSize(file.fileSize || 0),
+        // 检查多种可能的日期字段
+        date: file.createdAt || file.createTime || file.create_at || new Date().toISOString(),
+        icon: markRaw(Files),
+        id: file.id
+      }))
+    } else {
+      // 如果没有数据，使用空数组
+      files.value = []
+    }
   } catch (error) {
     console.error('获取最近文件失败:', error)
-    // 如果API调用失败，使用模拟数据
-    files.value = [
-      {
-        name: '项目实施方案.docx',
-        size: '2.3 MB',
-        date: '2025-12-28 15:30',
-        icon: markRaw(Files)
-      },
-      {
-        name: '季度工作总结.pptx',
-        size: '5.6 MB',
-        date: '2025-12-27 14:15',
-        icon: markRaw(Files)
-      },
-      {
-        name: '技术架构设计.pdf',
-        size: '3.8 MB',
-        date: '2025-12-26 11:00',
-        icon: markRaw(Files)
-      },
-      {
-        name: '团队成员名单.xlsx',
-        size: '1.2 MB',
-        date: '2025-12-25 09:45',
-        icon: markRaw(Files)
-      }
-    ]
+    console.error('错误详情:', {
+      message: error.message,
+      response: error.response,
+      stack: error.stack
+    })
+    // 如果API调用失败，使用空数组
+    files.value = []
   }
+}
+
+// 格式化文件大小的辅助函数
+const formatFileSize = (size) => {
+  if (!size) return '0 B'
+  const k = 1024
+  const sizes = ['B', 'KB', 'MB', 'GB']
+  const i = Math.floor(Math.log(size) / Math.log(k))
+  return parseFloat((size / Math.pow(k, i)).toFixed(1)) + ' ' + sizes[i]
 }
 
 // 获取仪表盘数据

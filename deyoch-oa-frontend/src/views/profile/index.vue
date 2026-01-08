@@ -147,7 +147,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { Edit } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
-import { get, put } from '@/utils/axios'
+import { getUserProfile, updateUserProfile, changePassword } from '@/api/user'
 import { useI18n } from 'vue-i18n'
 
 const { t } = useI18n()
@@ -226,7 +226,7 @@ const formatDate = (dateString) => {
 // 获取用户信息
 const getUserInfo = async () => {
   try {
-    const data = await get('/user/current')
+    const data = await getUserProfile()
     userInfo.value = data
     
     // 填充表单数据
@@ -275,7 +275,7 @@ const handleSubmit = async () => {
       phone: form.phone
     }
     
-    await put('/user/profile', updateData)
+    await updateUserProfile(updateData)
     
     ElMessage.success(t('profile.updateSuccess'))
     isEditing.value = false
@@ -305,7 +305,7 @@ const handlePasswordSubmit = async () => {
     await passwordFormRef.value.validate()
     passwordLoading.value = true
     
-    await put('/user/change-password', {
+    await changePassword({
       currentPassword: passwordForm.currentPassword,
       newPassword: passwordForm.newPassword
     })

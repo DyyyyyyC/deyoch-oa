@@ -5,14 +5,14 @@ import com.deyoch.dto.LoginRequestDto;
 import com.deyoch.dto.LoginResponseDto;
 import com.deyoch.entity.DeyochUser;
 import com.deyoch.mapper.DeyochUserMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.AuthService;
 import com.deyoch.service.PermissionService;
 import com.deyoch.utils.JwtUtil;
 import java.util.List;
 import java.util.ArrayList;
-import lombok.AllArgsConstructor;
+
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;

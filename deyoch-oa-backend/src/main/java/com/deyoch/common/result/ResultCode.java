@@ -1,4 +1,4 @@
-package com.deyoch.result;
+package com.deyoch.common.result;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;

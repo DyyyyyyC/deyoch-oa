@@ -59,11 +59,10 @@
         @selection-change="handleSelectionChange"
       >
         <el-table-column type="selection" width="55" />
-        <el-table-column prop="fileName" :label="$t('documentManagement.fileName')" min-width="200" show-overflow-tooltip>
+        <el-table-column prop="fileName" :label="$t('documentManagement.fileName')" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="version" label="版本" min-width="80" align="center">
           <template #default="scope">
-            <el-link type="primary" @click="handleViewDocument(scope.row)">
-              {{ scope.row.fileName }}
-            </el-link>
+            <el-tag size="small" type="info">v{{ scope.row.version }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="uploaderName" :label="$t('documentManagement.uploader')" min-width="120" show-overflow-tooltip />
@@ -82,6 +81,19 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" min-width="180" align="center" show-overflow-tooltip />
         <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" min-width="180" align="center" show-overflow-tooltip />
+        <el-table-column label="操作" min-width="200" align="center" fixed="right">
+          <template #default="scope">
+            <el-button type="primary" size="small" @click="handleDownload(scope.row)">
+              <el-icon><Download /></el-icon>下载
+            </el-button>
+            <el-button type="info" size="small" @click="handleViewVersions(scope.row)">
+              <el-icon><Clock /></el-icon>版本
+            </el-button>
+            <el-button type="success" size="small" @click="handleUploadNewVersion(scope.row)">
+              <el-icon><Upload /></el-icon>新版本
+            </el-button>
+          </template>
+        </el-table-column>
       </el-table>
 
       <!-- 分页 -->
@@ -102,28 +114,37 @@
     <el-dialog
       v-model="dialogVisible"
       :title="dialogTitle"
-      width="50%"
+      width="60%"
       :close-on-click-modal="false"
       :close-on-press-escape="false"
     >
       <el-form ref="documentFormRef" :model="formData" :rules="rules" label-width="100px">
-        <el-form-item :label="$t('documentManagement.file')" prop="file">
-          <el-upload
-            v-model:file-list="fileList"
-            class="upload-demo"
-            action=""
-            :auto-upload="false"
-            :on-change="handleFileChange"
-          >
-            <el-button type="primary">
-              <el-icon><Plus /></el-icon>{{ $t('documentManagement.chooseFile') }}
-            </el-button>
-            <template #tip>
-              <div class="el-upload__tip">
-                {{ $t('documentManagement.uploadTip') }}
-              </div>
-            </template>
-          </el-upload>
+        <el-form-item label="文件" prop="file">
+          <!-- 使用分片上传组件 -->
+          <ChunkUpload
+            v-if="!formData.id"
+            ref="chunkUploadRef"
+            @success="handleUploadSuccess"
+            @error="handleUploadError"
+            :accept="'.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.zip,.rar'"
+            :max-size="2048"
+          />
+          <!-- 编辑模式显示当前文件信息 -->
+          <div v-else class="current-file-info">
+            <el-icon><Document /></el-icon>
+            <span>{{ formData.fileName }}</span>
+            <el-tag size="small" type="info">v{{ formData.version }}</el-tag>
+          </div>
+        </el-form-item>
+        <el-form-item v-if="isNewVersion" label="变更日志" prop="changeLog">
+          <el-input
+            v-model="formData.changeLog"
+            type="textarea"
+            :rows="3"
+            placeholder="请描述本次更新的内容..."
+            maxlength="500"
+            show-word-limit
+          />
         </el-form-item>
         <el-form-item :label="$t('documentManagement.status')" prop="status">
           <el-switch
@@ -138,7 +159,67 @@
       <template #footer>
         <div class="dialog-footer">
           <el-button @click="dialogVisible = false">{{ $t('common.cancel') }}</el-button>
-          <el-button type="primary" @click="handleSubmit">{{ $t('common.confirm') }}</el-button>
+          <el-button type="primary" @click="handleSubmit" :loading="uploading">
+            {{ uploading ? '上传中...' : $t('common.confirm') }}
+          </el-button>
+        </div>
+      </template>
+    </el-dialog>
+
+    <!-- 版本历史弹窗 -->
+    <el-dialog
+      v-model="versionDialogVisible"
+      title="版本历史"
+      width="80%"
+      :close-on-click-modal="false"
+    >
+      <el-table
+        v-loading="versionLoading"
+        :data="versionList"
+        border
+        style="width: 100%"
+      >
+        <el-table-column prop="version" label="版本号" width="100" align="center">
+          <template #default="scope">
+            <el-tag :type="scope.row.isCurrent ? 'success' : 'info'" size="small">
+              v{{ scope.row.version }}
+              <span v-if="scope.row.isCurrent">(当前)</span>
+            </el-tag>
+          </template>
+        </el-table-column>
+        <el-table-column prop="fileName" label="文件名" min-width="200" show-overflow-tooltip />
+        <el-table-column prop="fileSize" label="文件大小" width="120">
+          <template #default="scope">
+            {{ formatFileSize(scope.row.fileSize) }}
+          </template>
+        </el-table-column>
+        <el-table-column prop="changeLog" label="变更日志" min-width="200" show-overflow-tooltip>
+          <template #default="scope">
+            <span v-if="scope.row.changeLog">{{ scope.row.changeLog }}</span>
+            <span v-else class="text-muted">无变更日志</span>
+          </template>
+        </el-table-column>
+        <el-table-column prop="createdBy" label="创建者" width="120" />
+        <el-table-column prop="createdAt" label="创建时间" width="180" align="center" />
+        <el-table-column label="操作" width="200" align="center">
+          <template #default="scope">
+            <el-button type="primary" size="small" @click="handleDownloadVersion(scope.row)">
+              <el-icon><Download /></el-icon>下载
+            </el-button>
+            <el-button 
+              v-if="!scope.row.isCurrent" 
+              type="warning" 
+              size="small" 
+              @click="handleRevertVersion(scope.row)"
+            >
+              <el-icon><RefreshLeft /></el-icon>回退
+            </el-button>
+          </template>
+        </el-table-column>
+      </el-table>
+      <template #footer>
+        <div class="dialog-footer">
+          <el-button @click="versionDialogVisible = false">关闭</el-button>
         </div>
       </template>
     </el-dialog>
@@ -166,6 +247,32 @@
 :deep(.el-table__content) {
   font-size: 14px;
 }
+
+/* 当前文件信息样式 */
+.current-file-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: #f5f7fa;
+  border-radius: 4px;
+  border: 1px solid #dcdfe6;
+}
+
+.current-file-info .el-icon {
+  color: #409eff;
+}
+
+/* 文本静音样式 */
+.text-muted {
+  color: #909399;
+  font-style: italic;
+}
+
+/* 版本标签样式 */
+.version-tag {
+  margin-left: 8px;
+}
 </style>
 
 <script setup>
@@ -173,7 +280,8 @@ import { ref, reactive, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import {
-  Plus, Search, Download, Edit, Delete, View
+  Plus, Search, Download, Edit, Delete, View, Clock, Upload, 
+  Document, RefreshLeft
 } from '@element-plus/icons-vue'
 import {
   getDocumentList,
@@ -181,29 +289,43 @@ import {
   updateDocument,
   deleteDocument,
   uploadDocument,
-  downloadDocument
+  downloadDocument,
+  uploadNewVersion,
+  getDocumentVersions,
+  downloadDocumentVersion,
+  revertToVersion
 } from '@/api/document'
+import ChunkUpload from '@/components/ChunkUpload.vue'
 import '@/style/management-layout.css'
 
 const { t } = useI18n()
 
 // 状态管理
 const loading = ref(false)
+const uploading = ref(false)
+const versionLoading = ref(false)
 const dialogVisible = ref(false)
+const versionDialogVisible = ref(false)
 const dialogTitle = ref('')
+const isNewVersion = ref(false)
+const currentDocument = ref(null)
+
 const searchForm = reactive({
   title: '',
   status: ''
 })
+
 const pagination = reactive({
   currentPage: 1,
   pageSize: 10,
   total: 0
 })
-const fileList = ref([])
+
 const documentList = ref([])
 const selectedDocuments = ref([])
+const versionList = ref([])
 const documentFormRef = ref(null)
+const chunkUploadRef = ref(null)
 
 // 表单数据
 const formData = reactive({
@@ -214,7 +336,9 @@ const formData = reactive({
   fileType: '',
   userId: null,
   deptId: null,
-  status: 1
+  status: 1,
+  version: '1.0',
+  changeLog: ''
 })
 
 // 表单验证规则
@@ -223,13 +347,27 @@ const rules = reactive({
     { 
       required: true, 
       validator: (rule, value, callback) => {
-        if (fileList.value.length === 0) {
-          callback(new Error(t('documentManagement.pleaseSelectFile')))
+        if (!formData.id && !chunkUploadRef.value?.hasFile()) {
+          callback(new Error('请选择要上传的文件'))
         } else {
           callback()
         }
       }, 
       trigger: 'change' 
+    }
+  ],
+  changeLog: [
+    { 
+      required: true, 
+      message: '请输入变更日志', 
+      trigger: 'blur',
+      validator: (rule, value, callback) => {
+        if (isNewVersion.value && !value?.trim()) {
+          callback(new Error('上传新版本时必须填写变更日志'))
+        } else {
+          callback()
+        }
+      }
     }
   ]
 })
@@ -243,18 +381,18 @@ const formatFileSize = (size) => {
   return parseFloat((size / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i]
 }
 
-// 处理文件变化
-const handleFileChange = (file) => {
-  if (file && file.raw) {
-    formData.fileName = file.name
-    formData.fileSize = file.size
-    formData.fileType = file.type || file.name.substring(file.name.lastIndexOf('.') + 1)
-    
-    // 触发表单验证
-    if (documentFormRef.value) {
-      documentFormRef.value.validateField('file')
-    }
-  }
+// 分片上传成功回调
+const handleUploadSuccess = (result) => {
+  ElMessage.success('文件上传成功')
+  formData.fileName = result.fileName
+  formData.filePath = result.filePath
+  formData.fileSize = result.fileSize
+  formData.fileType = result.fileType
+}
+
+// 分片上传失败回调
+const handleUploadError = (error) => {
+  ElMessage.error('文件上传失败：' + error.message)
 }
 
 // 加载文档列表
@@ -267,31 +405,26 @@ const loadDocumentList = () => {
     status: searchForm.status
   })
     .then(res => {
-      // 处理响应数据
       let documents = []
+      let total = 0
       
-      // 检查响应类型
-      if (Array.isArray(res)) {
-        // 情况1：直接返回数组
-        documents = res
-      } else if (res.code === 200) {
-        // 情况2：标准Result格式，有code字段且为200
-        if (Array.isArray(res.data)) {
-          documents = res.data
+      if (res && typeof res === 'object') {
+        if (res.records && Array.isArray(res.records)) {
+          documents = res.records
+          total = res.total || 0
+        } else if (Array.isArray(res)) {
+          documents = res
+          total = res.length
         }
-      } else if (res.data && Array.isArray(res.data)) {
-        // 情况3：其他格式，数据在data字段中且为数组
-        documents = res.data
       }
       
-      // 更新文档列表
       documentList.value = documents
-      pagination.total = documents.length
+      pagination.total = total
     })
     .catch(error => {
       documentList.value = []
       pagination.total = 0
-      ElMessage.error('获取文档列表失败，请检查网络连接')
+      ElMessage.error('获取文档列表失败：' + (error.message || '未知错误'))
     })
     .finally(() => {
       loading.value = false
@@ -300,10 +433,7 @@ const loadDocumentList = () => {
 
 // 搜索
 const handleSearch = () => {
-  // 实现真正的搜索逻辑
   pagination.currentPage = 1
-  
-  // 重新加载文档列表，loadDocumentList 方法已经包含了搜索参数的处理
   loadDocumentList()
 }
 
@@ -332,15 +462,107 @@ const handleSelectionChange = (selection) => {
   selectedDocuments.value = selection
 }
 
+// 查看版本历史
+const handleViewVersions = (row) => {
+  currentDocument.value = row
+  versionDialogVisible.value = true
+  loadVersionHistory(row.id)
+}
+
+// 加载版本历史
+const loadVersionHistory = (documentId) => {
+  versionLoading.value = true
+  getDocumentVersions(documentId)
+    .then(res => {
+      versionList.value = res || []
+    })
+    .catch(error => {
+      ElMessage.error('获取版本历史失败：' + error.message)
+      versionList.value = []
+    })
+    .finally(() => {
+      versionLoading.value = false
+    })
+}
+
+// 上传新版本
+const handleUploadNewVersion = (row) => {
+  currentDocument.value = row
+  dialogTitle.value = `上传新版本 - ${row.fileName}`
+  isNewVersion.value = true
+  resetForm()
+  formData.id = row.id
+  formData.fileName = row.fileName
+  formData.version = row.version
+  formData.status = row.status
+  dialogVisible.value = true
+}
+
+// 下载指定版本
+const handleDownloadVersion = (version) => {
+  if (!currentDocument.value) return
+  
+  versionLoading.value = true
+  downloadDocumentVersion(currentDocument.value.id, version.version)
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', `${version.fileName}_v${version.version}`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
+      ElMessage.success('下载成功')
+    })
+    .catch(error => {
+      ElMessage.error('下载失败：' + error.message)
+    })
+    .finally(() => {
+      versionLoading.value = false
+    })
+}
+
+// 回退版本
+const handleRevertVersion = (version) => {
+  ElMessageBox.confirm(
+    `确定要回退到版本 v${version.version} 吗？此操作会将该版本设为当前版本。`,
+    '确认回退',
+    {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    }
+  )
+    .then(() => {
+      versionLoading.value = true
+      return revertToVersion(currentDocument.value.id, version.version)
+    })
+    .then(() => {
+      ElMessage.success('版本回退成功')
+      loadVersionHistory(currentDocument.value.id)
+      loadDocumentList()
+    })
+    .catch(error => {
+      if (error !== 'cancel') {
+        ElMessage.error('版本回退失败：' + error.message)
+      }
+    })
+    .finally(() => {
+      versionLoading.value = false
+    })
+}
+
 // 批量编辑文档
 const handleBatchEdit = () => {
   if (selectedDocuments.value.length !== 1) {
     ElMessage.warning('请选择一个文档进行编辑')
     return
   }
-  // 填充表单数据
   const row = selectedDocuments.value[0]
   dialogTitle.value = t('documentManagement.editDocument')
+  isNewVersion.value = false
   Object.assign(formData, row)
   dialogVisible.value = true
 }
@@ -363,13 +585,11 @@ const handleBatchDelete = () => {
   )
     .then(() => {
       loading.value = true
-      // 批量删除
       const deletePromises = selectedDocuments.value.map(doc => deleteDocument(doc.id))
       Promise.all(deletePromises)
         .then(() => {
           ElMessage.success(t('documentManagement.deleteSuccess'))
           loadDocumentList()
-          // 清空选择
           selectedDocuments.value = []
         })
         .catch(error => {
@@ -387,65 +607,30 @@ const handleBatchDelete = () => {
 // 添加文档
 const handleAddDocument = () => {
   dialogTitle.value = t('documentManagement.addDocument')
+  isNewVersion.value = false
   resetForm()
   dialogVisible.value = true
-}
-
-// 编辑文档
-const handleEditDocument = (row) => {
-  dialogTitle.value = t('documentManagement.editDocument')
-  Object.assign(formData, row)
-  dialogVisible.value = true
-}
-
-// 查看文档
-const handleViewDocument = (row) => {
-  // 这里可以跳转到文档详情页
 }
 
 // 下载文档
 const handleDownload = (row) => {
   loading.value = true
   downloadDocument(row.id)
-    .then(res => {
-      // 处理下载结果，通常会返回文件URL或直接返回文件流
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.setAttribute('download', row.fileName)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      window.URL.revokeObjectURL(url)
+      
       ElMessage.success(t('documentManagement.downloadSuccess'))
-      // 这里可以根据后端返回的结果进行文件下载处理
-      // 例如：window.open(res.data, '_blank')
     })
     .catch(error => {
       console.error('下载文档失败:', error)
       ElMessage.error(t('documentManagement.downloadFailed'))
-    })
-    .finally(() => {
-      loading.value = false
-    })
-}
-
-// 删除文档
-const handleDeleteDocument = (row) => {
-  ElMessageBox.confirm(
-    t('documentManagement.deleteConfirm'),
-    t('common.confirm'),
-    {
-      confirmButtonText: t('common.confirm'),
-      cancelButtonText: t('common.cancel'),
-      type: 'warning'
-    }
-  )
-    .then(() => {
-      loading.value = true
-      return deleteDocument(row.id)
-    })
-    .then(() => {
-      ElMessage.success(t('documentManagement.deleteSuccess'))
-      loadDocumentList()
-    })
-    .catch(error => {
-      if (error !== 'cancel') {
-        console.error('删除文档失败:', error)
-        ElMessage.error(t('documentManagement.deleteFailed'))
-      }
     })
     .finally(() => {
       loading.value = false
@@ -465,9 +650,13 @@ const resetForm = () => {
     fileType: '',
     userId: null,
     deptId: null,
-    status: 1
+    status: 1,
+    version: '1.0',
+    changeLog: ''
   })
-  fileList.value = []
+  if (chunkUploadRef.value) {
+    chunkUploadRef.value.reset()
+  }
 }
 
 // 提交表单
@@ -475,45 +664,76 @@ const handleSubmit = () => {
   if (documentFormRef.value) {
     documentFormRef.value.validate((valid) => {
       if (valid) {
-        loading.value = true
+        uploading.value = true
         
-        if (fileList.value.length > 0) {
-          // 上传新文档
+        if (isNewVersion.value && formData.id) {
+          // 上传新版本
           const uploadFormData = new FormData()
-          uploadFormData.append('file', fileList.value[0].raw)
-          uploadFormData.append('status', formData.status.toString())
-          
-          uploadDocument(uploadFormData)
-            .then(res => {
-              ElMessage.success(t('documentManagement.addSuccess'))
-              dialogVisible.value = false
-              loadDocumentList()
-            })
-            .catch(error => {
-              console.error('上传文档失败:', error)
-              ElMessage.error(t('documentManagement.addFailed'))
-            })
-            .finally(() => {
-              loading.value = false
-            })
-        } else if (formData.id) {
-          // 更新现有文档
-          updateDocument(formData.id, formData)
+          const file = chunkUploadRef.value?.getFile()
+          if (file) {
+            uploadFormData.append('file', file)
+            uploadFormData.append('changeLog', formData.changeLog)
+            uploadFormData.append('status', formData.status.toString())
+            
+            uploadNewVersion(formData.id, uploadFormData)
+              .then(res => {
+                ElMessage.success('新版本上传成功')
+                dialogVisible.value = false
+                loadDocumentList()
+                if (versionDialogVisible.value) {
+                  loadVersionHistory(formData.id)
+                }
+              })
+              .catch(error => {
+                ElMessage.error('新版本上传失败：' + error.message)
+              })
+              .finally(() => {
+                uploading.value = false
+              })
+          } else {
+            uploading.value = false
+            ElMessage.error('请选择要上传的文件')
+          }
+        } else if (!formData.id) {
+          // 上传新文档
+          const file = chunkUploadRef.value?.getFile()
+          if (file) {
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', file)
+            uploadFormData.append('status', formData.status.toString())
+            
+            uploadDocument(uploadFormData)
+              .then(res => {
+                ElMessage.success(t('documentManagement.addSuccess'))
+                dialogVisible.value = false
+                loadDocumentList()
+              })
+              .catch(error => {
+                ElMessage.error(t('documentManagement.addFailed'))
+              })
+              .finally(() => {
+                uploading.value = false
+              })
+          } else {
+            uploading.value = false
+            ElMessage.error('请选择要上传的文件')
+          }
+        } else {
+          // 更新现有文档信息
+          updateDocument(formData.id, {
+            status: formData.status
+          })
             .then(res => {
               ElMessage.success(t('documentManagement.editSuccess'))
               dialogVisible.value = false
               loadDocumentList()
             })
             .catch(error => {
-              console.error('更新文档失败:', error)
               ElMessage.error(t('documentManagement.editFailed'))
             })
             .finally(() => {
-              loading.value = false
+              uploading.value = false
             })
-        } else {
-          loading.value = false
-          ElMessage.error('请选择要上传的文件')
         }
       }
     })

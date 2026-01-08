@@ -2,7 +2,7 @@ package com.deyoch.service;
 
 import com.deyoch.dto.LoginRequestDto;
 import com.deyoch.dto.LoginResponseDto;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.Result;
 
 /**
  * 认证服务接口

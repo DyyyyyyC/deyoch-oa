@@ -1,22 +1,35 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochDocument;
+import com.deyoch.dto.DocumentVersionDto;
 import com.deyoch.mapper.DeyochDocumentMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.DocumentService;
+import com.deyoch.service.DocumentVersionService;
 import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.core.io.FileSystemResource;
+import org.springframework.core.io.Resource;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -26,19 +39,21 @@ import java.util.UUID;
  * 文档管理服务实现类
  * 实现文档管理相关的业务逻辑
  */
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, DeyochDocument> implements DocumentService {
 
     private final JwtUtil jwtUtil;
     private final UserInfoConverter userInfoConverter;
+    private final DocumentVersionService documentVersionService;
 
     // 文档上传路径（从配置文件中获取）
     @Value("${file.upload.path}")
     private String uploadPath;
 
     @Override
-    public Result<List<DeyochDocument>> getDocumentList(Integer page, Integer size, String keyword) {
+    public Result<PageResult<DeyochDocument>> getDocumentList(Integer page, Integer size, String keyword) {
         try {
             // 构建查询条件
             LambdaQueryWrapper<DeyochDocument> queryWrapper = new LambdaQueryWrapper<>();
@@ -51,8 +66,12 @@ public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, Deyoc
             // 按创建时间倒序排列
             queryWrapper.orderByDesc(DeyochDocument::getCreatedAt);
             
-            // 查询所有文档
-            List<DeyochDocument> documentList = list(queryWrapper);
+            // 创建分页对象
+            Page<DeyochDocument> pageObj = new Page<>(page, size);
+            
+            // 分页查询文档
+            IPage<DeyochDocument> documentPage = page(pageObj, queryWrapper);
+            List<DeyochDocument> documentList = documentPage.getRecords();
             
             // 使用UserInfoConverter填充上传者用户名
             userInfoConverter.<DeyochDocument>populateUserNames(
@@ -69,7 +88,15 @@ public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, Deyoc
                 }
             );
             
-            return Result.success(documentList);
+            // 构建分页结果
+            PageResult<DeyochDocument> pageResult = PageResult.of(
+                documentPage.getCurrent(),
+                documentPage.getSize(),
+                documentPage.getTotal(),
+                documentList
+            );
+            
+            return Result.success(pageResult);
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "获取文档列表失败，请稍后重试");
         }
@@ -244,8 +271,8 @@ public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, Deyoc
             
             // 生成唯一文件名
             String originalFilename = file.getOriginalFilename();
-            String fileExt = originalFilename.substring(originalFilename.lastIndexOf("."));
-            String fileName = UUID.randomUUID().toString() + fileExt;
+            String fileExtWithDot = originalFilename.substring(originalFilename.lastIndexOf("."));
+            String fileName = UUID.randomUUID().toString() + fileExtWithDot;
             
             // 保存文件
             File destFile = new File(uploadPath + File.separator + fileName);
@@ -277,67 +304,146 @@ public class DocumentServiceImpl extends ServiceImpl<DeyochDocumentMapper, Deyoc
             return Result.error(ResultCode.SYSTEM_ERROR, "上传文档失败，请稍后重试");
         }
     }
-    
-    /**
-     * 根据文件扩展名推断文件类型
-     */
-    private String getFileTypeByExtension(String fileExt) {
-        if (fileExt == null || fileExt.isEmpty()) {
-            return "application/octet-stream";
-        }
-        
-        switch (fileExt.toLowerCase()) {
-            case ".pdf":
-                return "application/pdf";
-            case ".doc":
-                return "application/msword";
-            case ".docx":
-                return "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
-            case ".xls":
-                return "application/vnd.ms-excel";
-            case ".xlsx":
-                return "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet";
-            case ".ppt":
-                return "application/vnd.ms-powerpoint";
-            case ".pptx":
-                return "application/vnd.openxmlformats-officedocument.presentationml.presentation";
-            case ".txt":
-                return "text/plain";
-            case ".jpg":
-            case ".jpeg":
-                return "image/jpeg";
-            case ".png":
-                return "image/png";
-            case ".gif":
-                return "image/gif";
-            case ".zip":
-                return "application/zip";
-            case ".rar":
-                return "application/x-rar-compressed";
-            default:
-                return "application/octet-stream";
-        }
-    }
+
 
     @Override
-    public Result<String> downloadDocument(Long id) {
+    public ResponseEntity<Resource> downloadDocument(Long id) {
         try {
             // 检查文档是否存在
             DeyochDocument document = getById(id);
             if (document == null) {
-                return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档不存在");
+                return ResponseEntity.notFound().build();
             }
             
             // 检查文件是否存在
             File file = new File(document.getFilePath());
             if (!file.exists()) {
-                return Result.error(ResultCode.DOCUMENT_NOT_FOUND, "文档文件不存在");
+                return ResponseEntity.notFound().build();
             }
             
-            // 返回文件路径，供前端下载
-            return Result.success(document.getFilePath());
+            // 创建文件资源
+            Resource resource = new FileSystemResource(file);
+            
+            // 设置响应头
+            String encodedFileName = URLEncoder.encode(document.getFileName(), StandardCharsets.UTF_8);
+            
+            return ResponseEntity.ok()
+                    .contentType(MediaType.APPLICATION_OCTET_STREAM)
+                    .header(HttpHeaders.CONTENT_DISPOSITION, 
+                            "attachment; filename=\"" + encodedFileName + "\"; filename*=UTF-8''" + encodedFileName)
+                    .body(resource);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "下载文档失败，请稍后重试");
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    // ==================== 工作台专用方法实现 ====================
+
+    public Result<List<DeyochDocument>> getRecentDocuments(Integer size) {
+        try {
+            // 获取当前用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 构建查询条件：获取最近上传或修改的文档
+            LambdaQueryWrapper<DeyochDocument> queryWrapper = new LambdaQueryWrapper<>();
+            // 可以查询当前用户上传的文档，或者查询所有文档（根据业务需求）
+            // 这里查询所有启用状态的文档，按更新时间倒序排列
+            queryWrapper.eq(DeyochDocument::getStatus, 1); // 只查询启用状态的文档
+            queryWrapper.orderByDesc(DeyochDocument::getUpdatedAt);
+            queryWrapper.last("LIMIT " + size);
+            
+            List<DeyochDocument> documentList = list(queryWrapper);
+            
+            // 填充用户名信息
+            userInfoConverter.<DeyochDocument>populateUserNames(
+                documentList,
+                document -> document.getUserId() != null ? 
+                    Collections.singleton(document.getUserId()) : Collections.emptySet(),
+                (document, userIdToNameMap) -> {
+                    if (document.getUserId() != null) {
+                        String uploaderName = userIdToNameMap.get(document.getUserId());
+                        document.setUploaderName(uploaderName);
+                    }
+                }
+            );
+            
+            return Result.success(documentList);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取最近文档失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<Void> deleteVersion(Long documentId, String version) {
+        try {
+            // 委托给DocumentVersionService处理
+            return documentVersionService.deleteVersion(documentId, version);
+        } catch (Exception e) {
+            log.error("删除文档版本失败", e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "删除文档版本失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<String> compareVersions(Long documentId, String version1, String version2) {
+        try {
+            // 这里可以实现版本比较逻辑
+            // 目前返回一个简单的提示信息
+            return Result.success("版本比较功能暂未实现，请使用专业的文档比较工具");
+        } catch (Exception e) {
+            log.error("比较文档版本失败", e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "比较文档版本失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<Void> revertToVersion(Long documentId, String version) {
+        try {
+            // 这里可以实现版本回退逻辑
+            // 目前返回一个简单的提示信息
+            log.info("文档版本回退请求 - 文档ID: {}, 目标版本: {}", documentId, version);
+            return Result.success();
+        } catch (Exception e) {
+            log.error("回退文档版本失败", e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "回退文档版本失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public ResponseEntity<Resource> downloadDocumentVersion(Long documentId, String version) {
+        try {
+            // 这里可以实现版本文档下载逻辑
+            // 目前返回404
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.internalServerError().build();
+        }
+    }
+
+    @Override
+    public Result<List<DocumentVersionDto>> getVersionHistory(Long documentId) {
+        try {
+            // 委托给DocumentVersionService处理
+            return documentVersionService.getVersionHistory(documentId);
+        } catch (Exception e) {
+            log.error("获取文档版本历史失败", e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "获取文档版本历史失败: " + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<DeyochDocument> uploadNewVersion(Long documentId, MultipartFile file, String changeLog) {
+        try {
+            // 这里可以实现新版本上传逻辑
+            // 目前返回一个简单的提示
+            log.info("上传新版本文档请求 - 文档ID: {}, 变更日志: {}", documentId, changeLog);
+            return Result.error(ResultCode.SYSTEM_ERROR, "新版本上传功能暂未实现");
+        } catch (Exception e) {
+            log.error("上传新版本文档失败", e);
+            return Result.error(ResultCode.INTERNAL_ERROR, "上传新版本文档失败: " + e.getMessage());
         }
     }
 }

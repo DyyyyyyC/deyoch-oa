@@ -2,7 +2,7 @@ package com.deyoch.config;
 
 import com.deyoch.entity.DeyochUser;
 import com.deyoch.mapper.DeyochUserMapper;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.PermissionService;
 import com.deyoch.utils.JwtUtil;
 import io.jsonwebtoken.Claims;

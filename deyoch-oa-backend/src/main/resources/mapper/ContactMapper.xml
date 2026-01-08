@@ -1,0 +1,206 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.ContactMapper">
+
+    <!-- 通讯录结果映射 -->
+    <resultMap id="ContactDtoMap" type="com.deyoch.dto.ContactDto">
+        <id column="id" property="id"/>
+        <result column="username" property="username"/>
+        <result column="real_name" property="realName"/>
+        <result column="nickname" property="nickname"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="position" property="position"/>
+        <result column="office_location" property="officeLocation"/>
+        <result column="extension" property="extension"/>
+        <result column="employee_id" property="employeeId"/>
+        <result column="avatar" property="avatar"/>
+        <result column="dept_name" property="deptName"/>
+        <result column="dept_id" property="deptId"/>
+        <result column="dept_parent_id" property="deptParentId"/>
+        <result column="role_name" property="roleName"/>
+        <result column="role_id" property="roleId"/>
+        <result column="status" property="status"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 组织架构树结果映射 -->
+    <resultMap id="OrgTreeDtoMap" type="com.deyoch.dto.OrgTreeDto">
+        <id column="id" property="id"/>
+        <result column="name" property="name"/>
+        <result column="type" property="type"/>
+        <result column="parent_id" property="parentId"/>
+        <result column="dept_code" property="deptCode"/>
+        <result column="leader_id" property="leaderId"/>
+        <result column="leader_name" property="leaderName"/>
+        <result column="position" property="position"/>
+        <result column="phone" property="phone"/>
+        <result column="email" property="email"/>
+        <result column="sort" property="sort"/>
+        <result column="status" property="status"/>
+    </resultMap>
+
+    <!-- 分页查询通讯录 -->
+    <select id="selectContactDirectory" resultMap="ContactDtoMap">
+        SELECT 
+            u.id,
+            u.username,
+            u.real_name,
+            u.nickname,
+            u.phone,
+            u.email,
+            u.position,
+            u.office_location,
+            u.extension,
+            u.employee_id,
+            u.avatar,
+            d.dept_name,
+            d.id as dept_id,
+            d.parent_id as dept_parent_id,
+            r.role_name,
+            r.id as role_id,
+            u.status,
+            u.created_at,
+            u.updated_at
+        FROM deyoch_user u
+        LEFT JOIN deyoch_dept d ON u.dept_id = d.id
+        LEFT JOIN deyoch_role r ON u.role_id = r.id
+        WHERE u.status = 1
+        <if test="keyword != null and keyword != ''">
+            AND (
+                u.real_name LIKE CONCAT('%', #{keyword}, '%')
+                OR u.username LIKE CONCAT('%', #{keyword}, '%')
+                OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+                OR u.email LIKE CONCAT('%', #{keyword}, '%')
+                OR u.position LIKE CONCAT('%', #{keyword}, '%')
+                OR u.employee_id LIKE CONCAT('%', #{keyword}, '%')
+                OR d.dept_name LIKE CONCAT('%', #{keyword}, '%')
+            )
+        </if>
+        <if test="deptId != null">
+            AND u.dept_id = #{deptId}
+        </if>
+        ORDER BY d.sort ASC, u.created_at DESC
+    </select>
+
+    <!-- 查询部门树结构 -->
+    <select id="selectDepartmentTree" resultMap="OrgTreeDtoMap">
+        SELECT 
+            d.id,
+            d.dept_name as name,
+            'dept' as type,
+            d.parent_id,
+            d.dept_code,
+            d.leader_id,
+            u.real_name as leader_name,
+            NULL as position,
+            d.phone,
+            d.email,
+            d.sort,
+            d.status
+        FROM deyoch_dept d
+        LEFT JOIN deyoch_user u ON d.leader_id = u.id
+        WHERE d.status = 1
+        ORDER BY d.sort ASC, d.created_at ASC
+    </select>
+
+    <!-- 根据部门ID查询用户 -->
+    <select id="selectUsersByDeptId" resultMap="OrgTreeDtoMap">
+        SELECT 
+            u.id,
+            u.real_name as name,
+            'user' as type,
+            u.dept_id as parent_id,
+            NULL as dept_code,
+            NULL as leader_id,
+            NULL as leader_name,
+            u.position,
+            u.phone,
+            u.email,
+            0 as sort,
+            u.status
+        FROM deyoch_user u
+        WHERE u.status = 1
+        <if test="deptId != null">
+            AND u.dept_id = #{deptId}
+        </if>
+        ORDER BY u.created_at ASC
+    </select>
+
+    <!-- 查询所有通讯录数据 -->
+    <select id="selectAllContacts" resultMap="ContactDtoMap">
+        SELECT 
+            u.id,
+            u.username,
+            u.real_name,
+            u.nickname,
+            u.phone,
+            u.email,
+            u.position,
+            u.office_location,
+            u.extension,
+            u.employee_id,
+            u.avatar,
+            d.dept_name,
+            d.id as dept_id,
+            d.parent_id as dept_parent_id,
+            r.role_name,
+            r.id as role_id,
+            u.status,
+            u.created_at,
+            u.updated_at
+        FROM deyoch_user u
+        LEFT JOIN deyoch_dept d ON u.dept_id = d.id
+        LEFT JOIN deyoch_role r ON u.role_id = r.id
+        WHERE u.status = 1
+        ORDER BY d.sort ASC, u.created_at DESC
+    </select>
+
+    <!-- 搜索联系人 -->
+    <select id="searchContacts" resultMap="ContactDtoMap">
+        SELECT 
+            u.id,
+            u.username,
+            u.real_name,
+            u.nickname,
+            u.phone,
+            u.email,
+            u.position,
+            u.office_location,
+            u.extension,
+            u.employee_id,
+            u.avatar,
+            d.dept_name,
+            d.id as dept_id,
+            d.parent_id as dept_parent_id,
+            r.role_name,
+            r.id as role_id,
+            u.status,
+            u.created_at,
+            u.updated_at
+        FROM deyoch_user u
+        LEFT JOIN deyoch_dept d ON u.dept_id = d.id
+        LEFT JOIN deyoch_role r ON u.role_id = r.id
+        WHERE u.status = 1
+        AND (
+            u.real_name LIKE CONCAT('%', #{keyword}, '%')
+            OR u.username LIKE CONCAT('%', #{keyword}, '%')
+            OR u.phone LIKE CONCAT('%', #{keyword}, '%')
+            OR u.email LIKE CONCAT('%', #{keyword}, '%')
+            OR u.position LIKE CONCAT('%', #{keyword}, '%')
+            OR u.employee_id LIKE CONCAT('%', #{keyword}, '%')
+            OR d.dept_name LIKE CONCAT('%', #{keyword}, '%')
+        )
+        ORDER BY 
+            CASE 
+                WHEN u.real_name LIKE CONCAT(#{keyword}, '%') THEN 1
+                WHEN u.real_name LIKE CONCAT('%', #{keyword}, '%') THEN 2
+                ELSE 3
+            END,
+            d.sort ASC, 
+            u.created_at DESC
+        LIMIT 50
+    </select>
+
+</mapper>

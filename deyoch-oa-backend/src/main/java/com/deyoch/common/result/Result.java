@@ -1,4 +1,4 @@
-package com.deyoch.result;
+package com.deyoch.common.result;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

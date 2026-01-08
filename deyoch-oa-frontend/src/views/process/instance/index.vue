@@ -231,9 +231,29 @@ const loadProcessList = async () => {
 const getProcessInstanceList = async () => {
   loading.value = true
   try {
-    const data = await getProcessInstanceListApi()
+    // 调用分页接口
+    const response = await getProcessInstanceListApi({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.instanceName
+    })
+    
+    // 处理分页响应数据
+    let instances = []
+    let total = 0
+    
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      instances = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      instances = response
+      total = response.length
+    }
+    
     // 将流程名称与流程实例关联
-    const processedData = data.map(instance => {
+    const processedData = instances.map(instance => {
       const process = processList.value.find(p => p.id === instance.processId)
       return {
         ...instance,
@@ -241,18 +261,8 @@ const getProcessInstanceList = async () => {
       }
     })
     
-    // 实现前端搜索过滤
-    let filteredInstances = processedData
-    
-    // 按实例名称过滤
-    if (searchForm.instanceName && searchForm.instanceName.trim()) {
-      filteredInstances = filteredInstances.filter(instance => 
-        instance.instanceName && instance.instanceName.toLowerCase().includes(searchForm.instanceName.toLowerCase())
-      )
-    }
-    
-    processInstanceList.value = filteredInstances
-    pagination.total = filteredInstances.length
+    processInstanceList.value = processedData
+    pagination.total = total
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {

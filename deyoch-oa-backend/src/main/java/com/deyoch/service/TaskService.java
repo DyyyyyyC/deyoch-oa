@@ -2,7 +2,8 @@ package com.deyoch.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochTask;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 
 import java.util.List;
 
@@ -13,10 +14,13 @@ import java.util.List;
 public interface TaskService extends IService<DeyochTask> {
 
     /**
-     * 获取任务列表
-     * @return 任务列表
+     * 获取任务列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页任务列表
      */
-    Result<List<DeyochTask>> getTaskList();
+    Result<PageResult<DeyochTask>> getTaskList(Integer page, Integer size, String keyword);
 
     /**
      * 根据ID获取任务详情

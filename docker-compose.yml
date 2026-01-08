@@ -1,0 +1,129 @@
+version: '3.8'
+
+services:
+  # MySQL数据库
+  mysql:
+    image: mysql:8.0
+    container_name: deyoch-oa-mysql
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-root123}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-deyoch_oa}
+      MYSQL_USER: ${MYSQL_USER:-deyoch}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-deyoch123}
+      TZ: Asia/Shanghai
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./deyoch-oa-backend/src/main/resources/db:/docker-entrypoint-initdb.d:ro
+      - ./mysql/conf.d:/etc/mysql/conf.d:ro
+    ports:
+      - "${MYSQL_PORT:-3306}:3306"
+    networks:
+      - oa-network
+    command: --default-authentication-plugin=mysql_native_password
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-p${MYSQL_ROOT_PASSWORD:-root123}"]
+      timeout: 20s
+      retries: 10
+      interval: 30s
+      start_period: 60s
+
+  # Redis缓存（可选）
+  redis:
+    image: redis:7-alpine
+    container_name: deyoch-oa-redis
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    volumes:
+      - redis_data:/data
+      - ./redis/redis.conf:/etc/redis/redis.conf:ro
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+    networks:
+      - oa-network
+    command: redis-server /etc/redis/redis.conf
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+
+  # 后端服务
+  backend:
+    build:
+      context: ./deyoch-oa-backend
+      dockerfile: Dockerfile
+    container_name: deyoch-oa-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: ${SPRING_PROFILES_ACTIVE:-docker}
+      SPRING_DATASOURCE_URL: jdbc:mysql://mysql:3306/${MYSQL_DATABASE:-deyoch_oa}?useUnicode=true&characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
+      SPRING_DATASOURCE_USERNAME: ${MYSQL_USER:-deyoch}
+      SPRING_DATASOURCE_PASSWORD: ${MYSQL_PASSWORD:-deyoch123}
+      SPRING_REDIS_HOST: redis
+      SPRING_REDIS_PORT: 6379
+      SPRING_REDIS_PASSWORD: ${REDIS_PASSWORD:-}
+      JWT_SECRET: ${JWT_SECRET:-deyoch-oa-jwt-secret-key-2024}
+      JWT_EXPIRATION: ${JWT_EXPIRATION:-86400}
+      FILE_UPLOAD_PATH: ${FILE_UPLOAD_PATH:-/app/uploads}
+      TZ: Asia/Shanghai
+    volumes:
+      - backend_uploads:/app/uploads
+      - backend_logs:/app/logs
+    ports:
+      - "${BACKEND_PORT:-8080}:8080"
+    networks:
+      - oa-network
+    depends_on:
+      mysql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/actuator/health"]
+      timeout: 10s
+      retries: 5
+      interval: 30s
+      start_period: 120s
+
+  # 前端服务
+  frontend:
+    build:
+      context: ./deyoch-oa-frontend
+      dockerfile: Dockerfile
+    container_name: deyoch-oa-frontend
+    restart: unless-stopped
+    environment:
+      TZ: Asia/Shanghai
+    ports:
+      - "${FRONTEND_PORT:-80}:80"
+    networks:
+      - oa-network
+    depends_on:
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost/health"]
+      timeout: 10s
+      retries: 3
+      interval: 30s
+
+# 网络配置
+networks:
+  oa-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/16
+
+# 数据卷
+volumes:
+  mysql_data:
+    driver: local
+  redis_data:
+    driver: local
+  backend_uploads:
+    driver: local
+  backend_logs:
+    driver: local

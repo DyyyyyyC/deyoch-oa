@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.ChunkUploadMapper">
+
+    <!-- 分片上传DTO结果映射 -->
+    <resultMap id="ChunkUploadDtoMap" type="com.deyoch.dto.ChunkUploadDto">
+        <result column="upload_id" property="uploadId"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="chunk_size" property="chunkSize"/>
+        <result column="total_chunks" property="totalChunks"/>
+        <result column="uploaded_chunks" property="uploadedChunks"/>
+        <result column="md5_hash" property="md5Hash"/>
+        <result column="user_id" property="userId"/>
+        <result column="status" property="status"/>
+        <result column="final_path" property="finalPath"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="expires_at" property="expiresAt"/>
+    </resultMap>
+
+    <!-- 根据上传ID查询上传信息 -->
+    <select id="selectUploadInfoByUploadId" resultMap="ChunkUploadDtoMap">
+        SELECT 
+            upload_id,
+            file_name,
+            file_size,
+            chunk_size,
+            total_chunks,
+            uploaded_chunks,
+            md5_hash,
+            user_id,
+            status,
+            final_path,
+            created_at,
+            expires_at
+        FROM deyoch_chunk_upload
+        WHERE upload_id = #{uploadId}
+    </select>
+
+    <!-- 更新已上传分片数 -->
+    <update id="updateUploadedChunks">
+        UPDATE deyoch_chunk_upload
+        SET uploaded_chunks = #{uploadedChunks},
+            updated_at = NOW()
+        WHERE upload_id = #{uploadId}
+    </update>
+
+    <!-- 更新上传状态和最终路径 -->
+    <update id="updateStatusAndFinalPath">
+        UPDATE deyoch_chunk_upload
+        SET status = #{status},
+            final_path = #{finalPath},
+            updated_at = NOW()
+        WHERE upload_id = #{uploadId}
+    </update>
+
+    <!-- 查询过期的上传记录 -->
+    <select id="selectExpiredUploadIds" resultType="java.lang.String">
+        SELECT upload_id
+        FROM deyoch_chunk_upload
+        WHERE expires_at &lt; #{expireTime} AND status = 0
+    </select>
+
+    <!-- 删除过期的上传记录 -->
+    <delete id="deleteExpiredUploads">
+        DELETE FROM deyoch_chunk_upload
+        WHERE expires_at &lt; #{expireTime} AND status = 0
+    </delete>
+
+</mapper>

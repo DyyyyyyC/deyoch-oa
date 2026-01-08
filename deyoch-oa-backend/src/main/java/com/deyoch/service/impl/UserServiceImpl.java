@@ -2,12 +2,15 @@ package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.deyoch.entity.DeyochUser;
 import com.deyoch.entity.DeyochRole;
 import com.deyoch.mapper.DeyochUserMapper;
 import com.deyoch.mapper.DeyochRoleMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.UserService;
 import com.deyoch.utils.UserContextUtil;
 import lombok.RequiredArgsConstructor;
@@ -47,23 +50,47 @@ public class UserServiceImpl extends ServiceImpl<DeyochUserMapper, DeyochUser> i
     }
 
     @Override
-    public Result<List<DeyochUser>> getUserList() {
+    public Result<PageResult<DeyochUser>> getUserList(Integer page, Integer size, String keyword) {
         try {
-            // 查询所有用户，按创建时间倒序排列
+            // 构建查询条件
             LambdaQueryWrapper<DeyochUser> queryWrapper = new LambdaQueryWrapper<>();
-            queryWrapper.orderByDesc(DeyochUser::getCreatedAt);
-            List<DeyochUser> userList = list(queryWrapper);
             
-            // 为每个用户填充角色名称
+            // 添加关键词搜索条件（搜索用户名或昵称）
+            if (keyword != null && !keyword.isEmpty()) {
+                queryWrapper.and(wrapper -> wrapper
+                    .like(DeyochUser::getUsername, keyword)
+                    .or()
+                    .like(DeyochUser::getNickname, keyword)
+                );
+            }
+            
+            // 按创建时间倒序排列
+            queryWrapper.orderByDesc(DeyochUser::getCreatedAt);
+            
+            // 创建分页对象
+            Page<DeyochUser> pageObj = new Page<>(page, size);
+            
+            // 分页查询用户
+            IPage<DeyochUser> userPage = page(pageObj, queryWrapper);
+            List<DeyochUser> userList = userPage.getRecords();
+            
+            // 为每个用户填充角色名称并隐藏密码
             for (DeyochUser user : userList) {
                 populateRoleName(user);
-                // 隐藏密码
                 user.setPassword(null);
             }
             
-            return Result.success(userList);
+            // 构建分页结果
+            PageResult<DeyochUser> pageResult = PageResult.of(
+                userPage.getCurrent(),
+                userPage.getSize(),
+                userPage.getTotal(),
+                userList
+            );
+            
+            return Result.success(pageResult);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取用户列表失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取用户列表失败，请稍后重试");
         }
     }
 

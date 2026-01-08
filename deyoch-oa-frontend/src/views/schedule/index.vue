@@ -255,20 +255,29 @@ const formRules = {
 const getScheduleList = async () => {
   loading.value = true
   try {
-    const data = await getScheduleListApi()
+    // 调用分页接口
+    const response = await getScheduleListApi({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.title
+    })
     
-    // 实现前端搜索过滤
-    let filteredSchedules = data
+    // 处理分页响应数据
+    let schedules = []
+    let total = 0
     
-    // 按标题过滤
-    if (searchForm.title && searchForm.title.trim()) {
-      filteredSchedules = filteredSchedules.filter(schedule => 
-        schedule.title && schedule.title.toLowerCase().includes(searchForm.title.toLowerCase())
-      )
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      schedules = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      schedules = response
+      total = response.length
     }
     
-    scheduleList.value = filteredSchedules
-    pagination.total = filteredSchedules.length
+    scheduleList.value = schedules
+    pagination.total = total
   } catch (error) {
     scheduleList.value = []
     pagination.total = 0

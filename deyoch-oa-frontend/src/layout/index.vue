@@ -145,7 +145,7 @@ import { ref, onMounted, computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { logout } from '@/api/auth'
-import { get } from '@/utils/axios'
+import { getAnnouncementList } from '@/api/announcement'
 import { ElMessage } from 'element-plus'
 import { useI18n } from 'vue-i18n'
 import LanguageSwitch from '@/components/LanguageSwitch.vue'
@@ -202,7 +202,7 @@ const defaultOpenedMenus = ref(['system'])
 const getNotificationCount = async () => {
   try {
     // 使用公告列表接口，过滤出已发布的公告作为通知
-    const data = await get('/announcement/list')
+    const data = await getAnnouncementList()
     if (Array.isArray(data)) {
       // 计算已发布状态的公告数量
       const publishedCount = data.filter(item => item.status === 1).length

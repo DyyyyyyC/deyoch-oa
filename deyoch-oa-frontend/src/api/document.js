@@ -75,5 +75,82 @@ export const uploadDocument = (formData) => {
  * @returns {Promise} - 返回下载结果
  */
 export const downloadDocument = (id) => {
-  return get(`/document/${id}/download`)
+  return get(`/document/${id}/download`, {}, {
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 获取工作台最近文件（限制数量）
+ * 使用现有接口，限制返回数量
+ * @returns {Promise} - 最近文件列表
+ */
+export const getRecentDocuments = () => {
+  return get('/document/list', { 
+    page: 1,
+    size: 5 // 限制返回5条最近文件
+  })
+}
+
+// ========================================
+// 文档版本管理相关API
+// ========================================
+
+/**
+ * 上传新版本文档
+ * @param {number} documentId - 文档ID
+ * @param {FormData} formData - 表单数据，包含文件和变更日志
+ * @returns {Promise} - 返回上传结果
+ */
+export const uploadNewVersion = (documentId, formData) => {
+  return post(`/document/${documentId}/version`, formData, {
+    headers: {
+      'Content-Type': 'multipart/form-data'
+    }
+  })
+}
+
+/**
+ * 获取文档版本历史
+ * @param {number} documentId - 文档ID
+ * @returns {Promise} - 返回版本历史列表
+ */
+export const getDocumentVersions = (documentId) => {
+  return get(`/document/${documentId}/versions`)
+}
+
+/**
+ * 下载指定版本文档
+ * @param {number} documentId - 文档ID
+ * @param {string} version - 版本号
+ * @returns {Promise} - 返回下载结果
+ */
+export const downloadDocumentVersion = (documentId, version) => {
+  return get(`/document/${documentId}/version/${version}/download`, {}, {
+    responseType: 'blob'
+  })
+}
+
+/**
+ * 回退到指定版本
+ * @param {number} documentId - 文档ID
+ * @param {string} version - 版本号
+ * @returns {Promise} - 返回回退结果
+ */
+export const revertToVersion = (documentId, version) => {
+  return post(`/document/${documentId}/revert/${version}`)
+}
+
+/**
+ * 比较文档版本
+ * @param {number} documentId - 文档ID
+ * @param {string} version1 - 版本1
+ * @param {string} version2 - 版本2
+ * @returns {Promise} - 返回比较结果
+ */
+export const compareVersions = (documentId, version1, version2) => {
+  return get(`/document/${documentId}/compare`, {
+    version1,
+    version2
+  })
 }

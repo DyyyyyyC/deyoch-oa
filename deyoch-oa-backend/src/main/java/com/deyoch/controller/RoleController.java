@@ -1,7 +1,8 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochRole;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,14 +26,20 @@ public class RoleController {
     private final RoleService roleService;
 
     /**
-     * 获取角色列表
-     * @return 角色列表
+     * 获取角色列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页角色列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('sys:role:manage')")
-    @Operation(summary = "获取角色列表", description = "获取所有角色的列表")
-    public Result<List<DeyochRole>> getRoleList() {
-        return roleService.getRoleList();
+    @Operation(summary = "获取角色列表", description = "获取所有角色的分页列表")
+    public Result<PageResult<DeyochRole>> getRoleList(
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
+        return roleService.getRoleList(page, size, keyword);
     }
 
     /**

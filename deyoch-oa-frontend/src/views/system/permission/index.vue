@@ -191,8 +191,18 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { get, post, put, del } from '@/utils/axios'
+import {
+  getPermissionList,
+  getPermissionTree,
+  createPermission,
+  updatePermission,
+  deletePermission
+} from '@/api/permission'
+import { useI18n } from 'vue-i18n'
 import '@/style/management-layout.css'
+
+// 获取i18n的t函数
+const { t } = useI18n()
 
 // 加载状态
 const loading = ref(false)
@@ -263,52 +273,51 @@ const rules = {
   ]
 }
 
-// 获取权限列表
-const getPermissionList = async () => {
+// 加载权限列表
+const loadPermissionList = async () => {
   loading.value = true
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const permData = await get('/permission/list')
+    const params = {
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.permName || searchForm.permCode
+    }
+    
+    const response = await getPermissionList(params)
+    
+    // 处理分页响应数据
+    let permissions = []
+    let total = 0
+    
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      permissions = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      permissions = response
+      total = response.length
+    }
     
     // 处理parentName字段
-    const processedData = permData.map(perm => {
+    const processedData = permissions.map(perm => {
       let parentName = ''
       if (perm.parentId === 0) {
         parentName = '根权限'
       } else {
-        const parentPerm = permData.find(p => p.id === perm.parentId)
+        const parentPerm = permissions.find(p => p.id === perm.parentId)
         parentName = parentPerm ? parentPerm.permName : '未知权限'
       }
       return { ...perm, parentName }
     })
     
-    // 实现前端搜索过滤
-    let filteredPermissions = processedData
-    
-    // 按权限名称过滤
-    if (searchForm.permName && searchForm.permName.trim()) {
-      filteredPermissions = filteredPermissions.filter(perm => 
-        perm.permName && perm.permName.toLowerCase().includes(searchForm.permName.toLowerCase())
-      )
-    }
-    
-    // 按权限代码过滤
-    if (searchForm.permCode && searchForm.permCode.trim()) {
-      filteredPermissions = filteredPermissions.filter(perm => 
-        perm.permCode && perm.permCode.toLowerCase().includes(searchForm.permCode.toLowerCase())
-      )
-    }
-    
-    permissionList.value = filteredPermissions
-    pagination.total = filteredPermissions.length
+    permissionList.value = processedData
+    pagination.total = total
     
     // 过滤出父权限列表（用于添加/编辑时选择父权限）
     parentPermissionList.value = processedData.filter(perm => perm.parentId === 0)
   } catch (error) {
-    // 只在error.message不为空时显示错误信息
-    if (error.message) {
-      ElMessage.error('获取权限列表失败：' + error.message)
-    }
+    ElMessage.error('获取权限列表失败：' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -320,18 +329,14 @@ const handleSelectionChange = (selection) => {
   console.log('选中的权限：', selectedPermissions.value)
 }
 
-// 获取权限树
-const getPermissionTree = async () => {
+// 加载权限树
+const loadPermissionTree = async () => {
   treeLoading.value = true
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const treeData = await get('/permission/tree')
+    const treeData = await getPermissionTree()
     permissionTree.value = treeData
   } catch (error) {
-    // 只在error.message不为空时显示错误信息
-    if (error.message) {
-      ElMessage.error('获取权限树失败：' + error.message)
-    }
+    ElMessage.error('获取权限树失败：' + (error.message || '未知错误'))
   } finally {
     treeLoading.value = false
   }
@@ -341,26 +346,26 @@ const getPermissionTree = async () => {
 const handleSearch = () => {
   // 实现真正的搜索逻辑
   pagination.currentPage = 1
-  getPermissionList()
+  loadPermissionList()
 }
 
 // 重置搜索表单
 const handleReset = () => {
   searchForm.permName = ''
   searchForm.permCode = ''
-  getPermissionList()
+  loadPermissionList()
 }
 
 // 分页大小变化
 const handleSizeChange = (size) => {
   pagination.pageSize = size
-  getPermissionList()
+  loadPermissionList()
 }
 
 // 当前页变化
 const handleCurrentChange = (current) => {
   pagination.currentPage = current
-  getPermissionList()
+  loadPermissionList()
 }
 
 // 添加权限
@@ -409,21 +414,17 @@ const handleBatchDelete = async () => {
     
     // 批量删除
     for (const perm of selectedPermissions.value) {
-      // axios拦截器已经处理了code检查，直接返回data字段
-      await del('/permission/' + perm.id)
+      await deletePermission(perm.id)
     }
     
     ElMessage.success('删除权限成功')
-    getPermissionList()
-    getPermissionTree()
+    loadPermissionList()
+    loadPermissionTree()
     // 清空选择
     selectedPermissions.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      // 只在error.message不为空时显示详细错误信息
-      if (error.message) {
-        ElMessage.error('删除权限失败：' + error.message)
-      }
+      ElMessage.error('删除权限失败：' + (error.message || '未知错误'))
     }
   }
 }
@@ -431,17 +432,11 @@ const handleBatchDelete = async () => {
 // 状态变更
 const handleStatusChange = async (row) => {
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    await put('/permission/' + row.id, {
-      status: row.status
-    })
+    await updatePermission(row.id, { status: row.status })
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('更新状态失败：' + error.message)
-    }
+    ElMessage.error('更新状态失败：' + (error.message || '未知错误'))
     // 恢复原来的状态
-    getPermissionList()
+    loadPermissionList()
   }
 }
 
@@ -454,30 +449,25 @@ const handleSubmit = async () => {
     
     if (form.id) {
       // 编辑权限
-      await put('/permission/' + form.id, form)
+      await updatePermission(form.id, form)
     } else {
       // 添加权限
-      await post('/permission', form)
+      await createPermission(form)
     }
     
     ElMessage.success(form.id ? '编辑权限成功' : '添加权限成功')
     dialogVisible.value = false
-    getPermissionList()
-    getPermissionTree()
+    loadPermissionList()
+    loadPermissionTree()
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error((form.id ? '编辑权限失败' : '添加权限失败') + '：' + error.message)
-    } else {
-      ElMessage.error(form.id ? '编辑权限失败' : '添加权限失败')
-    }
+    ElMessage.error((form.id ? '编辑权限失败' : '添加权限失败') + '：' + (error.message || '未知错误'))
   }
 }
 
 // 组件挂载时获取数据
 onMounted(() => {
-  getPermissionList()
-  getPermissionTree()
+  loadPermissionList()
+  loadPermissionTree()
 })
 </script>
 

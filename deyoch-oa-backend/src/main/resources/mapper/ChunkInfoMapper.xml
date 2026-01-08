@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.ChunkInfoMapper">
+
+    <!-- 根据上传ID查询所有分片信息 -->
+    <select id="selectChunksByUploadId" resultType="com.deyoch.entity.DeyochChunkInfo">
+        SELECT 
+            id,
+            upload_id,
+            chunk_index,
+            chunk_size,
+            chunk_path,
+            md5_hash,
+            status,
+            created_at
+        FROM deyoch_chunk_info
+        WHERE upload_id = #{uploadId}
+        ORDER BY chunk_index ASC
+    </select>
+
+    <!-- 检查分片是否存在 -->
+    <select id="existsChunk" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM deyoch_chunk_info
+        WHERE upload_id = #{uploadId} AND chunk_index = #{chunkIndex} AND status = 1
+    </select>
+
+    <!-- 获取已上传的分片数量 -->
+    <select id="countUploadedChunks" resultType="int">
+        SELECT COUNT(*)
+        FROM deyoch_chunk_info
+        WHERE upload_id = #{uploadId} AND status = 1
+    </select>
+
+    <!-- 根据上传ID删除所有分片信息 -->
+    <delete id="deleteChunksByUploadId">
+        DELETE FROM deyoch_chunk_info
+        WHERE upload_id = #{uploadId}
+    </delete>
+
+</mapper>

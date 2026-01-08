@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.MessageTemplateMapper">
+
+    <!-- 根据模板类型查询消息模板 -->
+    <select id="selectByType" resultType="com.deyoch.entity.DeyochMessageTemplate">
+        SELECT 
+            id,
+            name,
+            type,
+            title_template,
+            content_template,
+            variables,
+            status,
+            created_at,
+            updated_at
+        FROM deyoch_message_template
+        WHERE type = #{type} AND status = 1
+        LIMIT 1
+    </select>
+
+</mapper>

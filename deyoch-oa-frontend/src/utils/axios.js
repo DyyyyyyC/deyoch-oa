@@ -213,9 +213,9 @@ service.interceptors.response.use(
   }
 )
 // 封装常用 HTTP 方法
-export const get = (url, params) => service({ url, method: 'get', params })
-export const post = (url, data) => service({ url, method: 'post', data })
-export const put = (url, data) => service({ url, method: 'put', data })
-export const del = (url, params) => service({ url, method: 'delete', params })
+export const get = (url, params, config = {}) => service({ url, method: 'get', params, ...config })
+export const post = (url, data, config = {}) => service({ url, method: 'post', data, ...config })
+export const put = (url, data, config = {}) => service({ url, method: 'put', data, ...config })
+export const del = (url, params, config = {}) => service({ url, method: 'delete', params, ...config })
 // 导出Axios实例，供其他模块使用
 export default service

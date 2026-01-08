@@ -2,9 +2,8 @@ package com.deyoch.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochAnnouncement;
-import com.deyoch.result.Result;
-
-import java.util.List;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 
 /**
  * 公告管理服务接口
@@ -13,10 +12,13 @@ import java.util.List;
 public interface AnnouncementService extends IService<DeyochAnnouncement> {
 
     /**
-     * 获取公告列表
-     * @return 公告列表
+     * 获取公告列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页公告列表
      */
-    Result<List<DeyochAnnouncement>> getAnnouncementList();
+    Result<PageResult<DeyochAnnouncement>> getAnnouncementList(Integer page, Integer size, String keyword);
 
     /**
      * 根据ID获取公告详情

@@ -2,10 +2,13 @@ package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.deyoch.entity.DeyochAnnouncement;
 import com.deyoch.mapper.DeyochAnnouncementMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.AnnouncementService;
 import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
@@ -15,8 +18,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.List;
-import java.util.Map;
-import java.util.Set;
 import java.util.Collections;
 
 /**
@@ -31,12 +32,29 @@ public class AnnouncementServiceImpl extends ServiceImpl<DeyochAnnouncementMappe
     private final UserInfoConverter userInfoConverter;
 
     @Override
-    public Result<List<DeyochAnnouncement>> getAnnouncementList() {
+    public Result<PageResult<DeyochAnnouncement>> getAnnouncementList(Integer page, Integer size, String keyword) {
         try {
-            // 查询所有公告，按发布时间倒序排列
+            // 构建查询条件
             LambdaQueryWrapper<DeyochAnnouncement> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 添加关键词搜索条件（搜索公告标题或内容）
+            if (keyword != null && !keyword.isEmpty()) {
+                queryWrapper.and(wrapper -> wrapper
+                    .like(DeyochAnnouncement::getTitle, keyword)
+                    .or()
+                    .like(DeyochAnnouncement::getContent, keyword)
+                );
+            }
+            
+            // 按发布时间倒序排列
             queryWrapper.orderByDesc(DeyochAnnouncement::getPublishTime);
-            List<DeyochAnnouncement> announcementList = list(queryWrapper);
+            
+            // 创建分页对象
+            Page<DeyochAnnouncement> pageObj = new Page<>(page, size);
+            
+            // 分页查询公告
+            IPage<DeyochAnnouncement> announcementPage = page(pageObj, queryWrapper);
+            List<DeyochAnnouncement> announcementList = announcementPage.getRecords();
             
             // 使用UserInfoConverter填充发布者用户名
             userInfoConverter.<DeyochAnnouncement>populateUserNames(
@@ -53,9 +71,17 @@ public class AnnouncementServiceImpl extends ServiceImpl<DeyochAnnouncementMappe
                 }
             );
             
-            return Result.success(announcementList);
+            // 构建分页结果
+            PageResult<DeyochAnnouncement> pageResult = PageResult.of(
+                announcementPage.getCurrent(),
+                announcementPage.getSize(),
+                announcementPage.getTotal(),
+                announcementList
+            );
+            
+            return Result.success(pageResult);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取公告列表失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取公告列表失败，请稍后重试");
         }
     }
 

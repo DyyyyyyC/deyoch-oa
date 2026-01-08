@@ -2,7 +2,8 @@ package com.deyoch.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochRole;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 
 import java.util.List;
 
@@ -13,10 +14,13 @@ import java.util.List;
 public interface RoleService extends IService<DeyochRole> {
 
     /**
-     * 获取角色列表
-     * @return 角色列表
+     * 获取角色列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页角色列表
      */
-    Result<List<DeyochRole>> getRoleList();
+    Result<PageResult<DeyochRole>> getRoleList(Integer page, Integer size, String keyword);
 
     /**
      * 根据ID获取角色详情

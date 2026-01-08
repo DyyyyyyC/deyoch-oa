@@ -2,7 +2,7 @@ package com.deyoch.controller;
 
 import com.deyoch.dto.LoginRequestDto;
 import com.deyoch.dto.LoginResponseDto;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.AuthService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -11,9 +11,6 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 
 @RestController
 @RequestMapping("auth")

@@ -1,7 +1,7 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochDept;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.DeptService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;

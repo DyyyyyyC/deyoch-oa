@@ -5,8 +5,8 @@ import { get, post, put, del } from '@/utils/axios'
  */
 
 // 获取公告列表
-export const getAnnouncementList = () => {
-  return get('/announcement/list')
+export const getAnnouncementList = (params = {}) => {
+  return get('/announcement/list', { params })
 }
 
 // 根据ID获取公告详情

@@ -210,7 +210,6 @@ import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, CircleCheck, VideoPlay } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
-import { get } from '@/utils/axios'
 import {
   getTaskList as getTaskListApi,
   createTask,
@@ -218,6 +217,7 @@ import {
   deleteTask,
   updateTaskStatus
 } from '@/api/task'
+import { getUserList as getUserListApi } from '@/api/user'
 import '@/style/management-layout.css'
 
 // 获取i18n的t函数
@@ -308,7 +308,7 @@ const formRules = {
 // 获取用户列表
 const getUserList = async () => {
   try {
-    const data = await get('/user/list')
+    const data = await getUserListApi()
     userList.value = data || []
     // 初始显示前10个用户
     filteredUserList.value = userList.value.slice(0, 10)
@@ -413,9 +413,29 @@ const getUserNameById = (userId) => {
 const getTaskList = async () => {
   loading.value = true
   try {
-    const data = await getTaskListApi()
-    taskList.value = data || []
-    pagination.total = data ? data.length : 0
+    // 调用分页接口
+    const response = await getTaskListApi({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.title
+    })
+    
+    // 处理分页响应数据
+    let tasks = []
+    let total = 0
+    
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      tasks = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      tasks = response
+      total = response.length
+    }
+    
+    taskList.value = tasks
+    pagination.total = total
   } catch (error) {
     taskList.value = []
     pagination.total = 0

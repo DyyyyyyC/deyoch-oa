@@ -66,16 +66,6 @@
         <el-table-column prop="roleName" :label="$t('roleManagement.roleName')" min-width="120" show-overflow-tooltip />
         <el-table-column prop="roleCode" :label="$t('roleManagement.roleCode')" min-width="120" show-overflow-tooltip />
         <el-table-column prop="description" :label="$t('roleManagement.description')" min-width="200" show-overflow-tooltip />
-        <el-table-column prop="status" :label="$t('roleManagement.status')" min-width="120">
-          <template #default="scope">
-            <el-switch
-              v-model="scope.row.status"
-              :active-value="1"
-              :inactive-value="0"
-              @change="handleStatusChange(scope.row)"
-            />
-          </template>
-        </el-table-column>
         <el-table-column prop="createdAt" :label="$t('roleManagement.createdAt')" min-width="180" show-overflow-tooltip />
         <el-table-column prop="updatedAt" :label="$t('roleManagement.updatedAt')" min-width="180" show-overflow-tooltip />
       </el-table>
@@ -114,9 +104,6 @@
         </el-form-item>
         <el-form-item :label="$t('roleManagement.description')" prop="description">
           <el-input v-model="form.description" type="textarea" :rows="3" :placeholder="$t('roleManagement.enterDescription')" />
-        </el-form-item>
-        <el-form-item :label="$t('roleManagement.status')" prop="status">
-          <el-switch v-model="form.status" :active-value="1" :inactive-value="0" />
         </el-form-item>
       </el-form>
       <template #footer>
@@ -158,7 +145,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete, Setting } from '@element-plus/icons-vue'
-import { get, post, put, del } from '@/utils/axios'
+import {
+  getRoleList,
+  createRole,
+  updateRole,
+  deleteRole,
+  assignRolePermissions
+} from '@/api/role'
+import { getPermissionTree, getRolePermissions } from '@/api/permission'
 import { useI18n } from 'vue-i18n'
 import '@/style/management-layout.css'
 
@@ -197,8 +191,7 @@ const form = reactive({
   id: null,
   roleName: '',
   roleCode: '',
-  description: '',
-  status: 1
+  description: ''
 })
 
 // 当前选中的角色ID（用于分配权限）
@@ -230,37 +223,37 @@ const rules = {
   ]
 }
 
-// 获取角色列表
-const getRoleList = async () => {
+// 加载角色列表
+const loadRoleList = async () => {
   loading.value = true
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const roleData = await get('/role/list')
-    
-    // 实现前端搜索过滤
-    let filteredRoles = roleData
-    
-    // 按角色名称过滤
-    if (searchForm.roleName && searchForm.roleName.trim()) {
-      filteredRoles = filteredRoles.filter(role => 
-        role.roleName && role.roleName.toLowerCase().includes(searchForm.roleName.toLowerCase())
-      )
+    // 使用API调用
+    const params = {
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.roleName || searchForm.roleCode
     }
     
-    // 按角色代码过滤
-    if (searchForm.roleCode && searchForm.roleCode.trim()) {
-      filteredRoles = filteredRoles.filter(role => 
-        role.roleCode && role.roleCode.toLowerCase().includes(searchForm.roleCode.toLowerCase())
-      )
+    const response = await getRoleList(params)
+    
+    // 处理分页响应数据
+    let roles = []
+    let total = 0
+    
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      roles = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      roles = response
+      total = response.length
     }
     
-    roleList.value = filteredRoles
-    pagination.total = filteredRoles.length
+    roleList.value = roles
+    pagination.total = total
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('获取角色列表失败：' + error.message)
-    }
+    ElMessage.error('获取角色列表失败：' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -269,21 +262,16 @@ const getRoleList = async () => {
 // 处理多选框选择变化
 const handleSelectionChange = (selection) => {
   selectedRoles.value = selection
-  console.log('选中的角色：', selectedRoles.value)
 }
 
-// 获取权限树
-const getPermissionTree = async () => {
+// 加载权限树
+const loadPermissionTree = async () => {
   permissionLoading.value = true
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const treeData = await get('/permission/tree')
+    const treeData = await getPermissionTree()
     permissionTree.value = treeData
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('获取权限树失败：' + error.message)
-    }
+    ElMessage.error('获取权限树失败：' + (error.message || '未知错误'))
   } finally {
     permissionLoading.value = false
   }
@@ -293,26 +281,26 @@ const getPermissionTree = async () => {
 const handleSearch = () => {
   // 实现真正的搜索逻辑
   pagination.currentPage = 1
-  getRoleList()
+  loadRoleList()
 }
 
 // 重置搜索表单
 const handleReset = () => {
   searchForm.roleName = ''
   searchForm.roleCode = ''
-  getRoleList()
+  loadRoleList()
 }
 
 // 分页大小变化
 const handleSizeChange = (size) => {
   pagination.pageSize = size
-  getRoleList()
+  loadRoleList()
 }
 
 // 当前页变化
 const handleCurrentChange = (current) => {
   pagination.currentPage = current
-  getRoleList()
+  loadRoleList()
 }
 
 // 添加角色
@@ -322,7 +310,6 @@ const handleAddRole = () => {
   form.roleName = ''
   form.roleCode = ''
   form.description = ''
-  form.status = 1
   // 打开对话框
   dialogVisible.value = true
 }
@@ -333,8 +320,14 @@ const handleBatchEdit = () => {
     ElMessage.warning('请选择一个角色进行编辑')
     return
   }
-  // 填充表单数据
-  Object.assign(form, selectedRoles.value[0])
+  
+  // 手动填充表单数据，避免Object.assign可能的副作用
+  const role = selectedRoles.value[0]
+  form.id = role.id
+  form.roleName = role.roleName
+  form.roleCode = role.roleCode
+  form.description = role.description
+  
   // 打开对话框
   dialogVisible.value = true
 }
@@ -356,36 +349,17 @@ const handleBatchDelete = async () => {
     
     // 批量删除
     for (const role of selectedRoles.value) {
-      // axios拦截器已经处理了code检查，直接返回data字段
-      await del('/role/' + role.id)
+      await deleteRole(role.id)
     }
     
     ElMessage.success('删除角色成功')
-    getRoleList()
+    loadRoleList()
     // 清空选择
     selectedRoles.value = []
   } catch (error) {
     if (error !== 'cancel') {
-      // 只在error.message不为空时显示详细错误信息
-      if (error.message) {
-        ElMessage.error('删除角色失败：' + error.message)
-      }
+      ElMessage.error('删除角色失败：' + (error.message || '未知错误'))
     }
-  }
-}
-
-// 状态变更
-const handleStatusChange = async (row) => {
-  try {
-    // 使用现有的更新角色端点，直接传递包含status的完整row对象
-    await put('/role/' + row.id, row)
-  } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('更新状态失败：' + error.message)
-    }
-    // 恢复原来的状态
-    getRoleList()
   }
 }
 
@@ -396,24 +370,20 @@ const handleSubmit = async () => {
   try {
     await formRef.value.validate()
     
-    let response
     if (form.id) {
       // 编辑角色
-      await put('/role/' + form.id, form)
+      await updateRole(form.id, form)
     } else {
       // 添加角色
-      await post('/role', form)
+      await createRole(form)
     }
     
     ElMessage.success(form.id ? '编辑角色成功' : '添加角色成功')
     dialogVisible.value = false
-    getRoleList()
+    loadRoleList()
   } catch (error) {
     if (error.name === 'Error') {
-      // 只在error.message不为空时显示详细错误信息
-      if (error.message) {
-        ElMessage.error('提交失败：' + error.message)
-      }
+      ElMessage.error('提交失败：' + (error.message || '未知错误'))
     }
   }
 }
@@ -427,18 +397,18 @@ const handleBatchAssignPermission = async () => {
   // 保存当前角色ID
   currentRoleId.value = selectedRoles.value[0].id
   // 加载权限树
-  await getPermissionTree()
+  await loadPermissionTree()
   // 获取角色已分配的权限
-  await getRolePermissions(selectedRoles.value[0].id)
+  await loadRolePermissions(selectedRoles.value[0].id)
   // 打开对话框
   permissionDialogVisible.value = true
 }
 
 // 获取角色已分配的权限
-const getRolePermissions = async (roleId) => {
+const loadRolePermissions = async (roleId) => {
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const permissionIds = await get('/role/' + roleId + '/perms')
+    const permissionIds = await getRolePermissions(roleId)
+    
     // 设置默认选中的权限
     setTimeout(() => {
       if (permissionTreeRef.value) {
@@ -446,10 +416,7 @@ const getRolePermissions = async (roleId) => {
       }
     }, 100)
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('获取角色权限失败：' + error.message)
-    }
+    ElMessage.error('获取角色权限失败：' + (error.message || '未知错误'))
   }
 }
 
@@ -461,21 +428,17 @@ const handlePermissionSubmit = async () => {
     // 获取选中的权限ID
     const checkedKeys = permissionTreeRef.value.getCheckedKeys()
     
-    // axios拦截器已经处理了code检查，直接返回data字段
-    await post('/role/' + currentRoleId.value + '/assign-perms', checkedKeys)
+    await assignRolePermissions(currentRoleId.value, checkedKeys)
     ElMessage.success('分配权限成功')
     permissionDialogVisible.value = false
   } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('分配权限失败：' + error.message)
-    }
+    ElMessage.error('分配权限失败：' + (error.message || '未知错误'))
   }
 }
 
 // 组件挂载时获取数据
 onMounted(() => {
-  getRoleList()
+  loadRoleList()
 })
 </script>
 

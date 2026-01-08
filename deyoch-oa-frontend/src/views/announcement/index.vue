@@ -229,23 +229,32 @@ const getUserNameById = (userId) => {
 const getAnnouncementList = async () => {
   loading.value = true
   try {
-    const data = await getAnnouncementListApi()
+    // 调用分页接口
+    const response = await getAnnouncementListApi({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.title
+    })
     
-    // 实现前端搜索过滤
-    let filteredAnnouncements = data
+    // 处理分页响应数据
+    let announcements = []
+    let total = 0
     
-    // 按标题过滤
-    if (searchForm.title && searchForm.title.trim()) {
-      filteredAnnouncements = filteredAnnouncements.filter(announcement => 
-        announcement.title && announcement.title.toLowerCase().includes(searchForm.title.toLowerCase())
-      )
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      announcements = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      announcements = response
+      total = response.length
     }
     
-    announcementList.value = filteredAnnouncements
-    pagination.total = filteredAnnouncements.length
+    announcementList.value = announcements
+    pagination.total = total
     
     // 构建用户ID到用户名的映射
-    const userIds = [...new Set(filteredAnnouncements.map(item => item.userId))]
+    const userIds = [...new Set(announcements.map(item => item.userId))]
     userIds.forEach(id => {
       if (!userNameMap[id]) {
         userNameMap[id] = userStore.userInfo?.username || '用户' + id

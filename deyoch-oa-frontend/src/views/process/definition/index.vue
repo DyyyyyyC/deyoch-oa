@@ -217,20 +217,29 @@ const formRules = {
 const getProcessList = async () => {
   loading.value = true
   try {
-    const data = await getProcessListApi()
+    // 调用分页接口
+    const response = await getProcessListApi({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.processName
+    })
     
-    // 实现前端搜索过滤
-    let filteredProcesses = data
+    // 处理分页响应数据
+    let processes = []
+    let total = 0
     
-    // 按流程名称过滤
-    if (searchForm.processName && searchForm.processName.trim()) {
-      filteredProcesses = filteredProcesses.filter(process => 
-        process.processName && process.processName.toLowerCase().includes(searchForm.processName.toLowerCase())
-      )
+    if (response && response.records && Array.isArray(response.records)) {
+      // 新的分页格式：PageResult
+      processes = response.records
+      total = response.total || 0
+    } else if (Array.isArray(response)) {
+      // 旧格式兼容：直接返回数组
+      processes = response
+      total = response.length
     }
     
-    processList.value = filteredProcesses
-    pagination.total = filteredProcesses.length
+    processList.value = processes
+    pagination.total = total
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {

@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.MessageMapper">
+
+    <!-- 消息DTO结果映射 -->
+    <resultMap id="MessageDtoMap" type="com.deyoch.dto.MessageDto">
+        <id column="id" property="id"/>
+        <result column="title" property="title"/>
+        <result column="content" property="content"/>
+        <result column="type" property="type"/>
+        <result column="type_name" property="typeName"/>
+        <result column="priority" property="priority"/>
+        <result column="priority_name" property="priorityName"/>
+        <result column="sender_id" property="senderId"/>
+        <result column="sender_name" property="senderName"/>
+        <result column="receiver_id" property="receiverId"/>
+        <result column="receiver_name" property="receiverName"/>
+        <result column="is_read" property="isRead"/>
+        <result column="read_time" property="readTime"/>
+        <result column="related_type" property="relatedType"/>
+        <result column="related_id" property="relatedId"/>
+        <result column="related_title" property="relatedTitle"/>
+        <result column="created_at" property="createdAt"/>
+        <result column="updated_at" property="updatedAt"/>
+    </resultMap>
+
+    <!-- 分页查询用户消息 -->
+    <select id="selectUserMessages" resultMap="MessageDtoMap">
+        SELECT 
+            m.id,
+            m.title,
+            m.content,
+            m.type,
+            CASE m.type
+                WHEN 1 THEN '系统消息'
+                WHEN 2 THEN '审批通知'
+                WHEN 3 THEN '任务通知'
+                WHEN 4 THEN '公告通知'
+                ELSE '未知类型'
+            END as type_name,
+            m.priority,
+            CASE m.priority
+                WHEN 1 THEN '普通'
+                WHEN 2 THEN '重要'
+                WHEN 3 THEN '紧急'
+                ELSE '普通'
+            END as priority_name,
+            m.sender_id,
+            sender.real_name as sender_name,
+            m.receiver_id,
+            receiver.real_name as receiver_name,
+            m.is_read,
+            m.read_time,
+            m.related_type,
+            m.related_id,
+            CASE m.related_type
+                WHEN 'task' THEN (SELECT title FROM deyoch_task WHERE id = m.related_id)
+                WHEN 'process' THEN (SELECT instance_name FROM deyoch_process_instance WHERE id = m.related_id)
+                WHEN 'announcement' THEN (SELECT title FROM deyoch_announcement WHERE id = m.related_id)
+                WHEN 'document' THEN (SELECT file_name FROM deyoch_document WHERE id = m.related_id)
+                ELSE NULL
+            END as related_title,
+            m.created_at,
+            m.updated_at
+        FROM deyoch_message m
+        LEFT JOIN deyoch_user sender ON m.sender_id = sender.id
+        LEFT JOIN deyoch_user receiver ON m.receiver_id = receiver.id
+        WHERE m.receiver_id = #{userId}
+        <if test="type != null">
+            AND m.type = #{type}
+        </if>
+        <if test="isRead != null">
+            AND m.is_read = #{isRead}
+        </if>
+        ORDER BY m.priority DESC, m.created_at DESC
+    </select>
+
+    <!-- 获取用户未读消息数量 -->
+    <select id="selectUnreadMessageCount" resultType="java.lang.Long">
+        SELECT COUNT(*)
+        FROM deyoch_message
+        WHERE receiver_id = #{userId} AND is_read = 0
+    </select>
+
+    <!-- 获取用户未读消息数量（按类型分组） -->
+    <select id="selectUnreadMessageCountByType" resultType="java.util.Map">
+        SELECT 
+            type,
+            COUNT(*) as count
+        FROM deyoch_message
+        WHERE receiver_id = #{userId} AND is_read = 0
+        GROUP BY type
+    </select>
+
+    <!-- 批量标记消息为已读 -->
+    <update id="batchMarkAsRead">
+        UPDATE deyoch_message 
+        SET is_read = 1, read_time = NOW()
+        WHERE receiver_id = #{userId}
+        AND id IN
+        <foreach collection="messageIds" item="messageId" open="(" separator="," close=")">
+            #{messageId}
+        </foreach>
+    </update>
+
+    <!-- 根据消息ID和用户ID查询消息 -->
+    <select id="selectMessageByIdAndUserId" resultMap="MessageDtoMap">
+        SELECT 
+            m.id,
+            m.title,
+            m.content,
+            m.type,
+            CASE m.type
+                WHEN 1 THEN '系统消息'
+                WHEN 2 THEN '审批通知'
+                WHEN 3 THEN '任务通知'
+                WHEN 4 THEN '公告通知'
+                ELSE '未知类型'
+            END as type_name,
+            m.priority,
+            CASE m.priority
+                WHEN 1 THEN '普通'
+                WHEN 2 THEN '重要'
+                WHEN 3 THEN '紧急'
+                ELSE '普通'
+            END as priority_name,
+            m.sender_id,
+            sender.real_name as sender_name,
+            m.receiver_id,
+            receiver.real_name as receiver_name,
+            m.is_read,
+            m.read_time,
+            m.related_type,
+            m.related_id,
+            CASE m.related_type
+                WHEN 'task' THEN (SELECT title FROM deyoch_task WHERE id = m.related_id)
+                WHEN 'process' THEN (SELECT instance_name FROM deyoch_process_instance WHERE id = m.related_id)
+                WHEN 'announcement' THEN (SELECT title FROM deyoch_announcement WHERE id = m.related_id)
+                WHEN 'document' THEN (SELECT file_name FROM deyoch_document WHERE id = m.related_id)
+                ELSE NULL
+            END as related_title,
+            m.created_at,
+            m.updated_at
+        FROM deyoch_message m
+        LEFT JOIN deyoch_user sender ON m.sender_id = sender.id
+        LEFT JOIN deyoch_user receiver ON m.receiver_id = receiver.id
+        WHERE m.id = #{messageId} AND m.receiver_id = #{userId}
+    </select>
+
+</mapper>

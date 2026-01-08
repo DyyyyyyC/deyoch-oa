@@ -4,8 +4,8 @@ import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochSchedule;
 import com.deyoch.mapper.DeyochScheduleMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.ScheduleService;
 import com.deyoch.service.UserInfoConverter;
 import com.deyoch.utils.JwtUtil;
@@ -207,6 +207,170 @@ public class ScheduleServiceImpl extends ServiceImpl<DeyochScheduleMapper, Deyoc
             return Result.success();
         } catch (Exception e) {
             return Result.error(ResultCode.SYSTEM_ERROR, "更新日程状态失败：" + e.getMessage());
+        }
+    }
+
+    // ==================== 工作台专用方法实现 ====================
+
+    public Result<List<DeyochSchedule>> getScheduleByDate(String date) {
+        try {
+            // 获取当前用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 构建查询条件：指定日期的日程
+            LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeyochSchedule::getUserId, userId);
+            // 使用DATE函数匹配日期部分
+            queryWrapper.apply("DATE(start_time) = {0}", date);
+            queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
+            
+            List<DeyochSchedule> scheduleList = list(queryWrapper);
+            
+            // 填充用户名信息
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                scheduleList,
+                schedule -> schedule.getUserId() != null ? 
+                    Collections.singleton(schedule.getUserId()) : Collections.emptySet(),
+                (schedule, userIdToNameMap) -> {
+                    if (schedule.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(schedule.getUserId());
+                        schedule.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
+            return Result.success(scheduleList);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取指定日期日程失败：" + e.getMessage());
+        }
+    }
+
+    public Result<List<DeyochSchedule>> getScheduleByDateRange(String startDate, String endDate) {
+        try {
+            // 获取当前用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 构建查询条件：日期范围内的日程
+            LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeyochSchedule::getUserId, userId);
+            // 使用DATE函数匹配日期范围
+            queryWrapper.apply("DATE(start_time) >= {0}", startDate);
+            queryWrapper.apply("DATE(start_time) <= {0}", endDate);
+            queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
+            
+            List<DeyochSchedule> scheduleList = list(queryWrapper);
+            
+            // 填充用户名信息
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                scheduleList,
+                schedule -> schedule.getUserId() != null ? 
+                    Collections.singleton(schedule.getUserId()) : Collections.emptySet(),
+                (schedule, userIdToNameMap) -> {
+                    if (schedule.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(schedule.getUserId());
+                        schedule.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
+            return Result.success(scheduleList);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取日期范围日程失败：" + e.getMessage());
+        }
+    }
+
+    public Result<List<DeyochSchedule>> getUpcomingSchedules(Integer days) {
+        try {
+            // 获取当前用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 计算未来几天的日期范围
+            LocalDateTime now = LocalDateTime.now();
+            LocalDateTime futureDate = now.plusDays(days);
+
+            // 构建查询条件：未来几天的日程
+            LambdaQueryWrapper<DeyochSchedule> queryWrapper = new LambdaQueryWrapper<>();
+            queryWrapper.eq(DeyochSchedule::getUserId, userId);
+            queryWrapper.ge(DeyochSchedule::getStartTime, now);
+            queryWrapper.le(DeyochSchedule::getStartTime, futureDate);
+            queryWrapper.orderByAsc(DeyochSchedule::getStartTime);
+            
+            List<DeyochSchedule> scheduleList = list(queryWrapper);
+            
+            // 填充用户名信息
+            userInfoConverter.<DeyochSchedule>populateUserNames(
+                scheduleList,
+                schedule -> schedule.getUserId() != null ? 
+                    Collections.singleton(schedule.getUserId()) : Collections.emptySet(),
+                (schedule, userIdToNameMap) -> {
+                    if (schedule.getUserId() != null) {
+                        String creatorName = userIdToNameMap.get(schedule.getUserId());
+                        schedule.setCreatorName(creatorName);
+                    }
+                }
+            );
+            
+            return Result.success(scheduleList);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取即将到来的日程失败：" + e.getMessage());
+        }
+    }
+
+    public Result<List<DeyochSchedule>> getSharedScheduleList() {
+        try {
+            // 获取当前用户ID
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 这里需要根据实际的分享机制来实现
+            // 假设有一个分享表或者在schedule表中有shared_users字段
+            // 目前先返回空列表，后续可以根据具体需求实现
+            List<DeyochSchedule> sharedSchedules = Collections.emptyList();
+            
+            return Result.success(sharedSchedules);
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取分享日程失败：" + e.getMessage());
+        }
+    }
+
+    public Result<Void> shareSchedule(Long id, List<Long> sharedUserIds) {
+        try {
+            // 检查日程是否存在
+            DeyochSchedule schedule = getById(id);
+            if (schedule == null) {
+                return Result.error(ResultCode.SCHEDULE_NOT_FOUND, "日程不存在");
+            }
+
+            // 获取当前用户ID，检查权限
+            Long userId = UserContextUtil.getUserIdFromToken(jwtUtil);
+            if (userId == null) {
+                return Result.error(ResultCode.UNAUTHORIZED, "未登录或无效的令牌");
+            }
+
+            // 检查是否是日程创建者
+            if (!userId.equals(schedule.getUserId())) {
+                return Result.error(ResultCode.FORBIDDEN, "只有日程创建者可以分享日程");
+            }
+
+            // 这里需要根据实际的分享机制来实现
+            // 可能需要创建一个分享表来记录分享关系
+            // 目前先简单返回成功，后续可以根据具体需求实现
+            log.info("用户 {} 分享日程 {} 给用户 {}", userId, id, sharedUserIds);
+            
+            return Result.success();
+        } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "分享日程失败：" + e.getMessage());
         }
     }
 }

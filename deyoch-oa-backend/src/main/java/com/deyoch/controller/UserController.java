@@ -1,7 +1,8 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochUser;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.UserService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,8 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-
-import java.util.List;
 
 /**
  * 用户管理控制器
@@ -25,14 +24,20 @@ public class UserController {
     private final UserService userService;
 
     /**
-     * 获取用户列表
-     * @return 用户列表
+     * 获取用户列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页用户列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('sys:user:manage')")
-    @Operation(summary = "获取用户列表", description = "获取所有用户的列表")
-    public Result<List<DeyochUser>> getUserList() {
-        return userService.getUserList();
+    @Operation(summary = "获取用户列表", description = "获取所有用户的分页列表")
+    public Result<PageResult<DeyochUser>> getUserList(
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
+        return userService.getUserList(page, size, keyword);
     }
 
     /**

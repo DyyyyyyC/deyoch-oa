@@ -2,9 +2,8 @@ package com.deyoch.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochUser;
-import com.deyoch.result.Result;
-
-import java.util.List;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 
 /**
  * 用户服务接口
@@ -13,10 +12,13 @@ import java.util.List;
 public interface UserService extends IService<DeyochUser> {
 
     /**
-     * 获取用户列表
-     * @return 用户列表
+     * 获取用户列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页用户列表
      */
-    Result<List<DeyochUser>> getUserList();
+    Result<PageResult<DeyochUser>> getUserList(Integer page, Integer size, String keyword);
 
     /**
      * 根据ID获取用户详情

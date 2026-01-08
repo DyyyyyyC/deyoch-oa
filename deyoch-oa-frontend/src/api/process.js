@@ -5,8 +5,8 @@ import { get, post, put, del } from '@/utils/axios'
  */
 
 // 获取流程列表
-export const getProcessList = () => {
-  return get('/process/list')
+export const getProcessList = (params = {}) => {
+  return get('/process/list', { params })
 }
 
 // 根据ID获取流程详情
@@ -34,8 +34,8 @@ export const deleteProcess = (id) => {
  */
 
 // 获取流程实例列表
-export const getProcessInstanceList = () => {
-  return get('/process-instance/list')
+export const getProcessInstanceList = (params = {}) => {
+  return get('/process-instance/list', { params })
 }
 
 // 根据ID获取流程实例详情

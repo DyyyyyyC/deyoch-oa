@@ -232,6 +232,50 @@ const asyncRoutes = [
         }
       }
     ]
+  },
+  // 通讯录管理菜单
+  {
+    path: '/contact',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '通讯录管理',
+      requiresAuth: true,
+      permission: 'oa:contact:view'
+    },
+    children: [
+      {
+        path: 'directory',
+        name: 'ContactDirectory',
+        component: () => import('@/views/contact/index.vue'),
+        meta: {
+          title: '通讯录',
+          requiresAuth: true,
+          permission: 'oa:contact:view'
+        }
+      }
+    ]
+  },
+  // 消息中心菜单
+  {
+    path: '/message',
+    component: () => import('@/layout/index.vue'),
+    meta: {
+      title: '消息中心',
+      requiresAuth: true,
+      permission: 'oa:message:view'
+    },
+    children: [
+      {
+        path: 'center',
+        name: 'MessageCenter',
+        component: () => import('@/views/message/index.vue'),
+        meta: {
+          title: '消息中心',
+          requiresAuth: true,
+          permission: 'oa:message:view'
+        }
+      }
+    ]
   }
 ]
 

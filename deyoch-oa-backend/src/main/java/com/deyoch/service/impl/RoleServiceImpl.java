@@ -1,13 +1,16 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.metadata.IPage;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochRole;
 import com.deyoch.entity.DeyochRolePermission;
 import com.deyoch.mapper.DeyochRoleMapper;
 import com.deyoch.mapper.DeyochRolePermissionMapper;
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import com.deyoch.service.RoleService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -28,12 +31,40 @@ public class RoleServiceImpl extends ServiceImpl<DeyochRoleMapper, DeyochRole> i
     private final DeyochRolePermissionMapper deyochRolePermissionMapper;
 
     @Override
-    public Result<List<DeyochRole>> getRoleList() {
+    public Result<PageResult<DeyochRole>> getRoleList(Integer page, Integer size, String keyword) {
         try {
-            List<DeyochRole> roleList = list();
-            return Result.success(roleList);
+            // 构建查询条件
+            LambdaQueryWrapper<DeyochRole> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 添加关键词搜索条件（搜索角色名称和角色编码）
+            if (keyword != null && !keyword.isEmpty()) {
+                queryWrapper.and(wrapper -> wrapper
+                    .like(DeyochRole::getRoleName, keyword)
+                    .or()
+                    .like(DeyochRole::getRoleCode, keyword)
+                );
+            }
+            
+            // 按创建时间倒序排列
+            queryWrapper.orderByDesc(DeyochRole::getCreatedAt);
+            
+            // 创建分页对象
+            Page<DeyochRole> pageObj = new Page<>(page, size);
+            
+            // 分页查询角色
+            IPage<DeyochRole> rolePage = page(pageObj, queryWrapper);
+            
+            // 构建分页结果
+            PageResult<DeyochRole> pageResult = PageResult.of(
+                rolePage.getCurrent(),
+                rolePage.getSize(),
+                rolePage.getTotal(),
+                rolePage.getRecords()
+            );
+            
+            return Result.success(pageResult);
         } catch (Exception e) {
-            return Result.error(ResultCode.SYSTEM_ERROR, "获取角色列表失败：" + e.getMessage());
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取角色列表失败，请稍后重试");
         }
     }
 

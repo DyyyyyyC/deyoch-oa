@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.deyoch.mapper.DocumentVersionMapper">
+
+    <!-- 文档版本DTO结果映射 -->
+    <resultMap id="DocumentVersionDtoMap" type="com.deyoch.dto.DocumentVersionDto">
+        <id column="id" property="id"/>
+        <result column="document_id" property="documentId"/>
+        <result column="version" property="version"/>
+        <result column="file_name" property="fileName"/>
+        <result column="file_path" property="filePath"/>
+        <result column="file_size" property="fileSize"/>
+        <result column="md5_hash" property="md5Hash"/>
+        <result column="change_log" property="changeLog"/>
+        <result column="created_by" property="createdBy"/>
+        <result column="creator_name" property="creatorName"/>
+        <result column="is_current" property="isCurrent"/>
+        <result column="created_at" property="createdAt"/>
+    </resultMap>
+
+    <!-- 根据文档ID查询版本历史 -->
+    <select id="selectVersionsByDocumentId" resultMap="DocumentVersionDtoMap">
+        SELECT 
+            dv.id,
+            dv.document_id,
+            dv.version,
+            dv.file_name,
+            dv.file_path,
+            dv.file_size,
+            dv.md5_hash,
+            dv.change_log,
+            dv.created_by,
+            u.real_name as creator_name,
+            CASE WHEN d.version = dv.version THEN 1 ELSE 0 END as is_current,
+            dv.created_at
+        FROM deyoch_document_version dv
+        LEFT JOIN deyoch_user u ON dv.created_by = u.id
+        LEFT JOIN deyoch_document d ON dv.document_id = d.id
+        WHERE dv.document_id = #{documentId}
+        ORDER BY dv.created_at DESC
+    </select>
+
+    <!-- 根据文档ID和版本号查询版本信息 -->
+    <select id="selectVersionByDocumentIdAndVersion" resultMap="DocumentVersionDtoMap">
+        SELECT 
+            dv.id,
+            dv.document_id,
+            dv.version,
+            dv.file_name,
+            dv.file_path,
+            dv.file_size,
+            dv.md5_hash,
+            dv.change_log,
+            dv.created_by,
+            u.real_name as creator_name,
+            CASE WHEN d.version = dv.version THEN 1 ELSE 0 END as is_current,
+            dv.created_at
+        FROM deyoch_document_version dv
+        LEFT JOIN deyoch_user u ON dv.created_by = u.id
+        LEFT JOIN deyoch_document d ON dv.document_id = d.id
+        WHERE dv.document_id = #{documentId} AND dv.version = #{version}
+    </select>
+
+    <!-- 获取文档的最新版本号 -->
+    <select id="selectLatestVersionByDocumentId" resultType="java.lang.String">
+        SELECT version
+        FROM deyoch_document_version
+        WHERE document_id = #{documentId}
+        ORDER BY created_at DESC
+        LIMIT 1
+    </select>
+
+    <!-- 检查版本是否存在 -->
+    <select id="existsVersion" resultType="boolean">
+        SELECT COUNT(*) > 0
+        FROM deyoch_document_version
+        WHERE document_id = #{documentId} AND version = #{version}
+    </select>
+
+</mapper>

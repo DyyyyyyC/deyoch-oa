@@ -1,6 +1,5 @@
 package com.deyoch.utils;
 
-import com.deyoch.result.ResultCode;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;

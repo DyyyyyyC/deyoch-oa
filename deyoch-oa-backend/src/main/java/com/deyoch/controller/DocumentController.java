@@ -1,9 +1,12 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochDocument;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.DocumentService;
 import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -30,12 +33,12 @@ public class DocumentController {
      * @param page 页码
      * @param size 每页数量
      * @param keyword 搜索关键词
-     * @return 文档列表
+     * @return 分页文档列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('oa:document:manage')")
-    @Operation(summary = "获取文档列表", description = "获取所有文档的列表")
-    public Result<List<DeyochDocument>> getDocumentList(
+    @Operation(summary = "获取文档列表", description = "获取所有文档的分页列表")
+    public Result<PageResult<DeyochDocument>> getDocumentList(
             @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
             @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
             @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
@@ -138,12 +141,12 @@ public class DocumentController {
     /**
      * 下载文档
      * @param id 文档ID
-     * @return 下载结果
+     * @return 文件流
      */
     @GetMapping("/{id}/download")
     @PreAuthorize("hasAuthority('oa:document:manage')")
     @Operation(summary = "下载文档", description = "根据文档ID下载文档")
-    public Result<String> downloadDocument(@PathVariable @Parameter(description = "文档ID") Long id) {
+    public ResponseEntity<Resource> downloadDocument(@PathVariable @Parameter(description = "文档ID") Long id) {
         return documentService.downloadDocument(id);
     }
 }

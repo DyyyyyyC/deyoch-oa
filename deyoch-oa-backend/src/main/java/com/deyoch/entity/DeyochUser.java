@@ -9,10 +9,12 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.annotation.TableName;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
+@TableName("deyoch_user")
 @Schema(description = "用户实体类")
 public class DeyochUser {
 

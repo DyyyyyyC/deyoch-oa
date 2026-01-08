@@ -2,7 +2,7 @@ package com.deyoch.service;
 
 import com.baomidou.mybatisplus.extension.service.IService;
 import com.deyoch.entity.DeyochDept;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.Result;
 
 import java.util.List;
 

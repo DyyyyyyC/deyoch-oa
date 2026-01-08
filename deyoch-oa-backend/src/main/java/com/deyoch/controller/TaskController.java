@@ -1,7 +1,8 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochTask;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.TaskService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,14 +26,20 @@ public class TaskController {
     private final TaskService taskService;
 
     /**
-     * 获取任务列表
-     * @return 任务列表
+     * 获取任务列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页任务列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('oa:task:manage')")
-    @Operation(summary = "获取任务列表", description = "获取所有任务的列表")
-    public Result<List<DeyochTask>> getTaskList() {
-        return taskService.getTaskList();
+    @Operation(summary = "获取任务列表", description = "获取所有任务的分页列表")
+    public Result<PageResult<DeyochTask>> getTaskList(
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
+        return taskService.getTaskList(page, size, keyword);
     }
 
     /**

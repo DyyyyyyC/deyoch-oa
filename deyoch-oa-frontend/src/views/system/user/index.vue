@@ -150,7 +150,14 @@
 import { ref, reactive, onMounted, computed } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Plus, Edit, Delete } from '@element-plus/icons-vue'
-import { get, post, put, del } from '@/utils/axios'
+import {
+  getUserList,
+  createUser,
+  updateUser,
+  deleteUser,
+  updateUserStatus
+} from '@/api/user'
+import { getRoleList } from '@/api/role'
 import '@/style/management-layout.css'
 
 // 加载状态
@@ -220,12 +227,19 @@ const rules = {
   ]
 }
 
-// 获取角色列表
-const getRoleList = async () => {
+// 获取角色列表（仅在需要时调用）
+const loadRoleList = async () => {
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const roleData = await get('/role/list')
-    roleList.value = roleData
+    // 使用API调用，不传分页参数获取所有角色
+    const roleData = await getRoleList()
+    // 如果返回的是分页数据，取records字段
+    if (roleData && roleData.records) {
+      roleList.value = roleData.records
+    } else if (Array.isArray(roleData)) {
+      roleList.value = roleData
+    } else {
+      roleList.value = []
+    }
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -235,33 +249,38 @@ const getRoleList = async () => {
 }
 
 // 获取用户列表
-const getUserList = async () => {
+const loadUserList = async () => {
   loading.value = true
   try {
-    // 确保角色列表已加载
-    if (roleList.value.length === 0) {
-      await getRoleList()
-    }
-    
-    // axios拦截器已经处理了code检查，直接返回data字段
-    const userData = await get('/user/list')
-    
-    // 将用户数据与角色名称关联
-    const userListWithRoleName = userData.map(user => {
-      const role = roleList.value.find(role => role.id === user.roleId)
-      return {
-        ...user,
-        roleName: role ? role.roleName : '未知角色'
-      }
+    // 调用分页接口
+    const response = await getUserList({
+      page: pagination.currentPage,
+      size: pagination.pageSize,
+      keyword: searchForm.username
     })
     
-    userList.value = userListWithRoleName
-    pagination.total = userListWithRoleName.length
-  } catch (error) {
-    // 只在error.message不为空时显示详细错误信息
-    if (error.message) {
-      ElMessage.error('获取用户列表失败：' + error.message)
+    // 处理分页响应数据
+    let users = []
+    let total = 0
+    
+    // 检查响应数据结构
+    if (response && typeof response === 'object') {
+      if (response.records && Array.isArray(response.records)) {
+        // PageResult格式：{ current, size, total, pages, records }
+        users = response.records
+        total = response.total || 0
+      } else if (Array.isArray(response)) {
+        // 直接数组格式
+        users = response
+        total = response.length
+      }
     }
+    
+    // 后端已经返回了roleName，不需要前端处理
+    userList.value = users
+    pagination.total = total
+  } catch (error) {
+    ElMessage.error('获取用户列表失败：' + (error.message || '未知错误'))
   } finally {
     loading.value = false
   }
@@ -270,7 +289,6 @@ const getUserList = async () => {
 // 处理多选框选择变化
 const handleSelectionChange = (selection) => {
   selectedUsers.value = selection
-  console.log('选中的用户：', selectedUsers.value)
 }
 
 // 搜索用户
@@ -280,7 +298,7 @@ const handleSearch = () => {
   
   try {
     // 获取完整用户列表
-    getUserList().then(() => {
+    loadUserList().then(() => {
       // 在前端进行搜索过滤
       let filteredUsers = [...userList.value]
       
@@ -314,19 +332,19 @@ const handleSearch = () => {
 const handleReset = () => {
   searchForm.username = ''
   searchForm.status = ''
-  getUserList()
+  loadUserList()
 }
 
 // 分页大小变化
 const handleSizeChange = (size) => {
   pagination.pageSize = size
-  getUserList()
+  loadUserList()
 }
 
 // 当前页变化
 const handleCurrentChange = (current) => {
   pagination.currentPage = current
-  getUserList()
+  loadUserList()
 }
 
 // 添加用户
@@ -341,7 +359,7 @@ const handleAddUser = async () => {
   form.roleId = null
   form.status = 1
   // 打开对话框前加载角色列表
-  await getRoleList()
+  await loadRoleList()
   // 打开对话框
   dialogVisible.value = true
 }
@@ -375,7 +393,7 @@ const handleBatchEdit = async () => {
   form.status = Number(user.status)
   
   // 打开对话框前加载角色列表
-  await getRoleList()
+  await loadRoleList()
   // 打开对话框
   dialogVisible.value = true
 }
@@ -397,12 +415,12 @@ const handleBatchDelete = async () => {
     
     // 批量删除
     for (const user of selectedUsers.value) {
-      // axios拦截器已经处理了code检查，直接返回data字段
-      await del('/user/' + user.id)
+      // 使用API调用
+      await deleteUser(user.id)
     }
     
     ElMessage.success('删除用户成功')
-    getUserList()
+    loadUserList()
     // 清空选择
     selectedUsers.value = []
   } catch (error) {
@@ -418,16 +436,15 @@ const handleBatchDelete = async () => {
 // 状态变更
 const handleStatusChange = async (row) => {
   try {
-    // axios拦截器已经处理了code检查，直接返回data字段
-    // 后端使用@RequestParam接收status参数，所以通过查询字符串传递
-    await put(`/user/${row.id}/status?status=${row.status}`)
+    // 使用API调用
+    await updateUserStatus(row.id, row.status)
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
       ElMessage.error('更新状态失败：' + error.message)
     }
     // 恢复原来的状态
-    getUserList()
+    loadUserList()
   }
 }
 
@@ -440,15 +457,15 @@ const handleSubmit = async () => {
     
     if (form.id) {
       // 编辑用户
-      await put('/user/' + form.id, form)
+      await updateUser(form.id, form)
     } else {
       // 添加用户
-      await post('/user', form)
+      await createUser(form)
     }
     
     ElMessage.success(form.id ? '编辑用户成功' : '添加用户成功')
     dialogVisible.value = false
-    getUserList()
+    loadUserList()
   } catch (error) {
     // 只在error.message不为空时显示详细错误信息
     if (error.message) {
@@ -461,8 +478,7 @@ const handleSubmit = async () => {
 
 // 组件挂载时获取数据
 onMounted(() => {
-  getUserList()
-  // 移除了getRoleList()调用，改为在打开对话框时调用
+  loadUserList()
 })
 </script>
 

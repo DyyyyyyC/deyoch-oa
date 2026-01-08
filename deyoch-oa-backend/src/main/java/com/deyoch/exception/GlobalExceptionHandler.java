@@ -1,7 +1,7 @@
 package com.deyoch.exception;
 
-import com.deyoch.result.Result;
-import com.deyoch.result.ResultCode;
+import com.deyoch.common.result.Result;
+import com.deyoch.common.result.ResultCode;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DataAccessException;
 import org.springframework.dao.DuplicateKeyException;

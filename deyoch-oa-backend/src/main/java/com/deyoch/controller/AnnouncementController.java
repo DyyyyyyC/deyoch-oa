@@ -1,7 +1,8 @@
 package com.deyoch.controller;
 
 import com.deyoch.entity.DeyochAnnouncement;
-import com.deyoch.result.Result;
+import com.deyoch.common.result.PageResult;
+import com.deyoch.common.result.Result;
 import com.deyoch.service.AnnouncementService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -9,8 +10,6 @@ import org.springframework.web.bind.annotation.*;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
-
-import java.util.List;
 
 /**
  * 公告管理控制器
@@ -25,14 +24,20 @@ public class AnnouncementController {
     private final AnnouncementService announcementService;
 
     /**
-     * 获取公告列表
-     * @return 公告列表
+     * 获取公告列表（分页）
+     * @param page 页码
+     * @param size 每页数量
+     * @param keyword 搜索关键词
+     * @return 分页公告列表
      */
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('oa:announcement:manage')")
-    @Operation(summary = "获取公告列表", description = "获取所有公告的列表")
-    public Result<List<DeyochAnnouncement>> getAnnouncementList() {
-        return announcementService.getAnnouncementList();
+    @Operation(summary = "获取公告列表", description = "获取所有公告的分页列表")
+    public Result<PageResult<DeyochAnnouncement>> getAnnouncementList(
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "10") @Parameter(description = "每页数量") Integer size,
+            @RequestParam(required = false) @Parameter(description = "搜索关键词") String keyword) {
+        return announcementService.getAnnouncementList(page, size, keyword);
     }
 
     /**
