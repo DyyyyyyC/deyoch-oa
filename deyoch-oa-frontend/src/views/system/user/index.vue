@@ -1,16 +1,14 @@
 <template>
   <div class="management-page">
     <!-- 页面标题 -->
-    <div class="page-header">
-      <h2>{{ $t('userManagement.title') }}</h2>
-    </div>
+    <PageHeader :title="$t('userManagement.title')" />
 
     <!-- 用户列表 -->
     <el-card class="table-card">
       <!-- 操作和搜索区域 -->
-      <div class="action-search-area">
+      <PageActionBar>
         <!-- 左侧操作按钮 -->
-        <div class="action-buttons">
+        <template #actions>
           <el-button type="primary" @click="handleAddUser">
             <el-icon><Plus /></el-icon>
             {{ $t('userManagement.addUser') }}
@@ -23,10 +21,10 @@
             <el-icon><Delete /></el-icon>
             {{ $t('userManagement.delete') }}
           </el-button>
-        </div>
+        </template>
         
         <!-- 右侧搜索区域 -->
-        <div class="search-area">
+        <template #search>
           <el-form :model="searchForm" inline>
             <el-form-item>
               <el-input 
@@ -50,8 +48,8 @@
               <el-button @click="handleReset">{{ $t('userManagement.reset') }}</el-button>
             </el-form-item>
           </el-form>
-        </div>
-      </div>
+        </template>
+      </PageActionBar>
       
       <el-table
         v-loading="loading"
@@ -158,6 +156,8 @@ import {
   updateUserStatus
 } from '@/api/user'
 import { getRoleList } from '@/api/role'
+import PageHeader from '@/components/PageHeader.vue'
+import PageActionBar from '@/components/PageActionBar.vue'
 import '@/style/management-layout.css'
 
 // 加载状态

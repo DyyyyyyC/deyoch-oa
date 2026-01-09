@@ -238,13 +238,13 @@ const asyncRoutes = [
     path: '/contact',
     component: () => import('@/layout/index.vue'),
     meta: {
-      title: '通讯录管理',
+      title: '通讯录',
       requiresAuth: true,
       permission: 'oa:contact:view'
     },
     children: [
       {
-        path: 'directory',
+        path: '',
         name: 'ContactDirectory',
         component: () => import('@/views/contact/index.vue'),
         meta: {
@@ -266,7 +266,7 @@ const asyncRoutes = [
     },
     children: [
       {
-        path: 'center',
+        path: '',
         name: 'MessageCenter',
         component: () => import('@/views/message/index.vue'),
         meta: {

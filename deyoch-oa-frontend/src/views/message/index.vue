@@ -1,23 +1,22 @@
 <template>
   <div class="message-container">
-    <el-card class="box-card">
-      <template #header>
-        <div class="card-header">
-          <span>消息中心</span>
-          <div class="header-actions">
-            <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
-              <el-button type="primary" @click="handleMarkAllRead">
-                <el-icon><Check /></el-icon>
-                全部已读
-              </el-button>
-            </el-badge>
-            <el-button type="danger" @click="handleClearAll">
-              <el-icon><Delete /></el-icon>
-              清空消息
-            </el-button>
-          </div>
-        </div>
+    <!-- 页面标题 -->
+    <PageHeader title="消息中心">
+      <template #extra>
+        <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
+          <el-button type="primary" @click="handleMarkAllRead">
+            <el-icon><Check /></el-icon>
+            全部已读
+          </el-button>
+        </el-badge>
+        <el-button type="danger" @click="handleClearAll">
+          <el-icon><Delete /></el-icon>
+          清空消息
+        </el-button>
       </template>
+    </PageHeader>
+
+    <el-card class="box-card">
 
       <!-- 消息筛选 -->
       <div class="filter-bar">
@@ -170,6 +169,7 @@ import {
 } from '@/api/message'
 import MessageDetailDialog from './components/MessageDetailDialog.vue'
 import { initWebSocket, closeWebSocket } from '@/utils/websocket'
+import PageHeader from '@/components/PageHeader.vue'
 
 // Store
 const userStore = useUserStore()
@@ -507,18 +507,6 @@ const formatTime = (time) => {
 <style scoped>
 .message-container {
   padding: 20px;
-}
-
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .badge-item {

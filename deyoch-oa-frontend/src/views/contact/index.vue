@@ -1,22 +1,20 @@
 <template>
   <div class="contact-container">
-    <el-card class="box-card">
-      <template #header>
-        <div class="card-header">
-          <span>通讯录管理</span>
-          <div class="header-actions">
-            <el-button type="primary" @click="handleExport">
-              <el-icon><Download /></el-icon>
-              导出
-            </el-button>
-            <el-button type="success" @click="handleImport">
-              <el-icon><Upload /></el-icon>
-              导入
-            </el-button>
-          </div>
-        </div>
+    <!-- 页面标题 -->
+    <PageHeader title="通讯录">
+      <template #extra>
+        <el-button type="primary" @click="handleExport">
+          <el-icon><Download /></el-icon>
+          导出
+        </el-button>
+        <el-button type="success" @click="handleImport">
+          <el-icon><Upload /></el-icon>
+          导入
+        </el-button>
       </template>
+    </PageHeader>
 
+    <el-card class="box-card">
       <div class="contact-content">
         <!-- 左侧组织架构树 -->
         <div class="org-tree-panel">
@@ -54,25 +52,27 @@
         <div class="contact-list-panel">
           <el-card shadow="never">
             <template #header>
-              <div class="list-header">
-                <span>联系人列表</span>
-                <div class="search-area">
-                  <el-input
-                    v-model="searchForm.keyword"
-                    placeholder="搜索姓名、电话、邮箱"
-                    style="width: 300px"
-                    clearable
-                    @keyup.enter="handleSearch"
-                  >
-                    <template #prefix>
-                      <el-icon><Search /></el-icon>
-                    </template>
-                  </el-input>
-                  <el-button type="primary" @click="handleSearch">搜索</el-button>
-                  <el-button @click="handleReset">重置</el-button>
-                </div>
-              </div>
+              <span>联系人列表</span>
             </template>
+
+            <!-- 搜索区域 -->
+            <PageActionBar>
+              <template #search>
+                <el-input
+                  v-model="searchForm.keyword"
+                  placeholder="搜索姓名、电话、邮箱"
+                  style="width: 300px"
+                  clearable
+                  @keyup.enter="handleSearch"
+                >
+                  <template #prefix>
+                    <el-icon><Search /></el-icon>
+                  </template>
+                </el-input>
+                <el-button type="primary" @click="handleSearch">搜索</el-button>
+                <el-button @click="handleReset">重置</el-button>
+              </template>
+            </PageActionBar>
 
             <!-- 联系人表格 -->
             <el-table
@@ -204,6 +204,8 @@ import {
 } from '@/api/contact'
 import ContactDetailDialog from './components/ContactDetailDialog.vue'
 import SendMessageDialog from './components/SendMessageDialog.vue'
+import PageHeader from '@/components/PageHeader.vue'
+import PageActionBar from '@/components/PageActionBar.vue'
 
 // 响应式数据
 const loading = ref(false)
@@ -419,17 +421,6 @@ const handleConfirmImport = async () => {
   padding: 20px;
 }
 
-.card-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.header-actions {
-  display: flex;
-  gap: 10px;
-}
-
 .contact-content {
   display: flex;
   gap: 20px;
@@ -444,18 +435,6 @@ const handleConfirmImport = async () => {
 .contact-list-panel {
   flex: 1;
   min-width: 0;
-}
-
-.list-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.search-area {
-  display: flex;
-  gap: 10px;
-  align-items: center;
 }
 
 .tree-node {
