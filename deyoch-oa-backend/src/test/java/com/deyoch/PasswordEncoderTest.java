@@ -18,7 +18,7 @@ public class PasswordEncoderTest {
         BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
         
         // 要加密的明文密码
-        String rawPassword = "admin123";
+        String rawPassword = "123456";
         
         // 生成加密后的密码
         String encodedPassword = passwordEncoder.encode(rawPassword);

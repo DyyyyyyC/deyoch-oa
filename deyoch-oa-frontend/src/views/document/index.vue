@@ -81,17 +81,19 @@
         </el-table-column>
         <el-table-column prop="createdAt" :label="$t('documentManagement.uploadTime')" min-width="180" align="center" show-overflow-tooltip />
         <el-table-column prop="updatedAt" :label="$t('documentManagement.updateTime')" min-width="180" align="center" show-overflow-tooltip />
-        <el-table-column label="操作" min-width="200" align="center" fixed="right">
+        <el-table-column label="操作" min-width="260" align="center" fixed="right">
           <template #default="scope">
-            <el-button type="primary" size="small" @click="handleDownload(scope.row)">
-              <el-icon><Download /></el-icon>下载
-            </el-button>
-            <el-button type="info" size="small" @click="handleViewVersions(scope.row)">
-              <el-icon><Clock /></el-icon>版本
-            </el-button>
-            <el-button type="success" size="small" @click="handleUploadNewVersion(scope.row)">
-              <el-icon><Upload /></el-icon>新版本
-            </el-button>
+            <div class="operation-buttons">
+              <el-button type="primary" size="small" @click="handleDownload(scope.row)">
+                <el-icon><Download /></el-icon>下载
+              </el-button>
+              <el-button type="info" size="small" @click="handleViewVersions(scope.row)">
+                <el-icon><Clock /></el-icon>版本
+              </el-button>
+              <el-button type="success" size="small" @click="handleUploadNewVersion(scope.row)">
+                <el-icon><Upload /></el-icon>新版本
+              </el-button>
+            </div>
           </template>
         </el-table-column>
       </el-table>
@@ -238,9 +240,25 @@
   text-overflow: ellipsis;
 }
 
-/* 调整操作按钮间距 */
+/* 调整操作按钮间距和布局 */
+.operation-buttons {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  flex-wrap: nowrap;
+  align-items: center;
+}
+
+.operation-buttons .el-button {
+  margin-right: 0;
+  flex-shrink: 0;
+  min-width: 70px;
+}
+
 :deep(.el-button--small) {
-  margin-right: 4px;
+  margin-right: 0;
+  padding: 6px 10px;
+  font-size: 12px;
 }
 
 /* 调整表格内容居中 */

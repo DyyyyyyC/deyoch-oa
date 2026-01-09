@@ -306,12 +306,37 @@ const formRules = {
 }
 
 // 获取用户列表
+// 优化：只在需要时（打开创建/编辑对话框时）才加载用户列表
+// 这样可以减少页面初始化时的网络请求，提高页面加载速度
+// 用户列表用于：
+// 1. 创建/编辑任务时选择负责人
+// 2. 显示任务的创建人和负责人姓名
+// 3. 搜索时按负责人筛选任务
 const getUserList = async () => {
   try {
+    console.log('开始加载用户列表（用于任务负责人选择）')
     const data = await getUserListApi()
-    userList.value = data || []
+    console.log('用户列表API响应:', data)
+    
+    // 处理不同的响应格式
+    let users = []
+    if (Array.isArray(data)) {
+      users = data
+    } else if (data && data.records && Array.isArray(data.records)) {
+      users = data.records
+    } else if (data && data.data && Array.isArray(data.data)) {
+      users = data.data
+    } else if (data && data.success && data.data && Array.isArray(data.data.records)) {
+      users = data.data.records
+    } else {
+      console.error('用户列表数据格式错误:', data)
+      users = []
+    }
+    
+    userList.value = users
     // 初始显示前10个用户
-    filteredUserList.value = userList.value.slice(0, 10)
+    filteredUserList.value = users.slice(0, 10)
+    console.log('用户列表加载完成，共', userList.value.length, '个用户')
   } catch (error) {
     console.error('获取用户列表失败:', error)
     userList.value = []
@@ -352,7 +377,7 @@ const searchUsers = (query) => {
 
 // 处理用户选择框获得焦点
 const handleUserSelectFocus = () => {
-  if (filteredUserList.value.length === 0) {
+  if (filteredUserList.value.length === 0 && userList.value.length > 0) {
     // 初始显示前10个启用的用户
     filteredUserList.value = userList.value
       .filter(user => user.status === 1)
@@ -514,6 +539,10 @@ const handleAddTask = () => {
   isEditMode.value = false
   resetForm()
   dialogVisible.value = true
+  // 在打开对话框时才加载用户列表
+  if (userList.value.length === 0) {
+    getUserList()
+  }
 }
 
 // 批量编辑任务
@@ -534,6 +563,10 @@ const handleBatchEdit = () => {
   taskForm.startTime = row.startTime
   taskForm.endTime = row.endTime
   dialogVisible.value = true
+  // 在打开对话框时才加载用户列表
+  if (userList.value.length === 0) {
+    getUserList()
+  }
 }
 
 // 批量删除任务
@@ -633,7 +666,8 @@ const handleUpdateTaskStatus = async (row, status) => {
 
 // 组件挂载时获取数据
 onMounted(() => {
-  getUserList()
   getTaskList()
+  // 用户列表将在需要时（打开创建/编辑对话框时）才加载，避免页面初始化时的不必要请求
+  console.log('任务管理页面初始化完成，用户列表将在需要时懒加载')
 })
 </script>

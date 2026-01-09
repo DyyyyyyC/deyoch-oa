@@ -1,22 +1,26 @@
 <template>
-  <div class="message-container">
+  <div class="management-page">
     <!-- 页面标题 -->
-    <PageHeader title="消息中心">
-      <template #extra>
-        <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
-          <el-button type="primary" @click="handleMarkAllRead">
-            <el-icon><Check /></el-icon>
-            全部已读
-          </el-button>
-        </el-badge>
-        <el-button type="danger" @click="handleClearAll">
-          <el-icon><Delete /></el-icon>
-          清空消息
-        </el-button>
-      </template>
-    </PageHeader>
+    <PageHeader title="消息中心" />
 
-    <el-card class="box-card">
+    <!-- 消息列表 -->
+    <el-card class="table-card">
+      <!-- 操作区域 -->
+      <PageActionBar>
+        <!-- 左侧操作按钮 -->
+        <template #actions>
+          <el-badge :value="unreadCount" :hidden="unreadCount === 0" class="badge-item">
+            <el-button type="primary" @click="handleMarkAllRead">
+              <el-icon><Check /></el-icon>
+              全部已读
+            </el-button>
+          </el-badge>
+          <el-button type="danger" @click="handleClearAll">
+            <el-icon><Delete /></el-icon>
+            清空消息
+          </el-button>
+        </template>
+      </PageActionBar>
 
       <!-- 消息筛选 -->
       <div class="filter-bar">
@@ -154,7 +158,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, computed, onMounted, onUnmounted } from 'vue'
+import { ref, reactive, computed, onMounted, onUnmounted, watch } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
 import { Check, Delete } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
@@ -170,6 +174,20 @@ import {
 import MessageDetailDialog from './components/MessageDetailDialog.vue'
 import { initWebSocket, closeWebSocket } from '@/utils/websocket'
 import PageHeader from '@/components/PageHeader.vue'
+import PageActionBar from '@/components/PageActionBar.vue'
+import '@/style/management-layout.css'
+
+/**
+ * 消息中心页面
+ * 
+ * 为什么需要用户ID？
+ * 1. 获取当前用户的消息列表 - 每个用户只能看到发给自己的消息
+ * 2. 标记消息为已读 - 需要知道是哪个用户读了消息
+ * 3. 删除消息 - 只能删除自己的消息
+ * 4. 获取未读消息数量 - 统计当前用户的未读消息
+ * 5. WebSocket连接 - 建立用户专属的实时消息推送连接
+ * 6. 清空消息 - 只清空当前用户的消息
+ */
 
 // Store
 const userStore = useUserStore()
@@ -192,7 +210,13 @@ const pagination = reactive({
 })
 
 // 计算属性
-const currentUserId = computed(() => userStore.userInfo?.id)
+const currentUserId = computed(() => {
+  // 根据用户反馈，用户信息中包含 userId 字段，不是 id 字段
+  const userId = userStore.userInfo?.userId
+  console.log('当前用户信息:', userStore.userInfo)
+  console.log('当前用户ID:', userId)
+  return userId
+})
 
 // 标签页配置
 const tabConfig = {
@@ -206,11 +230,37 @@ const tabConfig = {
 
 // 页面初始化
 onMounted(() => {
+  console.log('消息中心页面初始化')
+  console.log('用户store状态:', userStore)
+  console.log('用户store.userInfo:', userStore.userInfo)
+  
+  // 如果用户ID存在，直接初始化
+  if (currentUserId.value) {
+    console.log('用户ID存在，直接初始化消息中心')
+    initializeMessageCenter()
+  } else {
+    console.log('用户ID不存在，尝试重新获取用户信息')
+    // 如果用户ID不存在，尝试从store重新获取用户信息
+    userStore.getUserInfo()
+  }
+})
+
+// 监听用户ID变化
+watch(currentUserId, (newUserId) => {
+  console.log('用户ID发生变化:', newUserId)
+  if (newUserId) {
+    initializeMessageCenter()
+  }
+})
+
+// 初始化消息中心
+const initializeMessageCenter = () => {
+  console.log('初始化消息中心，用户ID:', currentUserId.value)
   loadMessageList()
   loadUnreadCount()
   loadUnreadCountByType()
   initWebSocketConnection()
-})
+}
 
 // 页面销毁
 onUnmounted(() => {
@@ -253,7 +303,10 @@ const handleWebSocketMessage = (message) => {
 
 // 加载消息列表
 const loadMessageList = async () => {
-  if (!currentUserId.value) return
+  if (!currentUserId.value) {
+    console.warn('用户ID为空，无法加载消息列表')
+    return
+  }
   
   loading.value = true
   try {
@@ -266,15 +319,49 @@ const loadMessageList = async () => {
       isRead: config.isRead
     }
     
+    console.log('加载消息列表，参数:', params)
     const response = await getUserMessages(params)
-    if (response.success) {
-      messageList.value = response.data.records
-      pagination.total = response.data.total
-      totalCount.value = response.data.total
+    console.log('消息列表响应:', response)
+    
+    // 处理不同的响应格式
+    if (response && typeof response === 'object') {
+      if (response.success !== undefined) {
+        // 格式1: {success: true, data: {records: [], total: 0}}
+        if (response.success && response.data) {
+          messageList.value = response.data.records || response.data || []
+          pagination.total = response.data.total || 0
+          totalCount.value = response.data.total || 0
+        } else {
+          console.error('获取消息列表失败:', response.message)
+          ElMessage.error('获取消息列表失败: ' + (response.message || '未知错误'))
+        }
+      } else if (response.records && Array.isArray(response.records)) {
+        // 格式2: {records: [], total: 0, current: 1, size: 20}
+        messageList.value = response.records
+        pagination.total = response.total || 0
+        totalCount.value = response.total || 0
+      } else if (Array.isArray(response)) {
+        // 格式3: 直接返回数组
+        messageList.value = response
+        pagination.total = response.length
+        totalCount.value = response.length
+      } else {
+        console.error('未知的响应格式:', response)
+        ElMessage.error('数据格式错误')
+        messageList.value = []
+        pagination.total = 0
+        totalCount.value = 0
+      }
+    } else {
+      console.error('获取消息列表失败: 响应数据无效')
+      ElMessage.error('获取消息列表失败: 响应数据无效')
+      messageList.value = []
+      pagination.total = 0
+      totalCount.value = 0
     }
   } catch (error) {
     console.error('加载消息列表失败:', error)
-    ElMessage.error('加载消息列表失败')
+    ElMessage.error('加载消息列表失败: ' + (error.message || '网络错误'))
   } finally {
     loading.value = false
   }
@@ -505,8 +592,8 @@ const formatTime = (time) => {
 </script>
 
 <style scoped>
-.message-container {
-  padding: 20px;
+.management-page {
+  /* 使用统一的管理页面样式 */
 }
 
 .badge-item {

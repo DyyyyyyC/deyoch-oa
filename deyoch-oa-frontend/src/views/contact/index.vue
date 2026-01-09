@@ -1,20 +1,42 @@
 <template>
-  <div class="contact-container">
+  <div class="management-page">
     <!-- 页面标题 -->
-    <PageHeader title="通讯录">
-      <template #extra>
-        <el-button type="primary" @click="handleExport">
-          <el-icon><Download /></el-icon>
-          导出
-        </el-button>
-        <el-button type="success" @click="handleImport">
-          <el-icon><Upload /></el-icon>
-          导入
-        </el-button>
-      </template>
-    </PageHeader>
+    <PageHeader title="通讯录" />
 
-    <el-card class="box-card">
+    <!-- 通讯录列表 -->
+    <el-card class="table-card">
+      <!-- 操作和搜索区域 -->
+      <PageActionBar>
+        <!-- 左侧操作按钮 -->
+        <template #actions>
+          <el-button type="primary" @click="handleExport">
+            <el-icon><Download /></el-icon>
+            导出
+          </el-button>
+          <el-button type="success" @click="handleImport">
+            <el-icon><Upload /></el-icon>
+            导入
+          </el-button>
+        </template>
+        
+        <!-- 右侧搜索区域 -->
+        <template #search>
+          <el-input
+            v-model="searchForm.keyword"
+            placeholder="搜索姓名、电话、邮箱"
+            style="width: 300px"
+            clearable
+            @keyup.enter="handleSearch"
+          >
+            <template #prefix>
+              <el-icon><Search /></el-icon>
+            </template>
+          </el-input>
+          <el-button type="primary" @click="handleSearch">搜索</el-button>
+          <el-button @click="handleReset">重置</el-button>
+        </template>
+      </PageActionBar>
+
       <div class="contact-content">
         <!-- 左侧组织架构树 -->
         <div class="org-tree-panel">
@@ -54,25 +76,6 @@
             <template #header>
               <span>联系人列表</span>
             </template>
-
-            <!-- 搜索区域 -->
-            <PageActionBar>
-              <template #search>
-                <el-input
-                  v-model="searchForm.keyword"
-                  placeholder="搜索姓名、电话、邮箱"
-                  style="width: 300px"
-                  clearable
-                  @keyup.enter="handleSearch"
-                >
-                  <template #prefix>
-                    <el-icon><Search /></el-icon>
-                  </template>
-                </el-input>
-                <el-button type="primary" @click="handleSearch">搜索</el-button>
-                <el-button @click="handleReset">重置</el-button>
-              </template>
-            </PageActionBar>
 
             <!-- 联系人表格 -->
             <el-table
@@ -206,6 +209,7 @@ import ContactDetailDialog from './components/ContactDetailDialog.vue'
 import SendMessageDialog from './components/SendMessageDialog.vue'
 import PageHeader from '@/components/PageHeader.vue'
 import PageActionBar from '@/components/PageActionBar.vue'
+import '@/style/management-layout.css'
 
 // 响应式数据
 const loading = ref(false)
@@ -248,13 +252,22 @@ onMounted(() => {
 // 加载组织架构树
 const loadOrganizationTree = async () => {
   try {
+    console.log('加载组织架构树')
     const response = await getOrganizationTree()
-    if (response.success) {
-      orgTreeData.value = response.data
+    console.log('组织架构树响应:', response)
+    
+    if (response && response.success) {
+      orgTreeData.value = response.data || []
+    } else if (Array.isArray(response)) {
+      // 兼容直接返回数组的情况
+      orgTreeData.value = response
+    } else {
+      console.error('获取组织架构失败:', response?.message || '数据格式错误')
+      ElMessage.error('获取组织架构失败: ' + (response?.message || '数据格式错误'))
     }
   } catch (error) {
     console.error('加载组织架构失败:', error)
-    ElMessage.error('加载组织架构失败')
+    ElMessage.error('加载组织架构失败: ' + (error.message || '网络错误'))
   }
 }
 
@@ -269,14 +282,58 @@ const loadContactList = async () => {
       deptId: searchForm.deptId
     }
     
+    console.log('加载联系人列表，参数:', params)
     const response = await getContactDirectory(params)
-    if (response.success) {
-      contactList.value = response.data.records
-      pagination.total = response.data.total
+    console.log('联系人列表响应:', response)
+    
+    // 处理不同的响应格式
+    if (response && typeof response === 'object') {
+      if (response.success && response.data) {
+        // 格式1: {success: true, data: {records: [], total: 0}}
+        if (response.data.records && Array.isArray(response.data.records)) {
+          contactList.value = response.data.records
+          pagination.total = response.data.total || 0
+        } else if (Array.isArray(response.data)) {
+          // 格式1变体: {success: true, data: []}
+          contactList.value = response.data
+          pagination.total = response.data.length
+        } else {
+          console.error('未知的成功响应格式:', response.data)
+          contactList.value = []
+          pagination.total = 0
+        }
+      } else if (response.records && Array.isArray(response.records)) {
+        // 格式2: {records: [], total: 0, current: 1, size: 20}
+        contactList.value = response.records
+        pagination.total = response.total || 0
+      } else if (Array.isArray(response)) {
+        // 格式3: 直接返回数组
+        contactList.value = response
+        pagination.total = response.length
+      } else {
+        console.error('未知的响应格式:', response)
+        ElMessage.error('数据格式错误')
+        contactList.value = []
+        pagination.total = 0
+      }
+    } else if (Array.isArray(response)) {
+      // 兼容直接返回数组的情况
+      contactList.value = response
+      pagination.total = response.length
+    } else {
+      console.error('获取联系人列表失败:', response?.message || '数据格式错误')
+      ElMessage.error('获取联系人列表失败: ' + (response?.message || '数据格式错误'))
+      contactList.value = []
+      pagination.total = 0
     }
+    
+    console.log('解析后的联系人列表:', contactList.value)
+    console.log('总数:', pagination.total)
   } catch (error) {
     console.error('加载联系人列表失败:', error)
-    ElMessage.error('加载联系人列表失败')
+    ElMessage.error('加载联系人列表失败: ' + (error.message || '网络错误'))
+    contactList.value = []
+    pagination.total = 0
   } finally {
     loading.value = false
   }
@@ -417,8 +474,8 @@ const handleConfirmImport = async () => {
 </script>
 
 <style scoped>
-.contact-container {
-  padding: 20px;
+.management-page {
+  /* 使用统一的管理页面样式 */
 }
 
 .contact-content {

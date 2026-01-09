@@ -125,6 +125,18 @@
             <el-icon><Document /></el-icon>
             <template #title>{{ $t('documentManagement.title') }}</template>
           </el-menu-item>
+          
+          <!-- 通讯录 -->
+          <el-menu-item index="/contact" v-if="hasPermission('oa:contact:view')">
+            <el-icon><Phone /></el-icon>
+            <template #title>通讯录</template>
+          </el-menu-item>
+          
+          <!-- 消息中心 -->
+          <el-menu-item index="/message" v-if="hasPermission('oa:message:view')">
+            <el-icon><Message /></el-icon>
+            <template #title>消息中心</template>
+          </el-menu-item>
         </el-menu>
         <!-- 折叠按钮放在右下方 -->
         <div class="sidebar-collapse-trigger" @click="toggleCollapse">
@@ -151,7 +163,8 @@ import { useI18n } from 'vue-i18n'
 import LanguageSwitch from '@/components/LanguageSwitch.vue'
 import {
   ArrowDown, House, Setting, Bell, List, Expand, Fold,
-  Platform, User, SwitchButton, CaretBottom, DocumentCopy, Calendar, Document, Menu
+  Platform, User, SwitchButton, CaretBottom, DocumentCopy, Calendar, Document, Menu,
+  Phone, Message
 } from '@element-plus/icons-vue'
 
 const router = useRouter()
