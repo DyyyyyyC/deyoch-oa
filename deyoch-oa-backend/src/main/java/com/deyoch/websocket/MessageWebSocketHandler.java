@@ -34,15 +34,21 @@ public class MessageWebSocketHandler implements WebSocketHandler {
     
     @Override
     public void afterConnectionEstablished(WebSocketSession session) throws Exception {
+        log.info("WebSocket连接建立，会话ID: {}", session.getId());
+        log.info("连接URI: {}", session.getUri());
+        log.info("远程地址: {}", session.getRemoteAddress());
+        
         String userId = getUserIdFromSession(session);
+        log.info("解析到的用户ID: {}", userId);
+        
         if (userId != null) {
             userSessions.put(userId, session);
-            log.info("用户 {} 建立WebSocket连接，当前在线用户数: {}", userId, userSessions.size());
+            log.info("用户 {} 建立WebSocket连接成功，当前在线用户数: {}", userId, userSessions.size());
             
             // 发送连接成功消息
             sendMessage(session, createSystemMessage("连接成功", "WebSocket连接已建立"));
         } else {
-            log.warn("无法获取用户ID，关闭连接");
+            log.warn("无法获取用户ID，关闭连接。URI: {}", session.getUri());
             session.close();
         }
     }
@@ -155,14 +161,19 @@ public class MessageWebSocketHandler implements WebSocketHandler {
     private String getUserIdFromSession(WebSocketSession session) {
         try {
             URI uri = session.getUri();
+            log.debug("解析WebSocket URI: {}", uri);
+            
             if (uri != null) {
                 String query = uri.getQuery();
+                log.debug("查询参数: {}", query);
+                
                 if (query != null) {
                     // 解析查询参数，格式：userId=123
                     String[] params = query.split("&");
                     for (String param : params) {
                         String[] keyValue = param.split("=");
                         if (keyValue.length == 2 && "userId".equals(keyValue[0])) {
+                            log.debug("从URL参数中找到用户ID: {}", keyValue[1]);
                             return keyValue[1];
                         }
                     }
@@ -172,8 +183,11 @@ public class MessageWebSocketHandler implements WebSocketHandler {
             // 如果URL中没有userId参数，尝试从session属性中获取
             Object userIdAttr = session.getAttributes().get("userId");
             if (userIdAttr != null) {
+                log.debug("从session属性中找到用户ID: {}", userIdAttr);
                 return userIdAttr.toString();
             }
+            
+            log.warn("无法从URI或session属性中获取用户ID");
             
         } catch (Exception e) {
             log.error("获取用户ID失败", e);

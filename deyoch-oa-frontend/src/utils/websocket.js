@@ -31,59 +31,88 @@ export function initWebSocket(userId, options = {}) {
     closeWebSocket()
   }
 
-  const wsUrl = `${getWebSocketUrl()}/ws/message?userId=${userId}`
+  // 尝试多个可能的WebSocket端点
+  const endpoints = [
+    `${getWebSocketUrl()}/api/ws/message?userId=${userId}`, // 主要端点（通过Vite代理）
+    `ws://localhost:8080/api/ws/message?userId=${userId}` // 备用端点（直连后端）
+  ]
   
-  try {
-    socket = new WebSocket(wsUrl)
-    
-    socket.onopen = (event) => {
-      console.log('WebSocket连接已建立')
-      reconnectAttempts = 0
-      startHeartbeat()
-      
-      if (options.onOpen) {
-        options.onOpen(event)
-      }
+  let currentEndpointIndex = 0
+  
+  function tryConnect() {
+    if (currentEndpointIndex >= endpoints.length) {
+      console.error('所有WebSocket端点都连接失败')
+      return
     }
     
-    socket.onmessage = (event) => {
-      try {
-        const message = JSON.parse(event.data)
-        console.log('收到WebSocket消息:', message)
+    const wsUrl = endpoints[currentEndpointIndex]
+    
+    try {
+      socket = new WebSocket(wsUrl)
+      
+      socket.onopen = (event) => {
+        reconnectAttempts = 0
+        startHeartbeat()
         
-        if (options.onMessage) {
-          options.onMessage(message)
+        if (options.onOpen) {
+          options.onOpen(event)
         }
-      } catch (error) {
-        console.error('解析WebSocket消息失败:', error)
-      }
-    }
-    
-    socket.onclose = (event) => {
-      console.log('WebSocket连接已关闭', event.code, event.reason)
-      stopHeartbeat()
-      
-      if (options.onClose) {
-        options.onClose(event)
       }
       
-      // 如果不是主动关闭，尝试重连
-      if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
-        scheduleReconnect(userId, options)
+      socket.onmessage = (event) => {
+        // 处理心跳响应消息
+        if (event.data === 'pong') {
+          return
+        }
+        
+        try {
+          const message = JSON.parse(event.data)
+          
+          if (options.onMessage) {
+            options.onMessage(message)
+          }
+        } catch (error) {
+          console.error('解析WebSocket消息失败:', error)
+          console.error('原始消息数据:', event.data)
+        }
       }
-    }
-    
-    socket.onerror = (error) => {
-      console.error('WebSocket连接错误:', error)
       
-      if (options.onError) {
-        options.onError(error)
+      socket.onclose = (event) => {
+        stopHeartbeat()
+        
+        // 如果是连接失败，尝试下一个端点
+        if ((event.code === 1006 || event.code === 1002) && currentEndpointIndex < endpoints.length - 1) {
+          currentEndpointIndex++
+          setTimeout(tryConnect, 1000)
+          return
+        }
+        
+        if (options.onClose) {
+          options.onClose(event)
+        }
+        
+        // 如果不是主动关闭，尝试重连
+        if (event.code !== 1000 && reconnectAttempts < maxReconnectAttempts) {
+          scheduleReconnect(userId, options)
+        }
+      }
+      
+      socket.onerror = (error) => {
+        if (options.onError) {
+          options.onError(error)
+        }
+      }
+      
+    } catch (error) {
+      // 尝试下一个端点
+      if (currentEndpointIndex < endpoints.length - 1) {
+        currentEndpointIndex++
+        setTimeout(tryConnect, 1000)
       }
     }
-    
-  } catch (error) {
-    console.error('创建WebSocket连接失败:', error)
   }
+  
+  tryConnect()
 }
 
 /**
@@ -158,15 +187,12 @@ export function isWebSocketConnected() {
  */
 function scheduleReconnect(userId, options) {
   if (reconnectAttempts >= maxReconnectAttempts) {
-    console.error('WebSocket重连次数已达上限，停止重连')
     return
   }
   
   reconnectAttempts++
-  console.log(`WebSocket将在${reconnectInterval}ms后进行第${reconnectAttempts}次重连`)
   
   reconnectTimer = setTimeout(() => {
-    console.log(`开始第${reconnectAttempts}次WebSocket重连`)
     initWebSocket(userId, options)
   }, reconnectInterval)
 }
@@ -199,14 +225,14 @@ function stopHeartbeat() {
  */
 function getWebSocketUrl() {
   const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
-  const host = window.location.host
   
-  // 开发环境
+  // 开发环境 - 使用Vite代理
   if (process.env.NODE_ENV === 'development') {
-    return `${protocol}//localhost:8080`
+    return `${protocol}//localhost:3000` // 使用Vite代理服务器
   }
   
-  // 生产环境
+  // 生产环境 - 使用当前域名
+  const host = window.location.host
   return `${protocol}//${host}`
 }
 

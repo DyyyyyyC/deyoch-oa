@@ -1,6 +1,7 @@
 package com.deyoch.service.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import com.deyoch.entity.DeyochPermission;
 import com.deyoch.entity.DeyochRolePermission;
@@ -17,6 +18,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -57,6 +59,42 @@ public class PermissionServiceImpl extends ServiceImpl<DeyochPermissionMapper, D
             List<DeyochPermission> permList = list(queryWrapper);
             return Result.success(permList);
         } catch (Exception e) {
+            return Result.error(ResultCode.SYSTEM_ERROR, "获取权限列表失败：" + e.getMessage());
+        }
+    }
+
+    @Override
+    public Result<Map<String, Object>> getPermissionList(String permName, String permCode, Integer page, Integer size) {
+        try {
+            // 构建查询条件
+            LambdaQueryWrapper<DeyochPermission> queryWrapper = new LambdaQueryWrapper<>();
+            
+            // 添加搜索条件
+            if (permName != null && !permName.trim().isEmpty()) {
+                queryWrapper.like(DeyochPermission::getPermName, permName.trim());
+            }
+            if (permCode != null && !permCode.trim().isEmpty()) {
+                queryWrapper.like(DeyochPermission::getPermCode, permCode.trim());
+            }
+            
+            // 按创建时间倒序排列
+            queryWrapper.orderByDesc(DeyochPermission::getCreatedAt);
+            
+            // 分页查询
+            Page<DeyochPermission> pageParam = new Page<>(page, size);
+            Page<DeyochPermission> pageResult = page(pageParam, queryWrapper);
+            
+            // 构建分页结果
+            Map<String, Object> result = new HashMap<>();
+            result.put("records", pageResult.getRecords());
+            result.put("total", pageResult.getTotal());
+            result.put("current", pageResult.getCurrent());
+            result.put("size", pageResult.getSize());
+            result.put("pages", pageResult.getPages());
+            
+            return Result.success(result);
+        } catch (Exception e) {
+            log.error("获取权限分页列表失败", e);
             return Result.error(ResultCode.SYSTEM_ERROR, "获取权限列表失败：" + e.getMessage());
         }
     }

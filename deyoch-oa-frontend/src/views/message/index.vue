@@ -213,8 +213,6 @@ const pagination = reactive({
 const currentUserId = computed(() => {
   // 根据用户反馈，用户信息中包含 userId 字段，不是 id 字段
   const userId = userStore.userInfo?.userId
-  console.log('当前用户信息:', userStore.userInfo)
-  console.log('当前用户ID:', userId)
   return userId
 })
 
@@ -230,16 +228,10 @@ const tabConfig = {
 
 // 页面初始化
 onMounted(() => {
-  console.log('消息中心页面初始化')
-  console.log('用户store状态:', userStore)
-  console.log('用户store.userInfo:', userStore.userInfo)
-  
   // 如果用户ID存在，直接初始化
   if (currentUserId.value) {
-    console.log('用户ID存在，直接初始化消息中心')
     initializeMessageCenter()
   } else {
-    console.log('用户ID不存在，尝试重新获取用户信息')
     // 如果用户ID不存在，尝试从store重新获取用户信息
     userStore.getUserInfo()
   }
@@ -247,7 +239,6 @@ onMounted(() => {
 
 // 监听用户ID变化
 watch(currentUserId, (newUserId) => {
-  console.log('用户ID发生变化:', newUserId)
   if (newUserId) {
     initializeMessageCenter()
   }
@@ -255,7 +246,6 @@ watch(currentUserId, (newUserId) => {
 
 // 初始化消息中心
 const initializeMessageCenter = () => {
-  console.log('初始化消息中心，用户ID:', currentUserId.value)
   loadMessageList()
   loadUnreadCount()
   loadUnreadCountByType()
@@ -278,8 +268,6 @@ const initWebSocketConnection = () => {
 
 // WebSocket消息处理
 const handleWebSocketMessage = (message) => {
-  console.log('收到新消息:', message)
-  
   // 更新未读数量
   loadUnreadCount()
   loadUnreadCountByType()
@@ -304,7 +292,6 @@ const handleWebSocketMessage = (message) => {
 // 加载消息列表
 const loadMessageList = async () => {
   if (!currentUserId.value) {
-    console.warn('用户ID为空，无法加载消息列表')
     return
   }
   
@@ -319,9 +306,7 @@ const loadMessageList = async () => {
       isRead: config.isRead
     }
     
-    console.log('加载消息列表，参数:', params)
     const response = await getUserMessages(params)
-    console.log('消息列表响应:', response)
     
     // 处理不同的响应格式
     if (response && typeof response === 'object') {

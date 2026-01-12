@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * 权限管理控制器
@@ -42,8 +43,13 @@ public class PermissionController {
     @GetMapping("/list")
     @PreAuthorize("hasAuthority('sys:perm:manage')")
     @Operation(summary = "获取权限列表", description = "获取权限的扁平列表结构")
-    public Result<List<DeyochPermission>> getPermissionList() {
-        return permissionService.getPermissionList();
+    public Result<Map<String, Object>> getPermissionList(
+            @RequestParam(required = false) @Parameter(description = "权限名称") String permName,
+            @RequestParam(required = false) @Parameter(description = "权限代码") String permCode,
+            @RequestParam(defaultValue = "1") @Parameter(description = "页码") Integer page,
+            @RequestParam(defaultValue = "20") @Parameter(description = "每页大小") Integer size
+    ) {
+        return permissionService.getPermissionList(permName, permCode, page, size);
     }
 
     /**
