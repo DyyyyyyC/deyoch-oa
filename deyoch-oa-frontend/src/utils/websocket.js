@@ -203,11 +203,11 @@ function getWebSocketUrl() {
   
   // 开发环境
   if (process.env.NODE_ENV === 'development') {
-    return `${protocol}//localhost:8080/api`
+    return `${protocol}//localhost:8080`
   }
   
   // 生产环境
-  return `${protocol}//${host}/api`
+  return `${protocol}//${host}`
 }
 
 /**

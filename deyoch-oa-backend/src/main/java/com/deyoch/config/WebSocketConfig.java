@@ -25,6 +25,7 @@ public class WebSocketConfig implements WebSocketConfigurer {
     @Override
     public void registerWebSocketHandlers(WebSocketHandlerRegistry registry) {
         // 注册消息WebSocket处理器
+        // WebSocket路径需要包含完整路径，因为context-path不会自动添加到WebSocket端点
         registry.addHandler(messageWebSocketHandler(), "/ws/message")
                 .setAllowedOrigins("*") // 生产环境应该配置具体的域名
                 .withSockJS(); // 启用SockJS支持
